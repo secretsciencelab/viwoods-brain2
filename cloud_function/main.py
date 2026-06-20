@@ -13,10 +13,19 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 # Scope for full drive access
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
+import json
+from google.oauth2.credentials import Credentials
+
 def get_drive_service():
-    # Application Default Credentials (ADC) will automatically pick up the 
-    # attached Service Account when running in Google Cloud Functions!
-    credentials, project = google.auth.default(scopes=SCOPES)
+    token_json_str = os.environ.get("DRIVE_TOKEN_JSON")
+    if token_json_str:
+        print("Using user's DRIVE_TOKEN_JSON for Drive API authentication...")
+        token_info = json.loads(token_json_str)
+        credentials = Credentials.from_authorized_user_info(token_info, SCOPES)
+    else:
+        print("Falling back to Service Account for Drive API authentication...")
+        credentials, project = google.auth.default(scopes=SCOPES)
+        
     return build("drive", "v3", credentials=credentials)
 
 def download_file(service, file_id, file_name, dest_folder="/tmp"):
