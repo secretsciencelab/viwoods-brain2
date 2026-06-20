@@ -35,7 +35,8 @@ def download_file(service, file_id, file_name, dest_folder="/tmp"):
 
 def process_pdf_to_markdown(pdf_path, output_path):
     print(f"Uploading {pdf_path} to Gemini for OCR...")
-    client = genai.Client() # Uses GEMINI_API_KEY from environment variables
+    api_key = os.environ.get("GEMINI_API_KEY")
+    client = genai.Client(api_key=api_key)
     
     sample_file = client.files.upload(file=pdf_path)
     
