@@ -136,7 +136,7 @@ def sync_drive_notes(request):
 
         all_files = get_files_in_folder(service, folder_id)
         
-        existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md")}
+        existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] != "All_Notes_Master.md"}
         pdfs_to_process = [f for f in all_files if f["name"].endswith(".pdf")]
         
         processed_count = 0
@@ -172,6 +172,31 @@ def sync_drive_notes(request):
                 # Sleep to respect rate limits if we plan to process multiple
                 print("Sleeping for 15 seconds to respect free-tier rate limits...")
                 time.sleep(15)
+                
+        print("\n--- Compiling Master Markdown File ---")
+        master_content = "# All Notes Master File\n\n"
+        
+        # Refresh the file list to include any newly created MD files
+        final_files = get_files_in_folder(service, folder_id)
+        final_mds = [f for f in final_files if f["name"].endswith(".md") and f["name"] != "All_Notes_Master.md"]
+        
+        for md in final_mds:
+            local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
+            try:
+                with open(local_md, "r", encoding="utf-8") as f:
+                    content = f.read()
+                master_content += f"\n\n## Source: {md['name']}\n\n{content}\n"
+            except Exception as e:
+                print(f"Skipping {md['name']} during compile: {e}")
+                
+        master_path = "/tmp/All_Notes_Master.md"
+        with open(master_path, "w", encoding="utf-8") as f:
+            f.write(master_content)
+            
+        master_search = [f for f in final_files if f["name"] == "All_Notes_Master.md"]
+        master_id = master_search[0]["id"] if master_search else None
+        
+        upload_to_drive(service, master_path, folder_id, existing_file_id=master_id)
                 
         return f"Sync complete! Processed {processed_count} files.", 200
         
