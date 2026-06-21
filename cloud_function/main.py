@@ -64,7 +64,7 @@ def process_pdf_to_markdown(pdf_path, output_path):
     prompt = "Transcribe the handwritten notes in this document into clean, structured Markdown. Preserve headings, bullet points, and paragraphs as accurately as possible."
     
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         contents=[sample_file, prompt]
     )
     
