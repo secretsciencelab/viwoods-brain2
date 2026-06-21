@@ -61,7 +61,7 @@ def process_pdf_to_markdown(pdf_path, output_path):
         return False
 
     print(f"Extracting handwriting to Markdown...")
-    prompt = "Transcribe the handwritten notes in this document into clean, structured Markdown. Preserve headings, bullet points, and paragraphs as accurately as possible."
+    prompt = "Transcribe the handwritten notes in this document into clean, structured Markdown. Preserve headings, bullet points, and paragraphs as accurately as possible. CRITICAL: If you see a hand-drawn empty square box next to a sentence, you MUST format it as a standard Markdown checkbox like this: `- [ ]`. If the box has a checkmark or X in it, format it as `- [x]`."
     
     response = client.models.generate_content(
         model="gemini-2.5-flash-lite",
