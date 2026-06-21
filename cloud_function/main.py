@@ -163,7 +163,16 @@ def sync_drive_notes(request):
             local_pdf_path = download_file(service, pdf['id'], pdf['name'], dest_folder="/tmp")
             local_md_path = local_pdf_path.replace(".pdf", ".md")
             
-            success = process_pdf_to_markdown(local_pdf_path, local_md_path)
+            try:
+                success = process_pdf_to_markdown(local_pdf_path, local_md_path)
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print("Hit Google AI API rate limit! Stopping PDF processing for today, but will compile the Master file now.")
+                    break
+                else:
+                    print(f"Error processing {pdf['name']}: {e}")
+                    continue
+                    
             if success:
                 parent_id = pdf.get('parents', [folder_id])[0]
                 upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id)
