@@ -92,14 +92,26 @@ def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id
 def get_files_in_folder(service, parent_id):
     all_files = []
     query = f"'{parent_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime)").execute()
-    items = results.get("files", [])
+    page_token = None
     
-    for item in items:
-        if item["mimeType"] == "application/vnd.google-apps.folder":
-            all_files.extend(get_files_in_folder(service, item["id"]))
-        else:
-            all_files.append(item)
+    while True:
+        results = service.files().list(
+            q=query, 
+            fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime)",
+            pageToken=page_token
+        ).execute()
+        items = results.get("files", [])
+        
+        for item in items:
+            if item["mimeType"] == "application/vnd.google-apps.folder":
+                all_files.extend(get_files_in_folder(service, item["id"]))
+            else:
+                all_files.append(item)
+                
+        page_token = results.get('nextPageToken')
+        if not page_token:
+            break
+            
     return all_files
 
 @functions_framework.http
