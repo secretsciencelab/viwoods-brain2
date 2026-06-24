@@ -72,4 +72,7 @@ This repository includes a front-end **Web Application** (`/webapp`) hosted on G
 - **Tree Navigation:** Explore your Viwoods folder hierarchy easily via a collapsible file tree.
 - **GitHub Pages Deployment:** Automatically deployed and hosted via the included `.github/workflows/webapp.yaml` configuration.
 
-To use the web app, simply visit your repository's GitHub Pages URL after deployment and connect your Google Drive Client ID!
+To use the web app, simply visit the hosted version here:
+**👉 [https://secretsciencelab.github.io/viwoods-brain2/](https://secretsciencelab.github.io/viwoods-brain2/)**
+
+Because the app is fully client-side and only connects directly to Google Drive via your browser, anyone can safely use this hosted URL by just plugging in their own Google Drive Client ID! You do not need to host your own copy.
