@@ -488,10 +488,22 @@ const app = createApp({
                 nodeMap[title.toLowerCase()] = n.id;
                 nodeMap[n.name.replace('.md', '').toLowerCase()] = n.id;
             });
+            
+            // Add explicit tags as distinct nodes
+            allTags.value.forEach(tag => {
+                nodes.push({ 
+                    id: 'tag_' + tag, 
+                    label: tag, 
+                    shape: 'box', 
+                    color: { background: 'transparent', border: '#a853ba' }, 
+                    font: { color: '#a853ba', size: 10 } 
+                });
+            });
 
             notes.value.forEach(n => {
                 const content = noteContents.value[n.id];
                 if (content) {
+                    // Explicit internal links
                     const regex = /\[\[(.*?)\]\]/g;
                     let match;
                     while ((match = regex.exec(content)) !== null) {
@@ -500,6 +512,12 @@ const app = createApp({
                             edges.push({ from: n.id, to: nodeMap[targetName], color: { color: '#262626' } });
                         }
                     }
+                    
+                    // Tag connections
+                    const tags = extractTags(content).explicit;
+                    tags.forEach(t => {
+                        edges.push({ from: n.id, to: 'tag_' + t, color: { color: '#a853ba', opacity: 0.3 }, dashes: true });
+                    });
                 }
             });
 
