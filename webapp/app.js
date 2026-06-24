@@ -73,7 +73,7 @@ const app = createApp({
         const pastYearDays = computed(() => {
             const days = [];
             const today = new Date();
-            for (let i = 180; i >= 0; i--) { // 6 months of activity
+            for (let i = 30; i >= 0; i--) { // 30 days of activity
                 const d = new Date(today);
                 d.setDate(today.getDate() - i);
                 const dateStr = d.toISOString().substring(0, 10);

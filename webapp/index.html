@@ -19,7 +19,7 @@
 <body>
     <div id="app" v-cloak>
         <header>
-            <h1>brain2</h1>
+            <h1 @click="selectedNote = null; searchQuery = ''; selectedTag = null;" style="cursor: pointer;" title="Go to Home">brain2</h1>
             <div class="header-actions">
                 <button @click="toggleTheme" class="icon-btn" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                     {{ isDarkMode ? '☀️' : '🌙' }}
@@ -102,7 +102,7 @@
                 </div>
 
                 <div v-else-if="!selectedNote" class="right-sidebar heatmap-sidebar">
-                    <h3>Activity (Last 6 Months)</h3>
+                    <h3>Activity (Last 30 Days)</h3>
                     <div class="heatmap-grid">
                         <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="getHeatmapClass(day.count)" :title="day.date + ': ' + day.count + ' updates'"></div>
                     </div>
