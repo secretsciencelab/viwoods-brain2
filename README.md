@@ -1,10 +1,10 @@
 <div align="center">
   <img src="webapp/wireframe_brain.png" width="120" alt="brain2 logo">
   <h1>brain2</h1>
-  <p><b>E-Ink Second Brain Sync</b></p>
+  <p><b>Viwoods Second Brain Sync</b></p>
 </div>
 
-A completely serverless, automated pipeline that turns your e-ink tablet (Viwoods, Boox, reMarkable, Supernote, etc.) into a smart, searchable Second Brain.
+A completely serverless, automated pipeline that turns your Viwoods e-ink tablet into a smart, searchable Second Brain.
 
 This tool automatically detects new handwritten Viwoods .note files in your Google Drive, uses Google's powerful **Gemini 2.5 Pro** model to flawlessly transcribe your handwriting into formatted Markdown, and syncs the text back to Google Drive. It even compiles "Master" Markdown files perfectly formatted for ingestion into **Google NotebookLM** or **Obsidian**.
 
@@ -49,7 +49,7 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
 5. Under **Variables & Secrets**, add the following Environment Variables:
    - `GEMINI_API_KEY`: Your key from Step 2.
    - `DRIVE_TOKEN_JSON`: Paste the entire raw JSON string from your `token.json` file (from Step 1).
-   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan (e.g., `Viwoods-Note, Boox-Notes`). Defaults to `Viwoods-Note`.
+   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan. Defaults to `Viwoods-Note`.
 6. Click **Deploy**.
 
 ### Step 4: Cloud Scheduler
