@@ -176,14 +176,14 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         
                     # Flatten image onto white background if transparent
                     try:
-                        from PIL import Image
+                        from PIL import Image, ImageOps
                         with Image.open(img_path) as img:
                             if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
-                                background = Image.new('RGB', img.size, (255, 255, 255))
                                 if img.mode == 'P':
                                     img = img.convert('RGBA')
-                                background.paste(img, mask=img.split()[3]) # 3 is the alpha channel
-                                background.save(img_path, 'PNG')
+                                alpha = img.split()[-1] # The alpha channel
+                                inverted_alpha = ImageOps.invert(alpha)
+                                inverted_alpha.save(img_path, 'PNG')
                             elif img.mode != 'RGB':
                                 img.convert('RGB').save(img_path, 'PNG')
                     except ImportError:
