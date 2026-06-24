@@ -342,6 +342,7 @@ main {
     clear: right;
     cursor: zoom-in;
     transition: transform 0.2s ease, filter 0.2s ease;
+    animation: fadeIn 0.8s ease-out forwards;
     
     /* Native Hand-Drawn Ink Effect */
     border-radius: 0;
@@ -361,43 +362,6 @@ main {
     content: "";
     display: table;
     clear: both;
-}
-
-/* Image Loading Skeleton */
-.image-skeleton {
-    width: 320px;
-    height: 240px;
-    margin: 16px 0 16px 32px;
-    float: right;
-    clear: right;
-    background: var(--bg-surface);
-    border: 1px dashed var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    gap: 16px;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid var(--border-color);
-    border-top-color: var(--text-secondary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
 
 /* Lightbox Modal */

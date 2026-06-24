@@ -483,17 +483,12 @@ const app = createApp({
 
             // Bulletproof regex: matches ANY image link containing _attachments or Attachments anywhere in the path
             rawMd = rawMd.replace(/!\[(.*?)\]\(\s*.*?(?:_attachments|Attachments)\/.*?([^\/]+\.(?:png|jpg|jpeg|gif|bmp|webp))\s*\)/gi, (match, altText, filename) => {
-                let imgTag = '';
                 if (imageBlobUrls.value[filename]) {
-                    imgTag = `![${altText}](${imageBlobUrls.value[filename]})`;
+                    const imgTag = `![${altText}](${imageBlobUrls.value[filename]})`;
+                    return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n${imgTag}`;
                 } else {
-                    imgTag = `<div class="image-skeleton">
-                                <div class="spinner"></div>
-                                <span>Loading ${filename}...</span>
-                              </div>`;
+                    return '';
                 }
-                
-                return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n${imgTag}`;
             });
             
             // Replace [[Note Name]] with clickable internal links
