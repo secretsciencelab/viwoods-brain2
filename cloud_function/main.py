@@ -43,6 +43,37 @@ def download_file(service, file_id, file_name, dest_folder="/tmp"):
         status, done = downloader.next_chunk()
     return file_path
 
+def get_or_create_folder(service, folder_name, parent_id):
+    query = f"mimeType='application/vnd.google-apps.folder' and name='{folder_name}' and '{parent_id}' in parents and trashed=false"
+    results = service.files().list(q=query, fields="files(id)").execute()
+    items = results.get("files", [])
+    if items:
+        return items[0]['id']
+    else:
+        file_metadata = {
+            'name': folder_name,
+            'mimeType': 'application/vnd.google-apps.folder',
+            'parents': [parent_id]
+        }
+        folder = service.files().create(body=file_metadata, fields='id').execute()
+        return folder['id']
+
+def upload_image_to_drive(service, local_file_path, parent_folder_id):
+    file_name = os.path.basename(local_file_path)
+    query = f"name='{file_name}' and '{parent_folder_id}' in parents and trashed=false"
+    results = service.files().list(q=query, fields="files(id)").execute()
+    items = results.get("files", [])
+    
+    media = MediaFileUpload(local_file_path, mimetype='image/png')
+    if items:
+        service.files().update(fileId=items[0]['id'], media_body=media).execute()
+    else:
+        file_metadata = {
+            'name': file_name,
+            'parents': [parent_folder_id]
+        }
+        service.files().create(body=file_metadata, media_body=media).execute()
+
 def process_pdf_to_markdown(pdf_path, output_path):
     print(f"Uploading {pdf_path} to Gemini for OCR...")
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -91,8 +122,12 @@ def get_page_text_from_md(md_content, page_id):
         return match.group(1).strip()
     return ""
 
-def process_note_to_markdown(note_path, output_path, existing_md_path=None):
+def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None):
     print(f"Extracting and analyzing {note_path}...")
+    
+    attachments_folder_id = None
+    if service and parent_folder_id:
+        attachments_folder_id = get_or_create_folder(service, "Attachments", parent_folder_id)
     
     existing_hashes = {}
     existing_md_content = ""
@@ -176,6 +211,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None):
                         else:
                             page_markdown = "[No text generated or response blocked by safety filters]"
                         client.files.delete(name=sample_file.name)
+                        
+                    if service and attachments_folder_id:
+                        upload_image_to_drive(service, img_path, attachments_folder_id)
+                        page_markdown = f"![Page {page_id}](Attachments/{image_file})\n\n" + page_markdown
+                        
                     os.remove(img_path)
             
             final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
@@ -297,7 +337,7 @@ def sync_drive_notes(request):
                     if doc["name"].endswith(".pdf"):
                         success = process_pdf_to_markdown(local_doc_path, local_md_path)
                     else:
-                        success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path)
+                        success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, folder_id)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")
