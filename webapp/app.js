@@ -669,7 +669,7 @@ app.component('tree-node', {
         <ul class="tree-list">
             <li v-for="child in node.children" :key="child.id || child.name">
                 <div class="tree-item" @click.stop="toggleOrSelect(child)" :class="{ active: selectedNote && selectedNote.id === child.id, 'is-folder': child.isFolder }">
-                    <span class="icon">{{ child.isFolder ? (child.expanded ? '📂' : '📁') : '📄' }}</span> 
+                    <span class="icon material-symbols-outlined" style="font-size: 1.2rem; vertical-align: bottom;">{{ child.isFolder ? (child.expanded ? 'folder_open' : 'folder') : 'description' }}</span> 
                     <span class="tree-name">{{ child.displayTitle || child.name }}</span>
                 </div>
                 <tree-node v-if="child.isFolder" v-show="child.expanded" :node="child" :selectedNote="selectedNote" @select="$emit('select', $event)"></tree-node>
