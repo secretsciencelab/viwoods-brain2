@@ -175,6 +175,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         target.write(source.read())
                         
                     # Flatten image onto white background if transparent
+                    is_blank = False
                     try:
                         from PIL import Image, ImageOps
                         with Image.open(img_path) as img:
@@ -184,8 +185,13 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                                 alpha = img.split()[-1] # The alpha channel
                                 inverted_alpha = ImageOps.invert(alpha)
                                 inverted_alpha.save(img_path, 'PNG')
+                                if inverted_alpha.getextrema() == (255, 255):
+                                    is_blank = True
                             elif img.mode != 'RGB':
-                                img.convert('RGB').save(img_path, 'PNG')
+                                img = img.convert('RGB')
+                                img.save(img_path, 'PNG')
+                                if img.convert('L').getextrema() == (255, 255):
+                                    is_blank = True
                     except ImportError:
                         print("Pillow not installed, skipping transparency flattening.")
                     except Exception as e:
@@ -195,22 +201,26 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                     with open(img_path, "rb") as img_file:
                         image_bytes = img_file.read()
                         
-                    try:
-                        from google.genai import types
-                        response = client.models.generate_content(
-                            model="gemini-2.5-flash",
-                            contents=[
-                                types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
-                                prompt
-                            ]
-                        )
-                        if response.text:
-                            page_markdown = response.text.strip()
-                        else:
-                            page_markdown = "[No text generated or response blocked by safety filters]"
-                    except Exception as e:
-                        print(f"Gemini API Error for page {page_id}: {e}")
-                        page_markdown = "[Error communicating with Gemini API]"
+                    if is_blank:
+                        print(f"Page {page_id} is completely blank. Skipping Gemini OCR.")
+                        page_markdown = ""
+                    else:
+                        try:
+                            from google.genai import types
+                            response = client.models.generate_content(
+                                model="gemini-2.5-flash",
+                                contents=[
+                                    types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+                                    prompt
+                                ]
+                            )
+                            if response.text:
+                                page_markdown = response.text.strip()
+                            else:
+                                page_markdown = "[No text generated or response blocked by safety filters]"
+                        except Exception as e:
+                            print(f"Gemini API Error for page {page_id}: {e}")
+                            page_markdown = "[Error communicating with Gemini API]"
                         
                     if service and attachments_folder_id:
                         upload_image_to_drive(service, img_path, attachments_folder_id)
