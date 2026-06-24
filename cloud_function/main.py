@@ -144,7 +144,7 @@ def sync_drive_notes(request):
     
             all_files = get_files_in_folder(service, folder_id)
             
-            existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md"]}
+            existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
             pdfs_to_process = [f for f in all_files if f["name"].endswith(".pdf")]
             
             processed_count = 0
@@ -198,7 +198,9 @@ def sync_drive_notes(request):
                 "scratch": {"filename": "Scratch_Master.md", "content": "# Scratch Master File\n\n", "files": []},
                 "work": {"filename": "Work_Master.md", "content": "# Work Master File\n\n", "files": []}
             }
-            master_filenames = [cat["filename"] for cat in master_categories.values()]
+            master_filenames = [cat["filename"] for cat in master_categories.values()] + ["TODO_Master.md"]
+            
+            todo_content = "# Master To-Do List\n\n"
             
             for f in final_files:
                 if f["name"].endswith(".md") and f["name"] not in master_filenames:
@@ -222,6 +224,14 @@ def sync_drive_notes(request):
                         with open(local_md, "r", encoding="utf-8") as f:
                             content = f.read()
                         cat_data["content"] += f"\n\n## Source: {md.get('folder_path', '')}/{md['name']}\n\n{content}\n"
+                        
+                        # Extract open To-Dos from this file
+                        todos = [line.strip() for line in content.split("\n") if line.strip().startswith("- [ ]")]
+                        if todos:
+                            todo_content += f"## {md.get('folder_path', '')}/{md['name']}\n"
+                            for t in todos:
+                                todo_content += f"{t}\n"
+                            todo_content += "\n"
                     except Exception as e:
                         print(f"Skipping {md['name']} during compile: {e}")
                         
@@ -234,6 +244,18 @@ def sync_drive_notes(request):
                 
                 print(f"Uploading {cat_data['filename']}...")
                 upload_to_drive(service, master_path, folder_id, existing_file_id=master_id)
+                
+            # Upload TODO_Master.md
+            if todo_content != "# Master To-Do List\n\n":
+                todo_path = "/tmp/TODO_Master.md"
+                with open(todo_path, "w", encoding="utf-8") as f:
+                    f.write(todo_content)
+                    
+                todo_search = [f for f in final_files if f["name"] == "TODO_Master.md"]
+                todo_id = todo_search[0]["id"] if todo_search else None
+                
+                print("Uploading TODO_Master.md...")
+                upload_to_drive(service, todo_path, folder_id, existing_file_id=todo_id)
                 
         return f"Sync complete! Processed {total_processed_count} files.", 200
         
