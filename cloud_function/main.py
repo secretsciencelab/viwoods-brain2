@@ -115,7 +115,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None):
             with z.open(note_list_file) as f:
                 note_list = json.load(f)
             for page in note_list:
-                page_id = page['pageId']
+                page_id = page.get('pageId', page.get('id'))
                 pages.append({
                     'id': page_id,
                     'image_names': [f"{page_id}.jpg", f"{page_id}.png"],
