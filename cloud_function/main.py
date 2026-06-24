@@ -236,6 +236,16 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
 def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None):
     file_name = os.path.basename(local_file_path)
     media = MediaFileUpload(local_file_path, mimetype='text/markdown')
+    
+    # Anti-duplication check: if no known ID, query Drive immediately before uploading
+    # to catch any files created by concurrent Cloud Run instances (e.g. from Scheduler retries)
+    if not existing_file_id:
+        query = f"name='{file_name}' and '{parent_folder_id}' in parents and trashed=false"
+        results = service.files().list(q=query, fields="files(id)").execute()
+        items = results.get("files", [])
+        if items:
+            existing_file_id = items[0]['id']
+            
     if existing_file_id:
         print(f"Updating existing {file_name} in Google Drive...")
         file = service.files().update(fileId=existing_file_id, media_body=media, fields='id').execute()
