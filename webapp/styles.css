@@ -726,5 +726,124 @@ main {
          b o r d e r - r a d i u s :   8 p x ; 
          b o r d e r :   1 p x   s o l i d   v a r ( - - b o r d e r - c o l o r ) ; 
  } 
-  
  
+ 
+ 
+/* Sidebar Controls & Tags */
+.sidebar-controls {
+    padding: 0 16px 12px;
+    display: flex;
+    gap: 8px;
+}
+.search-input {
+    flex: 1;
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+}
+.search-input:focus {
+    border-color: #38bdf8;
+}
+.graph-btn {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+    background: var(--bg-surface-hover);
+    border: 1px solid var(--border-color);
+}
+.tags-panel {
+    padding: 0 16px 12px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.tag {
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.tag:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+.tag.active {
+    background: #38bdf8;
+    color: #000;
+    border-color: #38bdf8;
+}
+
+/* Backlinks */
+.backlinks-panel {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--border-color);
+}
+.backlinks-panel h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+.backlinks-list {
+    list-style: none;
+    padding: 0;
+}
+.backlinks-list li {
+    margin-bottom: 8px;
+}
+.backlinks-list a {
+    color: #38bdf8;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+.backlinks-list a:hover {
+    text-decoration: underline;
+}
+
+/* Internal Links */
+.internal-link {
+    color: #38bdf8;
+    text-decoration: none;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+.internal-link:hover {
+    background: rgba(56, 189, 248, 0.2);
+}
+
+/* Graph Modal */
+.modal.graph-modal {
+    width: 90vw !important;
+    height: 90vh !important;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+.modal-header h2 {
+    margin: 0;
+}
+.graph-container {
+    flex: 1;
+    background: var(--bg-base);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-height: 400px;
+}
