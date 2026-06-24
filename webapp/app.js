@@ -42,15 +42,18 @@ const app = createApp({
         };
 
         const documentOutline = computed(() => {
-            if (!markdownContent.value) return [];
+            const html = parsedMarkdown.value;
+            if (!html) return [];
+            
             const outline = [];
-            const regex = /^(#{1,6})\s+(.+)$/gm;
+            const regex = /<h([1-6])\s+id="([^"]+)">([\s\S]*?)<\/h\1>/g;
             let m;
-            while ((m = regex.exec(markdownContent.value)) !== null) {
+            while ((m = regex.exec(html)) !== null) {
+                const cleanText = m[3].replace(/<[^>]*>?/gm, '').trim();
                 outline.push({
-                    level: m[1].length,
-                    title: m[2].trim(),
-                    id: m[2].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                    level: parseInt(m[1]),
+                    title: cleanText,
+                    id: m[2]
                 });
             }
             return outline;
