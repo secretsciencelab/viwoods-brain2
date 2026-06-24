@@ -88,6 +88,22 @@
                     <h2>brain2</h2>
                     <p>Select a notebook from the sidebar to view your synchronized notes and handwritten diagrams.</p>
                 </div>
+                
+                <div v-if="selectedNote && documentOutline.length > 0" class="right-sidebar">
+                    <h3>On this page</h3>
+                    <ul class="outline-list">
+                        <li v-for="item in documentOutline" :key="item.id" :style="{ paddingLeft: (item.level - 1) * 12 + 'px' }">
+                            <a :href="'#' + item.id" @click.prevent="scrollToHeading(item.id)">{{ item.title }}</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-else-if="!selectedNote" class="right-sidebar heatmap-sidebar">
+                    <h3>Activity (Last 6 Months)</h3>
+                    <div class="heatmap-grid">
+                        <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="getHeatmapClass(day.count)" :title="day.date + ': ' + day.count + ' updates'"></div>
+                    </div>
+                </div>
             </div>
         </main>
 

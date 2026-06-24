@@ -23,6 +23,62 @@ const app = createApp({
         const relatedNotes = ref([]);
         const showGraph = ref(false);
 
+        const scrollToHeading = (id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        const documentOutline = computed(() => {
+            if (!markdownContent.value) return [];
+            const outline = [];
+            const regex = /^(#{1,6})\s+(.+)$/gm;
+            let m;
+            while ((m = regex.exec(markdownContent.value)) !== null) {
+                outline.push({
+                    level: m[1].length,
+                    title: m[2].trim(),
+                    id: m[2].trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                });
+            }
+            return outline;
+        });
+
+        const dailyActivity = computed(() => {
+            const counts = {};
+            notes.value.forEach(note => {
+                if (note.modifiedTime) {
+                    const dateStr = note.modifiedTime.substring(0, 10);
+                    counts[dateStr] = (counts[dateStr] || 0) + 1;
+                }
+            });
+            return counts;
+        });
+
+        const pastYearDays = computed(() => {
+            const days = [];
+            const today = new Date();
+            for (let i = 180; i >= 0; i--) { // 6 months of activity
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().substring(0, 10);
+                days.push({
+                    date: dateStr,
+                    count: dailyActivity.value[dateStr] || 0
+                });
+            }
+            return days;
+        });
+
+        const getHeatmapClass = (count) => {
+            if (count === 0) return 'heat-0';
+            if (count <= 2) return 'heat-1';
+            if (count <= 5) return 'heat-2';
+            if (count <= 10) return 'heat-3';
+            return 'heat-4';
+        };
+
         const checkExistingAuth = () => {
             const savedToken = localStorage.getItem('brain2_access_token');
             const expiresAt = localStorage.getItem('brain2_token_expires');
@@ -420,7 +476,16 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
-            return marked.parse(rawMd);
+            let html = marked.parse(rawMd);
+            
+            // Post-process HTML to inject id attributes into headings for the Document Outline
+            html = html.replace(/<h([1-6])>(.*?)<\/h\1>/g, (match, level, text) => {
+                const cleanText = text.replace(/<[^>]*>?/gm, ''); // strip inline HTML
+                const id = cleanText.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                return `<h${level} id="${id}">${text}</h${level}>`;
+            });
+            
+            return html;
         });
 
         // Lightbox Logic
@@ -566,7 +631,11 @@ const app = createApp({
             initGoogleAuth,
             lightboxImage,
             closeLightbox,
-            handleMarkdownClick
+            handleMarkdownClick,
+            documentOutline,
+            scrollToHeading,
+            pastYearDays,
+            getHeatmapClass
         }
     }
 });
