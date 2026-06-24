@@ -1,5 +1,9 @@
 <div align="center">
-  <img src="webapp/wireframe_brain.png" width="120" alt="brain2 logo">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="webapp/wireframe_brain_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="webapp/wireframe_brain.png">
+    <img src="webapp/wireframe_brain.png" width="120" alt="brain2 logo">
+  </picture>
   <h1>brain2</h1>
   <p><b>Viwoods Second Brain Sync</b></p>
 </div>
