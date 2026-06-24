@@ -92,25 +92,21 @@ const app = createApp({
             const tags = [...explicitTags];
             const headings = content.match(/^#{1,6}\s+(.+)$/gm) || [];
             
-            const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'for', 'on', 'with', 'at', 'by', 'from']);
-            
             headings.forEach(h => {
                 let rawHeading = h.replace(/^#{1,6}\s+/, '').trim();
                 
                 // 1. Strip dates (e.g., 6/16, 12-24, 2024/06/16)
-                rawHeading = rawHeading.replace(/\b\d{1,4}[\/-]\d{1,2}(?:[\/-]\d{1,4})?\b/g, ' ');
+                rawHeading = rawHeading.replace(/\b\d{1,4}[\/-]\d{1,2}(?:[\/-]\d{1,4})?\b/g, ' ').trim();
                 
-                // 2. Tokenize into words
+                // 2. Strip leading articles (The, A, An)
+                rawHeading = rawHeading.replace(/^(the|a|an)\s+/i, '');
+                
+                // 3. Tokenize into words
                 let words = rawHeading.toLowerCase().split(/[^a-z0-9]+/);
+                words = words.filter(w => w.length > 0);
                 
-                // 3. Remove stop words & empty
-                words = words.filter(w => w.length > 0 && !stopWords.has(w));
-                
-                // 4. Basic stemming (remove trailing 's' for plurals, ignoring 'ss')
-                words = words.map(w => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) ? w.slice(0, -1) : w);
-                
-                // 5. Length check: if it's concise (1 to 4 words), it's a good tag. 
-                // Ignore full sentences.
+                // 4. Length check: concise headings (1 to 4 words)
+                // We no longer blindly stem plurals or destroy valid prepositions like 'to'.
                 if (words.length > 0 && words.length <= 4) {
                     tags.push('#' + words.join('-'));
                 }
