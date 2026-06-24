@@ -39,6 +39,11 @@
                     <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
                     <button @click="showGraph = true" class="icon-btn graph-btn" title="Graph View">🕸️ Graph</button>
                 </div>
+                
+                <div v-if="searchQuery || selectedTag" class="active-filter-indicator">
+                    <span>Filtering by: <strong>{{ selectedTag || searchQuery }}</strong></span>
+                    <button @click="searchQuery = ''; selectedTag = null" class="icon-btn clear-filter-btn" title="Clear Filter">✕</button>
+                </div>
 
                 <div v-if="allTags.length > 0" class="tags-panel">
                     <div class="tag-list">

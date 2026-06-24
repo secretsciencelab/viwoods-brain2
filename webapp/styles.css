@@ -754,6 +754,31 @@ main {
     background: var(--bg-surface-hover);
     border: 1px solid var(--border-color);
 }
+.active-filter-indicator {
+    padding: 8px 16px;
+    margin: 0 16px 12px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+.active-filter-indicator strong {
+    color: #38bdf8;
+    margin-left: 4px;
+}
+.clear-filter-btn {
+    padding: 4px;
+    font-size: 0.875rem;
+    color: #38bdf8;
+}
+.clear-filter-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+}
 .tags-panel {
     padding: 0 16px 12px;
     border-bottom: 1px solid var(--border-color);
