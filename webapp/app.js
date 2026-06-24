@@ -8,6 +8,17 @@ const app = createApp({
         const showSettings = ref(false);
         const clientIdInput = ref('');
         
+        const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
+        const toggleTheme = () => {
+            isDarkMode.value = !isDarkMode.value;
+            localStorage.setItem('brain2_theme', isDarkMode.value ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light');
+        };
+        
+        onMounted(() => {
+            document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light');
+        });
+        
         const isAuthenticated = ref(false);
         const isLoading = ref(false);
         const notes = ref([]);
@@ -564,7 +575,7 @@ const app = createApp({
                     shape: 'dot',
                     size: 10 + Math.min(count * 2, 40),
                     color: '#a853ba',
-                    font: { color: '#ededed' },
+                    font: { color: isDarkMode.value ? '#ededed' : '#18181b' },
                     title: `Used in ${count} notes`
                 });
             });
@@ -635,7 +646,9 @@ const app = createApp({
             documentOutline,
             scrollToHeading,
             pastYearDays,
-            getHeatmapClass
+            getHeatmapClass,
+            isDarkMode,
+            toggleTheme
         }
     }
 });

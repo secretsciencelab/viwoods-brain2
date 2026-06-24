@@ -8,6 +8,28 @@
     --accent: #ffffff;
     --accent-glow: rgba(255, 255, 255, 0.1);
     --focus-ring: rgba(255, 255, 255, 0.3);
+    
+    /* Image Filters */
+    --img-filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.2);
+    --img-filter-hover: invert(1) hue-rotate(180deg) brightness(1.8) contrast(1.5) drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+    --img-blend-mode: screen;
+}
+
+[data-theme="light"] {
+    --bg-base: #ffffff;
+    --bg-surface: #f4f4f5;
+    --bg-surface-hover: #e4e4e7;
+    --border-color: #e4e4e7;
+    --text-primary: #18181b;
+    --text-secondary: #71717a;
+    --accent: #000000;
+    --accent-glow: rgba(0, 0, 0, 0.1);
+    --focus-ring: rgba(0, 0, 0, 0.3);
+    
+    /* Light Mode Images: don't invert, just slightly darken line art */
+    --img-filter: brightness(0.9) contrast(1.2);
+    --img-filter-hover: brightness(0.8) contrast(1.5) drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+    --img-blend-mode: multiply;
 }
 
 * {
@@ -299,19 +321,18 @@ main {
     cursor: zoom-in;
     transition: transform 0.2s ease, filter 0.2s ease;
     
-    /* Native Dark Mode Hand-Drawn Ink Effect */
-    /* Inverts the white paper, brightens the ink, and screens out the background */
+    /* Native Hand-Drawn Ink Effect */
     border-radius: 0;
     border: none;
     box-shadow: none;
     background: transparent;
-    filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.2);
-    mix-blend-mode: screen;
+    filter: var(--img-filter);
+    mix-blend-mode: var(--img-blend-mode);
 }
 
 .markdown-body img:hover {
     transform: translateY(-2px) scale(1.05);
-    filter: invert(1) hue-rotate(180deg) brightness(1.8) contrast(1.5) drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+    filter: var(--img-filter-hover);
 }
 
 .markdown-body::after {
@@ -347,8 +368,8 @@ main {
     cursor: default;
     
     /* Apply same native ink effect to the zoomed image */
-    filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.2);
-    mix-blend-mode: screen;
+    filter: var(--img-filter);
+    mix-blend-mode: var(--img-blend-mode);
 }
 
 .lightbox-close {

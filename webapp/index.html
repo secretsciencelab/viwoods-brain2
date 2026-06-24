@@ -21,6 +21,9 @@
         <header>
             <h1>brain2</h1>
             <div class="header-actions">
+                <button @click="toggleTheme" class="icon-btn" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                    {{ isDarkMode ? '☀️' : '🌙' }}
+                </button>
                 <button @click="openSettings" class="icon-btn" title="Settings">⚙️</button>
                 <button v-if="!isAuthenticated" @click="initGoogleAuth" class="connect-btn">
                     <span class="icon">🔗</span> Connect Google Drive
