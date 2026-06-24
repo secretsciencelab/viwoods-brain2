@@ -500,51 +500,56 @@ const app = createApp({
 
             const nodes = [];
             const edges = [];
-            const nodeMap = {};
+            
+            const tagNodesMap = new Map();
+            const tagEdgesMap = new Map();
 
+            // Build Tag Network from co-occurrences
             notes.value.forEach(n => {
-                const title = n.displayTitle || n.name.replace('.md', '');
-                nodes.push({ id: n.id, label: title, shape: 'dot', size: 12, color: '#38bdf8' });
-                nodeMap[title.toLowerCase()] = n.id;
-                nodeMap[n.name.replace('.md', '').toLowerCase()] = n.id;
-            });
-
-            // 1. Explicit internal links
-            notes.value.forEach(n => {
-                const content = noteContents.value[n.id];
-                if (content) {
-                    const regex = /\[\[(.*?)\]\]/g;
-                    let match;
-                    while ((match = regex.exec(content)) !== null) {
-                        const targetName = match[1].toLowerCase();
-                        if (nodeMap[targetName]) {
-                            edges.push({ from: n.id, to: nodeMap[targetName], color: { color: '#262626' } });
-                        }
+                const content = noteContents.value[n.id] || '';
+                const tags = extractTags(content).all;
+                const uniqueTags = [...new Set(tags)];
+                
+                // Count occurrences for node size
+                uniqueTags.forEach(t => {
+                    tagNodesMap.set(t, (tagNodesMap.get(t) || 0) + 1);
+                });
+                
+                // Count co-occurrences for edge thickness
+                for (let i = 0; i < uniqueTags.length; i++) {
+                    for (let j = i + 1; j < uniqueTags.length; j++) {
+                        let t1 = uniqueTags[i];
+                        let t2 = uniqueTags[j];
+                        if (t1 > t2) { let temp = t1; t1 = t2; t2 = temp; }
+                        
+                        const edgeKey = t1 + '|' + t2;
+                        tagEdgesMap.set(edgeKey, (tagEdgesMap.get(edgeKey) || 0) + 1);
                     }
                 }
             });
 
-            // 2. Semantic Tag Network (Related Notes)
-            notes.value.forEach(n1 => {
-                const c1 = noteContents.value[n1.id] || '';
-                const tags1 = new Set(extractTags(c1).all);
-                if (tags1.size === 0) return;
-                
-                notes.value.forEach(n2 => {
-                    if (n1.id >= n2.id) return; // avoid duplicate edges A->B and B->A
-                    const c2 = noteContents.value[n2.id] || '';
-                    const tags2 = new Set(extractTags(c2).all);
-                    
-                    const shared = [...tags1].filter(x => tags2.has(x));
-                    if (shared.length > 0) {
-                        edges.push({ 
-                            from: n1.id, 
-                            to: n2.id, 
-                            color: { color: '#a853ba', opacity: 0.2 }, 
-                            dashes: true,
-                            title: 'Shared: ' + shared.join(', ') // Hover tooltip
-                        });
-                    }
+            // Create vis.js nodes
+            tagNodesMap.forEach((count, tag) => {
+                nodes.push({
+                    id: tag,
+                    label: tag,
+                    shape: 'dot',
+                    size: 10 + Math.min(count * 2, 40),
+                    color: '#a853ba',
+                    font: { color: '#ededed' },
+                    title: `Used in ${count} notes`
+                });
+            });
+
+            // Create vis.js edges
+            tagEdgesMap.forEach((weight, edgeKey) => {
+                const [t1, t2] = edgeKey.split('|');
+                edges.push({
+                    from: t1,
+                    to: t2,
+                    color: { color: '#38bdf8', opacity: Math.min(0.2 + (weight * 0.1), 0.8) },
+                    value: weight,
+                    title: `Co-occur in ${weight} notes`
                 });
             });
 
@@ -558,12 +563,9 @@ const app = createApp({
             
             network.on("doubleClick", function (params) {
                 if (params.nodes.length > 0) {
-                    const nodeId = params.nodes[0];
-                    const target = notes.value.find(n => n.id === nodeId);
-                    if (target) {
-                        showGraph.value = false;
-                        selectNote(target);
-                    }
+                    const tagId = params.nodes[0];
+                    showGraph.value = false;
+                    selectedTag.value = tagId;
                 }
             });
         };
