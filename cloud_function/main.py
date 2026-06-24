@@ -288,6 +288,8 @@ def get_files_in_folder(service, parent_id, current_path=""):
                 folder_path = current_path + "/" + item["name"] if current_path else item["name"]
                 all_files.extend(get_files_in_folder(service, item["id"], folder_path))
             else:
+                if item["name"].lower().endswith(".pdf"):
+                    continue
                 item["folder_path"] = current_path
                 all_files.append(item)
                 
