@@ -487,7 +487,10 @@ const app = createApp({
                 if (imageBlobUrls.value[filename]) {
                     imgTag = `![${altText}](${imageBlobUrls.value[filename]})`;
                 } else {
-                    imgTag = `![Loading ${filename}...](https://via.placeholder.com/800x400/171717/38bdf8?text=Loading+Image...)`;
+                    imgTag = `<div class="image-skeleton">
+                                <div class="spinner"></div>
+                                <span>Loading ${filename}...</span>
+                              </div>`;
                 }
                 
                 return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n${imgTag}`;
