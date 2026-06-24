@@ -122,12 +122,14 @@ def get_page_text_from_md(md_content, page_id):
         return match.group(1).strip()
     return ""
 
-def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None):
+def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None, note_name=None):
     print(f"Extracting and analyzing {note_path}...")
     
     attachments_folder_id = None
-    if service and parent_folder_id:
-        attachments_folder_id = get_or_create_folder(service, "Attachments", parent_folder_id)
+    if service and parent_folder_id and note_name:
+        attachments_base_id = get_or_create_folder(service, "Attachments", parent_folder_id)
+        # Create a subfolder named after the note inside Attachments
+        attachments_folder_id = get_or_create_folder(service, note_name, attachments_base_id)
     
     existing_hashes = {}
     existing_md_content = ""
@@ -219,7 +221,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         
                     if service and attachments_folder_id:
                         upload_image_to_drive(service, img_path, attachments_folder_id)
-                        page_markdown = f"![Page {page_id}](Attachments/{image_file})\n\n" + page_markdown
+                        page_markdown = f"![Page {page_id}](Attachments/{note_name}/{image_file})\n\n" + page_markdown
                         
                     os.remove(img_path)
             
@@ -352,7 +354,8 @@ def sync_drive_notes(request):
                     if doc["name"].endswith(".pdf"):
                         success = process_pdf_to_markdown(local_doc_path, local_md_path)
                     else:
-                        success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, folder_id)
+                        clean_note_name = doc["name"].replace(".note", "")
+                        success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, folder_id, clean_note_name)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")
