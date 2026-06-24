@@ -122,17 +122,9 @@ const app = createApp({
 
         const buildTree = (files) => {
             let tree = { name: "root", isFolder: true, expanded: true, children: [] };
-            
-            // Put Master files directly at root
-            let masters = files.filter(f => f.name.includes("Master"));
-            let normalFiles = files.filter(f => !f.name.includes("Master"));
-            
-            masters.forEach(f => {
-                tree.children.push({ ...f, isFolder: false });
-            });
 
-            // Build hierarchy for normal files
-            normalFiles.forEach(f => {
+            // Build hierarchy for files
+            files.forEach(f => {
                 let parts = f.displayName.split('/');
                 let current = tree;
                 for (let i = 0; i < parts.length - 1; i++) {
@@ -180,7 +172,7 @@ const app = createApp({
                             const subFolderPath = path ? `${path}/${file.name}` : file.name;
                             const subFiles = await fetchAllMarkdown(file.id, subFolderPath);
                             collectedFiles = collectedFiles.concat(subFiles);
-                        } else if (file.name.endsWith('.md')) {
+                        } else if (file.name.endsWith('.md') && !file.name.toLowerCase().endsWith('master.md')) {
                             file.displayName = path ? `${path}/${file.name}` : file.name;
                             collectedFiles.push(file);
                         }
@@ -330,32 +322,7 @@ const app = createApp({
                 const text = await res.text();
                 markdownContent.value = text;
                 
-                // If it's a Master file, it contains content from many subdirectories.
-                // We parse the "## Source: path/to/file.md" headers to find the original notes,
-                // and then fetch the images for all of them!
-                if (note.name.includes("Master.md")) {
-                    const sourceRegex = /## Source:\s*(.*?\.md)/g;
-                    let match;
-                    let uniqueSources = new Set();
-                    while ((match = sourceRegex.exec(text)) !== null) {
-                        uniqueSources.add(match[1].trim());
-                    }
-                    
-                    for (let source of uniqueSources) {
-                        let cleanSource = source.startsWith('/') ? source.substring(1) : source;
-                        let sourceNote = notes.value.find(n => {
-                            let cleanDisplayName = (n.displayName || "").startsWith('/') ? n.displayName.substring(1) : n.displayName;
-                            return cleanDisplayName === cleanSource || n.name === cleanSource;
-                        });
-                        
-                        if (sourceNote) {
-                            loadImagesForNote(sourceNote);
-                        }
-                    }
-                } else {
-                    // Normal note
-                    loadImagesForNote(note);
-                }
+                loadImagesForNote(note);
                 
                 // Calculate Related Notes based on Tag overlap
                 let related = [];
