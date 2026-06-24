@@ -1,4 +1,8 @@
-# 🧠 E-Ink Second Brain Sync
+<div align="center">
+  <img src="webapp/wireframe_brain.png" width="120" alt="brain2 logo">
+  <h1>brain2</h1>
+  <p><b>E-Ink Second Brain Sync</b></p>
+</div>
 
 A completely serverless, automated pipeline that turns your e-ink tablet (Viwoods, Boox, reMarkable, Supernote, etc.) into a smart, searchable Second Brain.
 
