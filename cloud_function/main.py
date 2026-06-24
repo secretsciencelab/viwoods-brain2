@@ -226,7 +226,7 @@ def sync_drive_notes(request):
     try:
         service = get_drive_service()
         
-        target_folders_env = os.environ.get("DRIVE_FOLDERS", "Viwoods-PDF,Viwoods-Note")
+        target_folders_env = os.environ.get("DRIVE_FOLDERS", "Viwoods-Note")
         target_folders = [f.strip() for f in target_folders_env.split(",") if f.strip()]
         
         total_processed_count = 0
