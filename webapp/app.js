@@ -547,8 +547,8 @@ const app = createApp({
                 edges.push({
                     from: t1,
                     to: t2,
-                    color: { color: '#38bdf8', opacity: Math.min(0.2 + (weight * 0.1), 0.8) },
-                    value: weight,
+                    color: { color: '#38bdf8', opacity: Math.min(0.5 + (weight * 0.15), 1.0) },
+                    value: weight * 2,
                     title: `Co-occur in ${weight} notes`
                 });
             });
