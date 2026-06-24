@@ -239,7 +239,7 @@ const app = createApp({
                             const subFolderPath = path ? `${path}/${file.name}` : file.name;
                             const subFiles = await fetchAllMarkdown(file.id, subFolderPath);
                             collectedFiles = collectedFiles.concat(subFiles);
-                        } else if (file.name.endsWith('.md') && !file.name.toLowerCase().endsWith('master.md')) {
+                        } else if (file.name.endsWith('.md') && (!file.name.toLowerCase().endsWith('master.md') || file.name === 'TODO_Master.md')) {
                             file.displayName = path ? `${path}/${file.name}` : file.name;
                             collectedFiles.push(file);
                         }
