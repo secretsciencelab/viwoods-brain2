@@ -293,19 +293,25 @@ main {
 
 .markdown-body img {
     max-width: 320px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
     margin: 16px 0 16px 32px;
     float: right;
     clear: right;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     cursor: zoom-in;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    
+    /* Native Dark Mode Hand-Drawn Ink Effect */
+    /* Inverts the white paper, brightens the ink, and screens out the background */
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.2);
+    mix-blend-mode: screen;
 }
 
 .markdown-body img:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    transform: translateY(-2px) scale(1.05);
+    filter: invert(1) hue-rotate(180deg) brightness(1.8) contrast(1.5) drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
 }
 
 .markdown-body::after {
@@ -335,10 +341,14 @@ main {
 .lightbox-img {
     max-width: 90vw;
     max-height: 90vh;
-    border-radius: 12px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+    border-radius: 0;
+    box-shadow: none;
     animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: default;
+    
+    /* Apply same native ink effect to the zoomed image */
+    filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(1.2);
+    mix-blend-mode: screen;
 }
 
 .lightbox-close {
