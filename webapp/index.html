@@ -71,7 +71,7 @@
                         <h3>🔗 Backlinks</h3>
                         <ul class="backlinks-list">
                             <li v-for="link in backlinks" :key="link.id">
-                                <a href="#" @click.prevent="selectNote(link)">{{ link.name.replace('.md', '') }}</a>
+                                <a href="#" @click.prevent="selectNote(link)">{{ link.displayTitle || link.name.replace('.md', '') }}</a>
                             </li>
                         </ul>
                     </div>

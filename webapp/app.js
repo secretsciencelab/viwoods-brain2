@@ -171,6 +171,11 @@ const app = createApp({
                                 const text = await res.text();
                                 contents[note.id] = text;
                                 
+                                const titleMatch = text.match(/^#\s+(.+)$/m);
+                                if (titleMatch) {
+                                    note.displayTitle = titleMatch[1].trim();
+                                }
+                                
                                 const tagMatches = text.match(/#[\w-]+/g);
                                 if (tagMatches) {
                                     tagMatches.forEach(t => tagSet.add(t));
@@ -318,12 +323,17 @@ const app = createApp({
                 
                 // Calculate Backlinks
                 let bl = [];
-                const searchStr = `[[${note.name.replace('.md', '')}]]`.toLowerCase();
+                const searchStrOriginal = `[[${note.name.replace('.md', '')}]]`.toLowerCase();
+                const searchStrTitle = note.displayTitle ? `[[${note.displayTitle}]]`.toLowerCase() : null;
+                
                 for (const n of notes.value) {
                     if (n.id === note.id) continue;
                     const content = noteContents.value[n.id];
-                    if (content && content.toLowerCase().includes(searchStr)) {
-                        bl.push(n);
+                    if (content) {
+                        const contentLow = content.toLowerCase();
+                        if (contentLow.includes(searchStrOriginal) || (searchStrTitle && contentLow.includes(searchStrTitle))) {
+                            bl.push(n);
+                        }
                     }
                 }
                 backlinks.value = bl;
@@ -414,12 +424,16 @@ const app = createApp({
                 lightboxImage.value = e.target.src;
             } else if (e.target.classList.contains('internal-link')) {
                 e.preventDefault();
-                const noteName = e.target.getAttribute('data-note');
-                const target = notes.value.find(n => n.name.replace('.md', '') === noteName || n.displayName === noteName);
+                const noteName = e.target.getAttribute('data-note').toLowerCase();
+                const target = notes.value.find(n => 
+                    n.name.replace('.md', '').toLowerCase() === noteName || 
+                    (n.displayName && n.displayName.toLowerCase() === noteName) ||
+                    (n.displayTitle && n.displayTitle.toLowerCase() === noteName)
+                );
                 if (target) {
                     selectNote(target);
                 } else {
-                    alert(`Note "${noteName}" not found in knowledge base.`);
+                    alert(`Note "${e.target.getAttribute('data-note')}" not found in knowledge base.`);
                 }
             }
         };
@@ -441,9 +455,10 @@ const app = createApp({
             const nodeMap = {};
 
             notes.value.forEach(n => {
-                const title = n.name.replace('.md', '');
+                const title = n.displayTitle || n.name.replace('.md', '');
                 nodes.push({ id: n.id, label: title, shape: 'dot', size: 12, color: '#38bdf8' });
-                nodeMap[title] = n.id;
+                nodeMap[title.toLowerCase()] = n.id;
+                nodeMap[n.name.replace('.md', '').toLowerCase()] = n.id;
             });
 
             notes.value.forEach(n => {
@@ -452,7 +467,7 @@ const app = createApp({
                     const regex = /\[\[(.*?)\]\]/g;
                     let match;
                     while ((match = regex.exec(content)) !== null) {
-                        const targetName = match[1];
+                        const targetName = match[1].toLowerCase();
                         if (nodeMap[targetName]) {
                             edges.push({ from: n.id, to: nodeMap[targetName], color: { color: '#262626' } });
                         }
@@ -516,7 +531,7 @@ app.component('tree-node', {
             <li v-for="child in node.children" :key="child.id || child.name">
                 <div class="tree-item" @click.stop="toggleOrSelect(child)" :class="{ active: selectedNote && selectedNote.id === child.id, 'is-folder': child.isFolder }">
                     <span class="icon">{{ child.isFolder ? (child.expanded ? '📂' : '📁') : '📄' }}</span> 
-                    <span class="tree-name">{{ child.name }}</span>
+                    <span class="tree-name">{{ child.displayTitle || child.name }}</span>
                 </div>
                 <tree-node v-if="child.isFolder" v-show="child.expanded" :node="child" :selectedNote="selectedNote" @select="$emit('select', $event)"></tree-node>
             </li>
