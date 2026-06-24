@@ -473,6 +473,14 @@ const app = createApp({
             
             let rawMd = markdownContent.value;
             
+            if (selectedNote.value && selectedNote.value.name === 'TODO_Master.md') {
+                // The backend outputs `## Folder/Path/Note.md` or `## /Note.md`
+                // We convert these into internal links so they are clickable
+                rawMd = rawMd.replace(/^##\s+\/?(.*?\.md)\s*$/gm, (match, path) => {
+                    return `## [[${path}]]`;
+                });
+            }
+
             // Bulletproof regex: matches ANY image link containing _attachments or Attachments anywhere in the path
             rawMd = rawMd.replace(/!\[(.*?)\]\(\s*.*?(?:_attachments|Attachments)\/.*?([^\/]+\.(?:png|jpg|jpeg|gif|bmp|webp))\s*\)/gi, (match, altText, filename) => {
                 let imgTag = '';
