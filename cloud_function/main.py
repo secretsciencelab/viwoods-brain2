@@ -90,7 +90,7 @@ def get_page_text_from_md(md_content, page_id):
         return match.group(1).strip()
     return ""
 
-def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None, note_name=None):
+def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None, note_name=None, is_daily=False):
     print(f"Extracting and analyzing {note_path}...")
     
     attachments_folder_id = None
@@ -203,6 +203,9 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         
                     if is_blank:
                         print(f"Page {page_id} is completely blank. Skipping Gemini OCR.")
+                        page_markdown = ""
+                    elif is_daily:
+                        print(f"Page {page_id} is a Daily note. Skipping Gemini OCR as requested.")
                         page_markdown = ""
                     else:
                         try:
@@ -359,7 +362,8 @@ def sync_drive_notes(request):
                 
                 try:
                     clean_note_name = doc["name"].replace(".note", "")
-                    success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name)
+                    is_daily = "Daily" in doc.get("folder_path", "") or clean_note_name.startswith("day_")
+                    success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")
