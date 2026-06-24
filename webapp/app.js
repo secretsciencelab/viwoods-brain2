@@ -556,7 +556,17 @@ const app = createApp({
             const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
             const options = {
                 nodes: { font: { color: '#ededed' } },
-                physics: { barnesHut: { gravitationalConstant: -2000, centralGravity: 0.3 } },
+                physics: { 
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: { 
+                        gravitationalConstant: -100, 
+                        centralGravity: 0.01, 
+                        springConstant: 0.08, 
+                        springLength: 100, 
+                        damping: 0.4 
+                    },
+                    stabilization: { iterations: 150 }
+                },
                 interaction: { hover: true }
             };
             const network = new vis.Network(container, data, options);
