@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>brain2</title>
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Marked for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+        <header>
+            <h1>brain2</h1>
+            <div class="header-actions">
+                <button @click="openSettings" class="icon-btn" title="Settings">⚙️</button>
+                <button v-if="!isAuthenticated" @click="initGoogleAuth" class="connect-btn">
+                    <span class="icon">🔗</span> Connect Google Drive
+                </button>
+                <div v-else class="status-badge">
+                    <span class="indicator"></span> Connected
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="sidebar">
+                <h2>My Notebooks</h2>
+                
+                <div v-if="isLoading" class="sidebar-loader">
+                    <div class="spinner"></div>
+                    <span>Scanning Drive...</span>
+                </div>
+                
+                <div v-else class="tree-root">
+                    <tree-node :node="fileTree" :selectedNote="selectedNote" @select="selectNote"></tree-node>
+                </div>
+            </div>
+            
+            <div class="content">
+                <div v-if="isContentLoading" class="content-loader">
+                    <div class="spinner large"></div>
+                    <p>Decrypting Notebook...</p>
+                </div>
+                <div v-else-if="selectedNote" class="note-view">
+                    <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
+                </div>
+                <div v-else class="empty-state">
+                    <div class="empty-state-icon">🧠</div>
+                    <h2>brain2</h2>
+                    <p>Select a notebook from the sidebar to view your synchronized notes and handwritten diagrams.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div v-if="showSettings" class="modal-overlay" @click.self="showSettings = false">
+            <div class="modal">
+                <h2>Configuration</h2>
+                <p>Since this is an open-source app, your Google credentials are never hardcoded. Enter your Google OAuth Web Client ID below. It will be saved securely in your browser's local storage.</p>
+                
+                <div class="input-group">
+                    <label>Google Client ID</label>
+                    <input type="text" v-model="clientIdInput" placeholder="123456789-abc...apps.googleusercontent.com">
+                </div>
+
+                <div class="modal-actions">
+                    <button @click="showSettings = false" class="secondary-btn">Cancel</button>
+                    <button @click="saveSettings" class="primary-btn">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Lightbox Modal -->
+        <div v-if="lightboxImage" class="lightbox-overlay" @click="closeLightbox">
+            <button class="lightbox-close" @click="closeLightbox">✕</button>
+            <img :src="lightboxImage" class="lightbox-img" @click.stop>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>

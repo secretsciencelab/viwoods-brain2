@@ -192,11 +192,19 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_markdown = get_page_text_from_md(existing_md_content, page_id)
             else:
                 print(f"Page {page_id} changed! OCRing with Gemini...")
-                image_file = next((img for img in p['image_names'] if img in z.namelist()), None)
+                image_file = None
+                for img_name in p['image_names']:
+                    match = next((f for f in z.namelist() if f.endswith(img_name)), None)
+                    if match:
+                        image_file = match
+                        break
                 
                 if image_file:
-                    img_path = f"/tmp/{image_file}"
-                    z.extract(image_file, "/tmp")
+                    img_path = f"/tmp/{os.path.basename(image_file)}"
+                    
+                    # Extract the nested file to /tmp/
+                    with z.open(image_file) as source, open(img_path, "wb") as target:
+                        target.write(source.read())
                     
                     # Read the raw image bytes to send inline (bypassing the slow File API)
                     with open(img_path, "rb") as img_file:
@@ -221,9 +229,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         
                     if service and attachments_folder_id:
                         upload_image_to_drive(service, img_path, attachments_folder_id)
-                        page_markdown = f"![Page {page_id}](_attachments/{note_name}/{image_file})\n\n" + page_markdown
+                        page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(image_file)})\n\n" + page_markdown
                         
                     os.remove(img_path)
+                else:
+                    page_markdown = f"[Warning: Could not find image for page {page_id} in the .note file]\n\n" + page_markdown
             
             final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
 
@@ -317,7 +327,11 @@ def sync_drive_notes(request):
             all_files = get_files_in_folder(service, folder_id)
             
             existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
-            docs_to_process = [f for f in all_files if f["name"].endswith(".pdf") or f["name"].endswith(".note")]
+            
+            if target_folder_name == "Viwoods-Note":
+                docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
+            else:
+                docs_to_process = [f for f in all_files if f["name"].endswith(".pdf") or f["name"].endswith(".note")]
             
             processed_count = 0
             
