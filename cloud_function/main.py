@@ -275,6 +275,8 @@ def get_files_in_folder(service, parent_id, current_path=""):
         
         for item in items:
             if item["mimeType"] == "application/vnd.google-apps.folder":
+                if item["name"].lower() in ["attachments", "scratch"]:
+                    continue
                 folder_path = current_path + "/" + item["name"] if current_path else item["name"]
                 all_files.extend(get_files_in_folder(service, item["id"], folder_path))
             else:
