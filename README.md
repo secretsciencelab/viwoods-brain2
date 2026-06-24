@@ -45,6 +45,7 @@ This tool automatically detects new handwritten PDFs in your Google Drive, uses 
 5. Under **Variables & Secrets**, add the following Environment Variables:
    - `GEMINI_API_KEY`: Your key from Step 2.
    - `DRIVE_TOKEN_JSON`: Paste the entire raw JSON string from your `token.json` file (from Step 1).
+   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan (e.g., `Viwoods-PDF, Boox-Notes`). Defaults to `Viwoods-PDF`.
 6. Click **Deploy**.
 
 ### Step 4: Cloud Scheduler

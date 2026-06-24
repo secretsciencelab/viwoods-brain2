@@ -125,113 +125,117 @@ def sync_drive_notes(request):
     try:
         service = get_drive_service()
         
-        # Find the Viwoods-PDF folder
-        folder_query = "mimeType='application/vnd.google-apps.folder' and name='Viwoods-PDF' and trashed=false"
-        folder_results = service.files().list(q=folder_query, fields="files(id, name)").execute()
-        folders = folder_results.get("files", [])
-
-        if not folders:
-            return "Could not find the 'Viwoods-PDF' folder. Make sure it is shared with the Service Account email.", 404
+        target_folders_env = os.environ.get("DRIVE_FOLDERS", "Viwoods-PDF")
+        target_folders = [f.strip() for f in target_folders_env.split(",") if f.strip()]
         
-        folder_id = folders[0]["id"]
-        print(f"Found 'Viwoods-PDF' folder. Scanning for PDFs...")
-
-        all_files = get_files_in_folder(service, folder_id)
+        total_processed_count = 0
         
-        existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md"]}
-        pdfs_to_process = [f for f in all_files if f["name"].endswith(".pdf")]
-        
-        processed_count = 0
-        
-        for pdf in pdfs_to_process:
-            expected_md_name = pdf["name"].replace(".pdf", ".md")
-            existing_md_id = None
-            
-            if expected_md_name in existing_mds:
-                md_file = existing_mds[expected_md_name]
-                pdf_time = datetime.datetime.fromisoformat(pdf["modifiedTime"].replace("Z", "+00:00"))
-                md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
-                
-                if pdf_time <= md_time:
-                    print(f"Skipping {pdf['name']} (Markdown is up to date).")
-                    continue
-                else:
-                    print(f"\n--- Updating {pdf['name']} (PDF was modified since last sync) ---")
-                    existing_md_id = md_file["id"]
-            else:
-                print(f"\n--- Processing new file: {pdf['name']} ---")
-                
-            # Cloud Functions only allow writing to /tmp directory
-            local_pdf_path = download_file(service, pdf['id'], pdf['name'], dest_folder="/tmp")
-            local_md_path = local_pdf_path.replace(".pdf", ".md")
-            
-            try:
-                success = process_pdf_to_markdown(local_pdf_path, local_md_path)
-            except Exception as e:
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("Hit Google AI API rate limit! Stopping PDF processing for today, but will compile the Master file now.")
-                    break
-                else:
-                    print(f"Error processing {pdf['name']}: {e}")
-                    continue
-                    
-            if success:
-                parent_id = pdf.get('parents', [folder_id])[0]
-                upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id)
-                processed_count += 1
-                
-                # Sleep to respect rate limits if we plan to process multiple
-                print("Sleeping for 15 seconds to respect free-tier rate limits...")
-                time.sleep(15)
-                
-        print("\n--- Compiling Master Markdown Files ---")
-        
-        # Refresh the file list to include any newly created MD files
-        final_files = get_files_in_folder(service, folder_id)
-        
-        master_categories = {
-            "main": {"filename": "All_Notes_Master.md", "content": "# All Notes Master File\n\n", "files": []},
-            "scratch": {"filename": "Scratch_Master.md", "content": "# Scratch Master File\n\n", "files": []},
-            "work": {"filename": "Work_Master.md", "content": "# Work Master File\n\n", "files": []}
-        }
-        master_filenames = [cat["filename"] for cat in master_categories.values()]
-        
-        for f in final_files:
-            if f["name"].endswith(".md") and f["name"] not in master_filenames:
-                path_lower = f.get("folder_path", "").lower()
-                path_parts = path_lower.split("/")
-                
-                if "scratch" in path_parts:
-                    master_categories["scratch"]["files"].append(f)
-                elif "work" in path_parts:
-                    master_categories["work"]["files"].append(f)
-                else:
-                    master_categories["main"]["files"].append(f)
-        
-        for cat_name, cat_data in master_categories.items():
-            if not cat_data["files"]:
+        for target_folder_name in target_folders:
+            folder_query = f"mimeType='application/vnd.google-apps.folder' and name='{target_folder_name}' and trashed=false"
+            folder_results = service.files().list(q=folder_query, fields="files(id, name)").execute()
+            folders = folder_results.get("files", [])
+    
+            if not folders:
+                print(f"Could not find folder '{target_folder_name}'. Skipping.")
                 continue
-                
-            for md in cat_data["files"]:
-                local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
-                try:
-                    with open(local_md, "r", encoding="utf-8") as f:
-                        content = f.read()
-                    cat_data["content"] += f"\n\n## Source: {md.get('folder_path', '')}/{md['name']}\n\n{content}\n"
-                except Exception as e:
-                    print(f"Skipping {md['name']} during compile: {e}")
-                    
-            master_path = f"/tmp/{cat_data['filename']}"
-            with open(master_path, "w", encoding="utf-8") as f:
-                f.write(cat_data["content"])
-                
-            master_search = [f for f in final_files if f["name"] == cat_data["filename"]]
-            master_id = master_search[0]["id"] if master_search else None
             
-            print(f"Uploading {cat_data['filename']}...")
-            upload_to_drive(service, master_path, folder_id, existing_file_id=master_id)
+            folder_id = folders[0]["id"]
+            print(f"Found '{target_folder_name}' folder. Scanning for PDFs...")
+    
+            all_files = get_files_in_folder(service, folder_id)
+            
+            existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md"]}
+            pdfs_to_process = [f for f in all_files if f["name"].endswith(".pdf")]
+            
+            processed_count = 0
+            
+            for pdf in pdfs_to_process:
+                expected_md_name = pdf["name"].replace(".pdf", ".md")
+                existing_md_id = None
                 
-        return f"Sync complete! Processed {processed_count} files.", 200
+                if expected_md_name in existing_mds:
+                    md_file = existing_mds[expected_md_name]
+                    pdf_time = datetime.datetime.fromisoformat(pdf["modifiedTime"].replace("Z", "+00:00"))
+                    md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
+                    
+                    if pdf_time <= md_time:
+                        print(f"Skipping {pdf['name']} (Markdown is up to date).")
+                        continue
+                    else:
+                        print(f"\n--- Updating {pdf['name']} (PDF was modified since last sync) ---")
+                        existing_md_id = md_file["id"]
+                else:
+                    print(f"\n--- Processing new file: {pdf['name']} ---")
+                    
+                local_pdf_path = download_file(service, pdf['id'], pdf['name'], dest_folder="/tmp")
+                local_md_path = local_pdf_path.replace(".pdf", ".md")
+                
+                try:
+                    success = process_pdf_to_markdown(local_pdf_path, local_md_path)
+                except Exception as e:
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        print("Hit Google AI API rate limit! Stopping PDF processing for today, but will compile the Master file now.")
+                        break
+                    else:
+                        print(f"Error processing {pdf['name']}: {e}")
+                        continue
+                        
+                if success:
+                    parent_id = pdf.get('parents', [folder_id])[0]
+                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id)
+                    processed_count += 1
+                    total_processed_count += 1
+                    
+                    print("Sleeping for 15 seconds to respect free-tier rate limits...")
+                    time.sleep(15)
+                    
+            print(f"\n--- Compiling Master Markdown Files for {target_folder_name} ---")
+            
+            final_files = get_files_in_folder(service, folder_id)
+            
+            master_categories = {
+                "main": {"filename": "All_Notes_Master.md", "content": "# All Notes Master File\n\n", "files": []},
+                "scratch": {"filename": "Scratch_Master.md", "content": "# Scratch Master File\n\n", "files": []},
+                "work": {"filename": "Work_Master.md", "content": "# Work Master File\n\n", "files": []}
+            }
+            master_filenames = [cat["filename"] for cat in master_categories.values()]
+            
+            for f in final_files:
+                if f["name"].endswith(".md") and f["name"] not in master_filenames:
+                    path_lower = f.get("folder_path", "").lower()
+                    path_parts = path_lower.split("/")
+                    
+                    if "scratch" in path_parts:
+                        master_categories["scratch"]["files"].append(f)
+                    elif "work" in path_parts:
+                        master_categories["work"]["files"].append(f)
+                    else:
+                        master_categories["main"]["files"].append(f)
+            
+            for cat_name, cat_data in master_categories.items():
+                if not cat_data["files"]:
+                    continue
+                    
+                for md in cat_data["files"]:
+                    local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
+                    try:
+                        with open(local_md, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        cat_data["content"] += f"\n\n## Source: {md.get('folder_path', '')}/{md['name']}\n\n{content}\n"
+                    except Exception as e:
+                        print(f"Skipping {md['name']} during compile: {e}")
+                        
+                master_path = f"/tmp/{cat_data['filename']}"
+                with open(master_path, "w", encoding="utf-8") as f:
+                    f.write(cat_data["content"])
+                    
+                master_search = [f for f in final_files if f["name"] == cat_data["filename"]]
+                master_id = master_search[0]["id"] if master_search else None
+                
+                print(f"Uploading {cat_data['filename']}...")
+                upload_to_drive(service, master_path, folder_id, existing_file_id=master_id)
+                
+        return f"Sync complete! Processed {total_processed_count} files.", 200
         
     except HttpError as error:
         print(f"An error occurred: {error}")
