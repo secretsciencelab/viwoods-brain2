@@ -85,6 +85,18 @@ const app = createApp({
             tokenClient.requestAccessToken();
         };
 
+        const extractTags = (content) => {
+            if (!content) return [];
+            const tags = content.match(/#[\w-]+/g) || [];
+            const headings = content.match(/^#{1,6}\s+(.+)$/gm) || [];
+            headings.forEach(h => {
+                const rawHeading = h.replace(/^#{1,6}\s+/, '').trim();
+                const normalized = '#' + rawHeading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                tags.push(normalized);
+            });
+            return tags.map(t => t.toLowerCase());
+        };
+
         const fileTree = ref({ children: [] });
 
         const buildTree = (files) => {
@@ -176,10 +188,8 @@ const app = createApp({
                                     note.displayTitle = titleMatch[1].trim();
                                 }
                                 
-                                const tagMatches = text.match(/#[\w-]+/g);
-                                if (tagMatches) {
-                                    tagMatches.forEach(t => tagSet.add(t));
-                                }
+                                const extracted = extractTags(text);
+                                extracted.forEach(t => tagSet.add(t));
                             } catch (e) {
                                 // ignore
                             }
@@ -259,7 +269,8 @@ const app = createApp({
                     }
                     if (selectedTag.value) {
                         const content = noteContents.value[node.id] || '';
-                        if (!content.includes(selectedTag.value)) {
+                        const nodeTags = new Set(extractTags(content));
+                        if (!nodeTags.has(selectedTag.value)) {
                             matches = false;
                         }
                     }
@@ -328,16 +339,14 @@ const app = createApp({
                 // Calculate Related Notes based on Tag overlap
                 let related = [];
                 const currentContent = noteContents.value[note.id] || '';
-                const currentTagsMatch = currentContent.match(/#[\w-]+/g) || [];
-                const currentTags = new Set(currentTagsMatch.map(t => t.toLowerCase()));
+                const currentTags = new Set(extractTags(currentContent));
                 
                 if (currentTags.size > 0) {
                     for (const n of notes.value) {
                         if (n.id === note.id) continue;
                         const content = noteContents.value[n.id];
                         if (content) {
-                            const tagsMatch = content.match(/#[\w-]+/g) || [];
-                            const tags = new Set(tagsMatch.map(t => t.toLowerCase()));
+                            const tags = new Set(extractTags(content));
                             
                             const shared = [...currentTags].filter(x => tags.has(x));
                             if (shared.length > 0) {
