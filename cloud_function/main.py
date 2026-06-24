@@ -74,38 +74,6 @@ def upload_image_to_drive(service, local_file_path, parent_folder_id):
         }
         service.files().create(body=file_metadata, media_body=media).execute()
 
-def process_pdf_to_markdown(pdf_path, output_path):
-    print(f"Uploading {pdf_path} to Gemini for OCR...")
-    api_key = os.environ.get("GEMINI_API_KEY")
-    client = genai.Client(api_key=api_key)
-    
-    sample_file = client.files.upload(file=pdf_path)
-    
-    while sample_file.state.name == "PROCESSING":
-        print(".", end="", flush=True)
-        time.sleep(2)
-        sample_file = client.files.get(name=sample_file.name)
-    print()
-
-    if sample_file.state.name == "FAILED":
-        print(f"Failed to process {pdf_path} in Gemini API.")
-        return False
-
-    prompt = "Transcribe the handwritten notes in this document into clean, structured Markdown. Preserve headings, bullet points, and paragraphs as accurately as possible. CRITICAL RULES: 1. If you see a hand-drawn empty square box next to a sentence, format it as a Markdown checkbox `- [ ]` (or `- [x]` if checked). 2. If you see a vertical line or bracket in the margin grouping multiple paragraphs together, wrap all those paragraphs in a Markdown blockquote (prefix lines with `> `) and include any hashtag written next to the bracket inside the block. 3. If you see a drawn horizontal line across the page, format it exactly as a Markdown horizontal rule (`---`) to act as a section break. 4. If you see any non-text drawings, doodles, or sketches, write a highly detailed visual description of them enclosed in brackets, like this: `[Drawing: A detailed description of what the sketch depicts]`. This ensures drawings become text-searchable."
-    
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[sample_file, prompt]
-    )
-    
-    output_text = response.text if response.text else "[No text generated or response blocked by safety filters]"
-    
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(output_text)
-    
-    client.files.delete(name=sample_file.name)
-    return True
-
 def get_page_hashes_from_md(md_content):
     match = re.search(r'<!-- HASHES:\s*(.*?)\s*-->', md_content, re.DOTALL)
     if match:
@@ -328,34 +296,20 @@ def sync_drive_notes(request):
             
             existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
             
-            if target_folder_name == "Viwoods-Note":
-                docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
-            else:
-                docs_to_process = [f for f in all_files if f["name"].endswith(".pdf") or f["name"].endswith(".note")]
+            docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
             
             processed_count = 0
             
             for doc in docs_to_process:
-                expected_md_name = doc["name"]
-                if expected_md_name.endswith(".pdf"):
-                    expected_md_name = expected_md_name.replace(".pdf", ".md")
-                elif expected_md_name.endswith(".note"):
-                    expected_md_name = expected_md_name.replace(".note", ".md")
+                expected_md_name = doc["name"].replace(".note", ".md")
                     
                 existing_md_id = None
                 existing_md_path = None
                 
                 if expected_md_name in existing_mds:
                     md_file = existing_mds[expected_md_name]
-                    doc_time = datetime.datetime.fromisoformat(doc["modifiedTime"].replace("Z", "+00:00"))
-                    md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
                     
                     existing_md_id = md_file["id"]
-                    if doc_time <= md_time and doc["name"].endswith(".pdf"):
-                        # For PDFs we can trust the modified time. For .note, we will process it because 
-                        # it has its own internal hashes that are more accurate.
-                        print(f"Skipping {doc['name']} (Markdown is up to date).")
-                        continue
                     
                     print(f"\n--- Updating {doc['name']} (Checking for internal modifications) ---")
                     # Download existing md so we can reuse page hashes
@@ -369,11 +323,8 @@ def sync_drive_notes(request):
                 parent_id = doc.get('parents', [folder_id])[0]
                 
                 try:
-                    if doc["name"].endswith(".pdf"):
-                        success = process_pdf_to_markdown(local_doc_path, local_md_path)
-                    else:
-                        clean_note_name = doc["name"].replace(".note", "")
-                        success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name)
+                    clean_note_name = doc["name"].replace(".note", "")
+                    success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")

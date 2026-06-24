@@ -2,7 +2,7 @@
 
 A completely serverless, automated pipeline that turns your e-ink tablet (Viwoods, Boox, reMarkable, Supernote, etc.) into a smart, searchable Second Brain.
 
-This tool automatically detects new handwritten PDFs in your Google Drive, uses Google's powerful **Gemini 2.5 Pro** model to flawlessly transcribe your handwriting into formatted Markdown, and syncs the text back to Google Drive. It even compiles "Master" Markdown files perfectly formatted for ingestion into **Google NotebookLM** or **Obsidian**.
+This tool automatically detects new handwritten Viwoods .note files in your Google Drive, uses Google's powerful **Gemini 2.5 Pro** model to flawlessly transcribe your handwriting into formatted Markdown, and syncs the text back to Google Drive. It even compiles "Master" Markdown files perfectly formatted for ingestion into **Google NotebookLM** or **Obsidian**.
 
 ## ✨ Features
 
@@ -12,15 +12,15 @@ This tool automatically detects new handwritten PDFs in your Google Drive, uses 
   - Draw a vertical line `|` or bracket `[` in the margin to create a Markdown Blockquote (`>`).
   - Draw a horizontal line across the page to create a section break (`---`).
 - **Folder Aware & Master Compiling:** Automatically categorizes your notes into `Scratch_Master.md` and `Work_Master.md` based on their subdirectories, allowing you to easily separate contexts in NotebookLM.
-- **Smart Syncing:** Compares timestamps. It only processes PDFs that are new or have been recently modified, aggressively saving API quota.
+- **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
 
 ## 🏗 Architecture
 
-1. **E-Ink Tablet:** Syncs raw handwritten `.pdf` files to a specific Google Drive folder (e.g., `Viwoods-PDF`).
+1. **E-Ink Tablet:** Syncs raw handwritten `.note` files to a specific Google Drive folder (e.g., `Viwoods-Note`).
 2. **Google Cloud Scheduler:** Wakes up the Cloud Run Function on a daily or hourly schedule.
-3. **Cloud Run Function:** Scans the Drive folder and downloads new/modified PDFs.
-4. **Gemini API:** Reads the PDFs and converts the handwriting to structured Markdown (`.md`).
+3. **Cloud Run Function:** Scans the Drive folder and downloads new/modified Viwoods .note files.
+4. **Gemini API:** Reads the Viwoods .note files and converts the handwriting to structured Markdown (`.md`).
 5. **Google Drive:** The Cloud Function uploads the individual `.md` files back to their original subfolders and updates the combined Master files in the root folder.
 6. **NotebookLM / Obsidian:** Connects directly to the Master Markdown files for your final Knowledge Graph and AI search.
 
@@ -45,7 +45,7 @@ This tool automatically detects new handwritten PDFs in your Google Drive, uses 
 5. Under **Variables & Secrets**, add the following Environment Variables:
    - `GEMINI_API_KEY`: Your key from Step 2.
    - `DRIVE_TOKEN_JSON`: Paste the entire raw JSON string from your `token.json` file (from Step 1).
-   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan (e.g., `Viwoods-PDF, Boox-Notes`). Defaults to `Viwoods-PDF`.
+   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan (e.g., `Viwoods-Note, Boox-Notes`). Defaults to `Viwoods-Note`.
 6. Click **Deploy**.
 
 ### Step 4: Cloud Scheduler
