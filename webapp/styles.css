@@ -38,6 +38,15 @@
     --lightbox-close-color: black;
 }
 
+[data-theme="light"] .empty-state-img {
+    filter: invert(1);
+    mix-blend-mode: multiply;
+    opacity: 0.3;
+}
+[data-theme="light"] .empty-state-img:hover {
+    opacity: 0.6;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -217,15 +226,14 @@ main {
     height: 256px;
     object-fit: contain;
     margin-bottom: 24px;
-    opacity: 0.8;
-    filter: drop-shadow(0 0 20px rgba(168, 83, 186, 0.2));
-    transition: all 0.3s ease;
+    opacity: 0.4;
+    transition: all 0.5s ease;
+    /* Blend bright lines on dark background naturally */
+    mix-blend-mode: screen;
 }
 
 .empty-state-img:hover {
-    opacity: 1;
-    transform: translateY(-4px);
-    filter: drop-shadow(0 0 30px rgba(56, 189, 248, 0.4));
+    opacity: 0.8;
 }
 
 .empty-state h2 {
