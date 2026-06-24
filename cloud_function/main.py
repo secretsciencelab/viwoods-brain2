@@ -125,7 +125,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_id = page.get('pageId', page.get('id'))
                 pages.append({
                     'id': page_id,
-                    'image_names': [f"{page_id}.jpg", f"{page_id}.png"],
+                    'image_names': [f"{page_id}.png", f"{page_id}.jpg"],
                     'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", f"{page_id}_LayoutImage.json"]
                 })
         elif page_list_file:
@@ -173,6 +173,23 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                     # Extract the nested file to /tmp/
                     with z.open(image_file) as source, open(img_path, "wb") as target:
                         target.write(source.read())
+                        
+                    # Flatten image onto white background if transparent
+                    try:
+                        from PIL import Image
+                        with Image.open(img_path) as img:
+                            if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                                background = Image.new('RGB', img.size, (255, 255, 255))
+                                if img.mode == 'P':
+                                    img = img.convert('RGBA')
+                                background.paste(img, mask=img.split()[3]) # 3 is the alpha channel
+                                background.save(img_path, 'PNG')
+                            elif img.mode != 'RGB':
+                                img.convert('RGB').save(img_path, 'PNG')
+                    except ImportError:
+                        print("Pillow not installed, skipping transparency flattening.")
+                    except Exception as e:
+                        print(f"Error processing image transparency: {e}")
                     
                     # Read the raw image bytes to send inline (bypassing the slow File API)
                     with open(img_path, "rb") as img_file:
