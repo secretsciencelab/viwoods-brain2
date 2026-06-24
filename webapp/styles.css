@@ -101,9 +101,15 @@ header h1::before {
     display: block;
     width: 24px;
     height: 24px;
-    background: conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg);
-    border-radius: 50%;
-    box-shadow: 0 0 20px rgba(168, 83, 186, 0.4);
+    background-image: url('wireframe_brain.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    mix-blend-mode: screen;
+}
+
+[data-theme="light"] header h1::before {
+    filter: invert(1);
+    mix-blend-mode: multiply;
 }
 
 /* Layout */
