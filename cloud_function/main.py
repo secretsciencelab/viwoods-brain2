@@ -67,8 +67,10 @@ def process_pdf_to_markdown(pdf_path, output_path):
         contents=[sample_file, prompt]
     )
     
+    output_text = response.text if response.text else "[No text generated or response blocked by safety filters]"
+    
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(response.text)
+        f.write(output_text)
     
     client.files.delete(name=sample_file.name)
     return True
@@ -169,7 +171,10 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None):
                             model="gemini-2.5-flash",
                             contents=[sample_file, prompt]
                         )
-                        page_markdown = response.text.strip()
+                        if response.text:
+                            page_markdown = response.text.strip()
+                        else:
+                            page_markdown = "[No text generated or response blocked by safety filters]"
                         client.files.delete(name=sample_file.name)
                     os.remove(img_path)
             
