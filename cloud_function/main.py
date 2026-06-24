@@ -196,21 +196,25 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                     img_path = f"/tmp/{image_file}"
                     z.extract(image_file, "/tmp")
                     
-                    sample_file = client.files.upload(file=img_path)
-                    while sample_file.state.name == "PROCESSING":
-                        time.sleep(2)
-                        sample_file = client.files.get(name=sample_file.name)
+                    # Read the raw image bytes to send inline (bypassing the slow File API)
+                    with open(img_path, "rb") as img_file:
+                        image_bytes = img_file.read()
                         
-                    if sample_file.state.name != "FAILED":
+                    try:
                         response = client.models.generate_content(
                             model="gemini-2.5-flash",
-                            contents=[sample_file, prompt]
+                            contents=[
+                                {"mime_type": "image/png", "data": image_bytes},
+                                prompt
+                            ]
                         )
                         if response.text:
                             page_markdown = response.text.strip()
                         else:
                             page_markdown = "[No text generated or response blocked by safety filters]"
-                        client.files.delete(name=sample_file.name)
+                    except Exception as e:
+                        print(f"Gemini API Error for page {page_id}: {e}")
+                        page_markdown = "[Error communicating with Gemini API]"
                         
                     if service and attachments_folder_id:
                         upload_image_to_drive(service, img_path, attachments_folder_id)
