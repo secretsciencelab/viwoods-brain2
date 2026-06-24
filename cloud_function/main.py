@@ -127,8 +127,8 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
     
     attachments_folder_id = None
     if service and parent_folder_id and note_name:
-        attachments_base_id = get_or_create_folder(service, "Attachments", parent_folder_id)
-        # Create a subfolder named after the note inside Attachments
+        attachments_base_id = get_or_create_folder(service, "_attachments", parent_folder_id)
+        # Create a subfolder named after the note inside _attachments
         attachments_folder_id = get_or_create_folder(service, note_name, attachments_base_id)
     
     existing_hashes = {}
@@ -221,7 +221,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         
                     if service and attachments_folder_id:
                         upload_image_to_drive(service, img_path, attachments_folder_id)
-                        page_markdown = f"![Page {page_id}](Attachments/{note_name}/{image_file})\n\n" + page_markdown
+                        page_markdown = f"![Page {page_id}](_attachments/{note_name}/{image_file})\n\n" + page_markdown
                         
                     os.remove(img_path)
             
@@ -275,7 +275,7 @@ def get_files_in_folder(service, parent_id, current_path=""):
         
         for item in items:
             if item["mimeType"] == "application/vnd.google-apps.folder":
-                if item["name"].lower() in ["attachments", "scratch"]:
+                if item["name"].lower() in ["attachments", "_attachments", "scratch"]:
                     continue
                 folder_path = current_path + "/" + item["name"] if current_path else item["name"]
                 all_files.extend(get_files_in_folder(service, item["id"], folder_path))
