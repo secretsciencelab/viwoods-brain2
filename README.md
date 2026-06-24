@@ -59,3 +59,17 @@ Tail the live logs for the Cloud Run function to debug any issues:
 ```bash
 gcloud beta run services logs tail secondbrain-gdrive --region us-central1 --project YOUR_PROJECT_ID
 ```
+
+## 🌐 Web Application
+
+This repository includes a front-end **Web Application** (`/webapp`) hosted on GitHub Pages that provides a beautiful, native-like interface to view and read your processed Markdown files directly from your browser.
+
+### Features
+- **Direct Google Drive Integration:** Connects securely to your Google Drive to load the transcribed `.md` files dynamically.
+- **Auto-Sync:** Silently polls Google Drive every 60 seconds in the background to hot-swap content without disrupting your reading or closing expanded folders.
+- **Persistent Sessions:** Your Google Drive token is securely cached in your browser's local storage so you don't have to log in on every page refresh.
+- **Image Support:** Seamlessly loads embedded drawings and blank pages exported by the sync script, fully supporting dark/light mode via transparency rendering.
+- **Tree Navigation:** Explore your Viwoods folder hierarchy easily via a collapsible file tree.
+- **GitHub Pages Deployment:** Automatically deployed and hosted via the included `.github/workflows/webapp.yaml` configuration.
+
+To use the web app, simply visit your repository's GitHub Pages URL after deployment and connect your Google Drive Client ID!
