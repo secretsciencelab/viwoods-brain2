@@ -109,8 +109,8 @@ const app = createApp({
             return tree;
         };
 
-        const loadNotebooks = async () => {
-            isLoading.value = true;
+        const loadNotebooks = async (isSilent = false) => {
+            if (!isSilent) isLoading.value = true;
             try {
                 let query = encodeURIComponent("name='Viwoods-Note' and mimeType='application/vnd.google-apps.folder' and trashed=false");
                 let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
@@ -119,16 +119,16 @@ const app = createApp({
                 let data = await res.json();
                 
                 if (!data.files || data.files.length === 0) {
-                    alert("Could not find 'Viwoods-Note' folder in your Google Drive.");
+                    if (!isSilent) alert("Could not find 'Viwoods-Note' folder in your Google Drive.");
                     return;
                 }
                 const rootFolderId = data.files[0].id;
 
-        const fetchAllMarkdown = async (parentId, path = "") => {
+                const fetchAllMarkdown = async (parentId, path = "") => {
                     let collectedFiles = [];
                     let q = encodeURIComponent(`'${parentId}' in parents and (name contains '.md' or mimeType='application/vnd.google-apps.folder') and name != '_attachments' and trashed=false`);
-                    // IMPORTANT: Added 'parents' to fields so we know where the file lives
-                    let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,parents)&orderBy=name`, {
+                    // IMPORTANT: Added 'parents' and 'modifiedTime' to fields
+                    let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,parents,modifiedTime)&orderBy=name`, {
                         headers: { Authorization: `Bearer ${accessToken}` }
                     });
                     let result = await response.json();
@@ -149,23 +149,63 @@ const app = createApp({
                 };
 
                 const allNotes = await fetchAllMarkdown(rootFolderId);
+                
+                // Preserve tree expansion state
+                const oldExpandedState = {};
+                const storeExpandedState = (node, path) => {
+                    if (node.isFolder) {
+                        oldExpandedState[path] = node.expanded;
+                        node.children.forEach(c => storeExpandedState(c, path + '/' + c.name));
+                    }
+                };
+                if (fileTree.value) storeExpandedState(fileTree.value, 'root');
+
+                const newTree = buildTree(allNotes);
+
+                const restoreExpandedState = (node, path) => {
+                    if (node.isFolder) {
+                        if (oldExpandedState[path] !== undefined) {
+                            node.expanded = oldExpandedState[path];
+                        }
+                        node.children.forEach(c => restoreExpandedState(c, path + '/' + c.name));
+                    }
+                };
+                restoreExpandedState(newTree, 'root');
+
                 notes.value = allNotes;
-                fileTree.value = buildTree(allNotes);
+                fileTree.value = newTree;
+
+                // Check if currently selected note got updated
+                if (isSilent && selectedNote.value) {
+                    const updatedNote = allNotes.find(n => n.id === selectedNote.value.id);
+                    if (updatedNote && updatedNote.modifiedTime !== selectedNote.value.modifiedTime) {
+                        selectNote(updatedNote, true); // true for isSilent mode
+                    }
+                }
             } catch (err) {
                 console.error(err);
-                alert("Failed to load notebooks. Check console.");
+                if (!isSilent) alert("Failed to load notebooks. Check console.");
             } finally {
-                isLoading.value = false;
+                if (!isSilent) isLoading.value = false;
             }
         };
+
+        // Periodic background refresh every 60 seconds
+        setInterval(() => {
+            if (isAuthenticated.value) {
+                loadNotebooks(true);
+            }
+        }, 60000);
 
         const imageBlobUrls = ref({});
         const isContentLoading = ref(false);
 
-        const selectNote = async (note) => {
+        const selectNote = async (note, isSilent = false) => {
             selectedNote.value = note;
-            isContentLoading.value = true;
-            imageBlobUrls.value = {}; // Reset images for new note
+            if (!isSilent) {
+                isContentLoading.value = true;
+                imageBlobUrls.value = {}; // Reset images for new note
+            }
             
             try {
                 const res = await fetch(`https://www.googleapis.com/drive/v3/files/${note.id}?alt=media`, {
