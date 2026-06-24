@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
@@ -15,6 +15,13 @@ const app = createApp({
         const markdownContent = ref('');
         let accessToken = null;
         let tokenClient = null;
+
+        const searchQuery = ref('');
+        const selectedTag = ref(null);
+        const allTags = ref([]);
+        const noteContents = ref({});
+        const backlinks = ref([]);
+        const showGraph = ref(false);
 
         const checkExistingAuth = () => {
             const savedToken = localStorage.getItem('brain2_access_token');
@@ -150,6 +157,35 @@ const app = createApp({
 
                 const allNotes = await fetchAllMarkdown(rootFolderId);
                 
+                const fetchAllNoteContents = async (files) => {
+                    const contents = {};
+                    const tagSet = new Set();
+                    const batchSize = 10;
+                    for (let i = 0; i < files.length; i += batchSize) {
+                        const batch = files.slice(i, i + batchSize);
+                        await Promise.all(batch.map(async (note) => {
+                            try {
+                                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${note.id}?alt=media`, {
+                                    headers: { Authorization: `Bearer ${accessToken}` }
+                                });
+                                const text = await res.text();
+                                contents[note.id] = text;
+                                
+                                const tagMatches = text.match(/#[\w-]+/g);
+                                if (tagMatches) {
+                                    tagMatches.forEach(t => tagSet.add(t));
+                                }
+                            } catch (e) {
+                                // ignore
+                            }
+                        }));
+                    }
+                    noteContents.value = contents;
+                    allTags.value = Array.from(tagSet).sort();
+                };
+                // Background fetch
+                fetchAllNoteContents(allNotes);
+                
                 // Preserve tree expansion state
                 const oldExpandedState = {};
                 const storeExpandedState = (node, path) => {
@@ -197,6 +233,45 @@ const app = createApp({
             }
         }, 60000);
 
+        const filteredFileTree = computed(() => {
+            if (!fileTree.value || !fileTree.value.children) return { children: [] };
+            
+            const cloneTree = JSON.parse(JSON.stringify(fileTree.value));
+            
+            const filterNode = (node) => {
+                if (!node.isFolder) {
+                    let matches = true;
+                    if (searchQuery.value) {
+                        const query = searchQuery.value.toLowerCase();
+                        const content = noteContents.value[node.id] || '';
+                        if (!node.name.toLowerCase().includes(query) && !content.toLowerCase().includes(query)) {
+                            matches = false;
+                        }
+                    }
+                    if (selectedTag.value) {
+                        const content = noteContents.value[node.id] || '';
+                        if (!content.includes(selectedTag.value)) {
+                            matches = false;
+                        }
+                    }
+                    return matches;
+                }
+                
+                if (node.children) {
+                    node.children = node.children.filter(filterNode);
+                    // Automatically expand folders if searching
+                    if (searchQuery.value || selectedTag.value) {
+                        node.expanded = true;
+                    }
+                    return node.children.length > 0;
+                }
+                return false;
+            };
+            
+            cloneTree.children = cloneTree.children.filter(filterNode);
+            return cloneTree;
+        });
+
         const imageBlobUrls = ref({});
         const isContentLoading = ref(false);
 
@@ -240,6 +315,19 @@ const app = createApp({
                     // Normal note
                     loadImagesForNote(note);
                 }
+                
+                // Calculate Backlinks
+                let bl = [];
+                const searchStr = `[[${note.name.replace('.md', '')}]]`.toLowerCase();
+                for (const n of notes.value) {
+                    if (n.id === note.id) continue;
+                    const content = noteContents.value[n.id];
+                    if (content && content.toLowerCase().includes(searchStr)) {
+                        bl.push(n);
+                    }
+                }
+                backlinks.value = bl;
+                
             } catch (err) {
                 console.error(err);
                 markdownContent.value = "Error loading file content.";
@@ -306,6 +394,11 @@ const app = createApp({
                 return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n${imgTag}`;
             });
             
+            // Replace [[Note Name]] with clickable internal links
+            rawMd = rawMd.replace(/\[\[(.*?)\]\]/g, (match, noteName) => {
+                return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
+            });
+            
             return marked.parse(rawMd);
         });
 
@@ -319,7 +412,72 @@ const app = createApp({
         const handleMarkdownClick = (e) => {
             if (e.target.tagName === 'IMG') {
                 lightboxImage.value = e.target.src;
+            } else if (e.target.classList.contains('internal-link')) {
+                e.preventDefault();
+                const noteName = e.target.getAttribute('data-note');
+                const target = notes.value.find(n => n.name.replace('.md', '') === noteName || n.displayName === noteName);
+                if (target) {
+                    selectNote(target);
+                } else {
+                    alert(`Note "${noteName}" not found in knowledge base.`);
+                }
             }
+        };
+
+        // Graph View Logic
+        watch(showGraph, async (newVal) => {
+            if (newVal) {
+                await nextTick();
+                initGraph();
+            }
+        });
+
+        const initGraph = () => {
+            const container = document.getElementById('graph-container');
+            if (!container) return;
+
+            const nodes = [];
+            const edges = [];
+            const nodeMap = {};
+
+            notes.value.forEach(n => {
+                const title = n.name.replace('.md', '');
+                nodes.push({ id: n.id, label: title, shape: 'dot', size: 12, color: '#38bdf8' });
+                nodeMap[title] = n.id;
+            });
+
+            notes.value.forEach(n => {
+                const content = noteContents.value[n.id];
+                if (content) {
+                    const regex = /\[\[(.*?)\]\]/g;
+                    let match;
+                    while ((match = regex.exec(content)) !== null) {
+                        const targetName = match[1];
+                        if (nodeMap[targetName]) {
+                            edges.push({ from: n.id, to: nodeMap[targetName], color: { color: '#262626' } });
+                        }
+                    }
+                }
+            });
+
+            const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+            const options = {
+                nodes: { font: { color: '#ededed' } },
+                physics: { barnesHut: { gravitationalConstant: -2000, centralGravity: 0.3 } },
+                interaction: { hover: true }
+            };
+            const network = new vis.Network(container, data, options);
+            
+            network.on("doubleClick", function (params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const target = notes.value.find(n => n.id === nodeId);
+                    if (target) {
+                        showGraph.value = false;
+                        selectNote(target);
+                    }
+                }
+            });
         };
 
         return {
@@ -333,6 +491,12 @@ const app = createApp({
             isContentLoading,
             notes,
             fileTree,
+            filteredFileTree,
+            searchQuery,
+            selectedTag,
+            allTags,
+            backlinks,
+            showGraph,
             selectedNote,
             selectNote,
             parsedMarkdown,

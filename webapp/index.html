@@ -12,6 +12,8 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Marked for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Vis-network for Knowledge Graph -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -33,13 +35,27 @@
             <div class="sidebar">
                 <h2>My Notebooks</h2>
                 
+                <div class="sidebar-controls" v-if="!isLoading">
+                    <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
+                    <button @click="showGraph = true" class="icon-btn graph-btn" title="Graph View">🕸️ Graph</button>
+                </div>
+
+                <div v-if="allTags.length > 0" class="tags-panel">
+                    <div class="tag-list">
+                        <span class="tag" :class="{ active: selectedTag === null }" @click="selectedTag = null">All</span>
+                        <span v-for="tag in allTags" :key="tag" class="tag" :class="{ active: selectedTag === tag }" @click="selectedTag = tag">
+                            {{ tag }}
+                        </span>
+                    </div>
+                </div>
+                
                 <div v-if="isLoading" class="sidebar-loader">
                     <div class="spinner"></div>
                     <span>Scanning Drive...</span>
                 </div>
                 
                 <div v-else class="tree-root">
-                    <tree-node :node="fileTree" :selectedNote="selectedNote" @select="selectNote"></tree-node>
+                    <tree-node :node="filteredFileTree" :selectedNote="selectedNote" @select="selectNote"></tree-node>
                 </div>
             </div>
             
@@ -50,6 +66,15 @@
                 </div>
                 <div v-else-if="selectedNote" class="note-view">
                     <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
+                    
+                    <div v-if="backlinks.length > 0" class="backlinks-panel">
+                        <h3>🔗 Backlinks</h3>
+                        <ul class="backlinks-list">
+                            <li v-for="link in backlinks" :key="link.id">
+                                <a href="#" @click.prevent="selectNote(link)">{{ link.name.replace('.md', '') }}</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div v-else class="empty-state">
                     <div class="empty-state-icon">🧠</div>
@@ -58,6 +83,17 @@
                 </div>
             </div>
         </main>
+
+        <!-- Graph Modal -->
+        <div v-if="showGraph" class="modal-overlay" @click.self="showGraph = false">
+            <div class="modal graph-modal">
+                <div class="modal-header">
+                    <h2>Knowledge Graph</h2>
+                    <button @click="showGraph = false" class="icon-btn">✕</button>
+                </div>
+                <div id="graph-container" class="graph-container"></div>
+            </div>
+        </div>
 
         <!-- Settings Modal -->
         <div v-if="showSettings" class="modal-overlay" @click.self="showSettings = false">
