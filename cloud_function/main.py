@@ -186,8 +186,7 @@ def sync_drive_notes(request):
                     processed_count += 1
                     total_processed_count += 1
                     
-                    print("Sleeping for 15 seconds to respect free-tier rate limits...")
-                    time.sleep(15)
+                    print("PDF successfully processed and saved to Google Drive.")
                     
             print(f"\n--- Compiling Master Markdown Files for {target_folder_name} ---")
             
