@@ -241,6 +241,10 @@ const app = createApp({
         const filteredFileTree = computed(() => {
             if (!fileTree.value || !fileTree.value.children) return { children: [] };
             
+            if (!searchQuery.value && !selectedTag.value) {
+                return fileTree.value;
+            }
+            
             const cloneTree = JSON.parse(JSON.stringify(fileTree.value));
             
             const filterNode = (node) => {
