@@ -508,22 +508,11 @@ const app = createApp({
                 nodeMap[title.toLowerCase()] = n.id;
                 nodeMap[n.name.replace('.md', '').toLowerCase()] = n.id;
             });
-            
-            // Add explicit tags as distinct nodes
-            allTags.value.forEach(tag => {
-                nodes.push({ 
-                    id: 'tag_' + tag, 
-                    label: tag, 
-                    shape: 'box', 
-                    color: { background: 'transparent', border: '#a853ba' }, 
-                    font: { color: '#a853ba', size: 10 } 
-                });
-            });
 
+            // 1. Explicit internal links
             notes.value.forEach(n => {
                 const content = noteContents.value[n.id];
                 if (content) {
-                    // Explicit internal links
                     const regex = /\[\[(.*?)\]\]/g;
                     let match;
                     while ((match = regex.exec(content)) !== null) {
@@ -532,13 +521,31 @@ const app = createApp({
                             edges.push({ from: n.id, to: nodeMap[targetName], color: { color: '#262626' } });
                         }
                     }
-                    
-                    // Tag connections
-                    const tags = extractTags(content).explicit;
-                    tags.forEach(t => {
-                        edges.push({ from: n.id, to: 'tag_' + t, color: { color: '#a853ba', opacity: 0.3 }, dashes: true });
-                    });
                 }
+            });
+
+            // 2. Semantic Tag Network (Related Notes)
+            notes.value.forEach(n1 => {
+                const c1 = noteContents.value[n1.id] || '';
+                const tags1 = new Set(extractTags(c1).all);
+                if (tags1.size === 0) return;
+                
+                notes.value.forEach(n2 => {
+                    if (n1.id >= n2.id) return; // avoid duplicate edges A->B and B->A
+                    const c2 = noteContents.value[n2.id] || '';
+                    const tags2 = new Set(extractTags(c2).all);
+                    
+                    const shared = [...tags1].filter(x => tags2.has(x));
+                    if (shared.length > 0) {
+                        edges.push({ 
+                            from: n1.id, 
+                            to: n2.id, 
+                            color: { color: '#a853ba', opacity: 0.2 }, 
+                            dashes: true,
+                            title: 'Shared: ' + shared.join(', ') // Hover tooltip
+                        });
+                    }
+                });
             });
 
             const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
