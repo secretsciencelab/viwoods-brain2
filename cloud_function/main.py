@@ -321,7 +321,7 @@ def sync_drive_notes(request):
     
             all_files = get_files_in_folder(service, folder_id)
             
-            existing_mds = {f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
+            existing_mds = {f["folder_path"] + "/" + f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
             
             docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
             
@@ -329,12 +329,20 @@ def sync_drive_notes(request):
             
             for doc in docs_to_process:
                 expected_md_name = doc["name"].replace(".note", ".md")
+                expected_md_path = doc["folder_path"] + "/" + expected_md_name
                     
                 existing_md_id = None
                 existing_md_path = None
                 
-                if expected_md_name in existing_mds:
-                    md_file = existing_mds[expected_md_name]
+                if expected_md_path in existing_mds:
+                    md_file = existing_mds[expected_md_path]
+                    
+                    doc_time = datetime.datetime.fromisoformat(doc["modifiedTime"].replace("Z", "+00:00"))
+                    md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
+                    
+                    if doc_time <= md_time:
+                        print(f"Skipping {doc['name']} (Markdown is up to date).")
+                        continue
                     
                     existing_md_id = md_file["id"]
                     
