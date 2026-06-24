@@ -216,6 +216,12 @@ main {
 .heat-3 { background: rgba(56, 189, 248, 0.8); }
 .heat-4 { background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
 
+/* Light Mode Overrides for Heatmap */
+[data-theme="light"] .heatmap-cell,
+[data-theme="light"] .heat-0 {
+    background: var(--border-color);
+}
+
 /* Empty State */
 .empty-state {
     display: flex;
@@ -999,4 +1005,45 @@ main {
     border-radius: 8px;
     border: 1px solid var(--border-color);
     min-height: 400px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    main {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        max-height: 40vh;
+    }
+    .content {
+        padding: 24px;
+    }
+    .right-sidebar {
+        display: none;
+    }
+    .markdown-body img, .image-placeholder {
+        max-width: 100%;
+        float: none;
+        margin: 16px 0;
+    }
+    header {
+        padding: 0 16px;
+    }
+    header h1 {
+        font-size: 1rem;
+    }
+    .header-actions {
+        gap: 8px;
+    }
+    .connect-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    .modal {
+        width: 90vw;
+        padding: 24px;
+    }
 }
