@@ -108,33 +108,43 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None):
     
     with zipfile.ZipFile(note_path, 'r') as z:
         note_list_file = next((f for f in z.namelist() if f.endswith('_NoteList.json')), None)
-        if not note_list_file:
-            print("Invalid .note file, no NoteList.json found.")
+        page_list_file = next((f for f in z.namelist() if f.endswith('PageListFileInfo.json')), None)
+        
+        pages = []
+        if note_list_file:
+            with z.open(note_list_file) as f:
+                note_list = json.load(f)
+            for page in note_list:
+                page_id = page['pageId']
+                pages.append({
+                    'id': page_id,
+                    'image_names': [f"{page_id}.jpg", f"{page_id}.png"],
+                    'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", f"{page_id}_LayoutImage.json"]
+                })
+        elif page_list_file:
+            with z.open(page_list_file) as f:
+                page_list = json.load(f)
+            for page in page_list:
+                page_id = page['id']
+                pages.append({
+                    'id': page_id,
+                    'image_names': [f"screenshotBmp_{page_id}.png", f"mainBmp_{page_id}.png"],
+                    'hash_files': [f"screenshotBmp_{page_id}.png"]
+                })
+        else:
+            print("Invalid .note file, no NoteList or PageList found.")
             return False
             
-        with z.open(note_list_file) as f:
-            note_list = json.load(f)
+        for p in pages:
+            page_id = p['id']
             
-        for page in note_list:
-            page_id = page['pageId']
-            path_file = f"PATH_{page_id}.json"
-            
-            page_hash_content = ""
-            if path_file in z.namelist():
-                with z.open(path_file) as f:
-                    page_hash_content += f.read().decode('utf-8')
-                    
-            layout_text = next((f for f in z.namelist() if f.endswith(f'{page_id}_LayoutText.json')), None)
-            if layout_text:
-                with z.open(layout_text) as f:
-                    page_hash_content += f.read().decode('utf-8')
-                    
-            layout_image = next((f for f in z.namelist() if f.endswith(f'{page_id}_LayoutImage.json')), None)
-            if layout_image:
-                with z.open(layout_image) as f:
-                    page_hash_content += f.read().decode('utf-8')
-                    
-            page_hash = hashlib.md5(page_hash_content.encode('utf-8')).hexdigest()
+            page_hash_content = b""
+            for hf in p['hash_files']:
+                if hf in z.namelist():
+                    with z.open(hf) as f:
+                        page_hash_content += f.read()
+                        
+            page_hash = hashlib.md5(page_hash_content).hexdigest()
             new_hashes[page_id] = page_hash
             
             page_markdown = ""
@@ -143,11 +153,9 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None):
                 page_markdown = get_page_text_from_md(existing_md_content, page_id)
             else:
                 print(f"Page {page_id} changed! OCRing with Gemini...")
-                image_file = f"{page_id}.jpg"
-                if image_file not in z.namelist():
-                    image_file = f"{page_id}.png"
+                image_file = next((img for img in p['image_names'] if img in z.namelist()), None)
                 
-                if image_file in z.namelist():
+                if image_file:
                     img_path = f"/tmp/{image_file}"
                     z.extract(image_file, "/tmp")
                     
