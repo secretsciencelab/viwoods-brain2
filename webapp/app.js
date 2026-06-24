@@ -86,15 +86,20 @@ const app = createApp({
         };
 
         const extractTags = (content) => {
-            if (!content) return [];
-            const tags = content.match(/#[\w-]+/g) || [];
+            if (!content) return { explicit: [], all: [] };
+            const explicitTags = content.match(/#[\w-]+/g) || [];
+            
+            const tags = [...explicitTags];
             const headings = content.match(/^#{1,6}\s+(.+)$/gm) || [];
             headings.forEach(h => {
                 const rawHeading = h.replace(/^#{1,6}\s+/, '').trim();
                 const normalized = '#' + rawHeading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                 tags.push(normalized);
             });
-            return tags.map(t => t.toLowerCase());
+            return {
+                explicit: explicitTags.map(t => t.toLowerCase()),
+                all: tags.map(t => t.toLowerCase())
+            };
         };
 
         const fileTree = ref({ children: [] });
@@ -189,7 +194,7 @@ const app = createApp({
                                 }
                                 
                                 const extracted = extractTags(text);
-                                extracted.forEach(t => tagSet.add(t));
+                                extracted.explicit.forEach(t => tagSet.add(t));
                             } catch (e) {
                                 // ignore
                             }
@@ -269,7 +274,7 @@ const app = createApp({
                     }
                     if (selectedTag.value) {
                         const content = noteContents.value[node.id] || '';
-                        const nodeTags = new Set(extractTags(content));
+                        const nodeTags = new Set(extractTags(content).all);
                         if (!nodeTags.has(selectedTag.value)) {
                             matches = false;
                         }
@@ -339,14 +344,14 @@ const app = createApp({
                 // Calculate Related Notes based on Tag overlap
                 let related = [];
                 const currentContent = noteContents.value[note.id] || '';
-                const currentTags = new Set(extractTags(currentContent));
+                const currentTags = new Set(extractTags(currentContent).all);
                 
                 if (currentTags.size > 0) {
                     for (const n of notes.value) {
                         if (n.id === note.id) continue;
                         const content = noteContents.value[n.id];
                         if (content) {
-                            const tags = new Set(extractTags(content));
+                            const tags = new Set(extractTags(content).all);
                             
                             const shared = [...currentTags].filter(x => tags.has(x));
                             if (shared.length > 0) {
