@@ -487,7 +487,7 @@ const app = createApp({
                     const imgTag = `![${altText}](${imageBlobUrls.value[filename]})`;
                     return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n${imgTag}`;
                 } else {
-                    return '';
+                    return `\n<div style="clear: both; margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 32px;"></div>\n\n<div class="image-placeholder"></div>`;
                 }
             });
             

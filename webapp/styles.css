@@ -364,6 +364,15 @@ main {
     clear: both;
 }
 
+.image-placeholder {
+    width: 320px;
+    height: 426px; /* Average 3:4 aspect ratio to prevent reflow */
+    margin: 16px 0 16px 32px;
+    float: right;
+    clear: right;
+    background: transparent;
+}
+
 /* Lightbox Modal */
 .lightbox-overlay {
     position: fixed;
