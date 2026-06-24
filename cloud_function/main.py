@@ -201,10 +201,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         image_bytes = img_file.read()
                         
                     try:
+                        from google.genai import types
                         response = client.models.generate_content(
                             model="gemini-2.5-flash",
                             contents=[
-                                {"mime_type": "image/png", "data": image_bytes},
+                                types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
                                 prompt
                             ]
                         )
