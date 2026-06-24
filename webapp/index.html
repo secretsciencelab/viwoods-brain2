@@ -67,11 +67,14 @@
                 <div v-else-if="selectedNote" class="note-view">
                     <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
                     
-                    <div v-if="backlinks.length > 0" class="backlinks-panel">
-                        <h3>🔗 Backlinks</h3>
+                    <div v-if="relatedNotes.length > 0" class="backlinks-panel">
+                        <h3>🏷️ Related Notes</h3>
                         <ul class="backlinks-list">
-                            <li v-for="link in backlinks" :key="link.id">
-                                <a href="#" @click.prevent="selectNote(link)">{{ link.displayTitle || link.name.replace('.md', '') }}</a>
+                            <li v-for="link in relatedNotes" :key="link.note.id">
+                                <a href="#" @click.prevent="selectNote(link.note)">
+                                    {{ link.note.displayTitle || link.note.name.replace('.md', '') }}
+                                    <span style="color: var(--text-secondary); font-size: 0.8em; margin-left: 6px;">({{ link.sharedTags.length }} shared tags)</span>
+                                </a>
                             </li>
                         </ul>
                     </div>

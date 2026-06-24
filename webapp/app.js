@@ -20,7 +20,7 @@ const app = createApp({
         const selectedTag = ref(null);
         const allTags = ref([]);
         const noteContents = ref({});
-        const backlinks = ref([]);
+        const relatedNotes = ref([]);
         const showGraph = ref(false);
 
         const checkExistingAuth = () => {
@@ -321,22 +321,32 @@ const app = createApp({
                     loadImagesForNote(note);
                 }
                 
-                // Calculate Backlinks
-                let bl = [];
-                const searchStrOriginal = `[[${note.name.replace('.md', '')}]]`.toLowerCase();
-                const searchStrTitle = note.displayTitle ? `[[${note.displayTitle}]]`.toLowerCase() : null;
+                // Calculate Related Notes based on Tag overlap
+                let related = [];
+                const currentContent = noteContents.value[note.id] || '';
+                const currentTagsMatch = currentContent.match(/#[\w-]+/g) || [];
+                const currentTags = new Set(currentTagsMatch.map(t => t.toLowerCase()));
                 
-                for (const n of notes.value) {
-                    if (n.id === note.id) continue;
-                    const content = noteContents.value[n.id];
-                    if (content) {
-                        const contentLow = content.toLowerCase();
-                        if (contentLow.includes(searchStrOriginal) || (searchStrTitle && contentLow.includes(searchStrTitle))) {
-                            bl.push(n);
+                if (currentTags.size > 0) {
+                    for (const n of notes.value) {
+                        if (n.id === note.id) continue;
+                        const content = noteContents.value[n.id];
+                        if (content) {
+                            const tagsMatch = content.match(/#[\w-]+/g) || [];
+                            const tags = new Set(tagsMatch.map(t => t.toLowerCase()));
+                            
+                            const shared = [...currentTags].filter(x => tags.has(x));
+                            if (shared.length > 0) {
+                                related.push({
+                                    note: n,
+                                    sharedTags: shared
+                                });
+                            }
                         }
                     }
+                    related.sort((a, b) => b.sharedTags.length - a.sharedTags.length);
                 }
-                backlinks.value = bl;
+                relatedNotes.value = related;
                 
             } catch (err) {
                 console.error(err);
@@ -510,7 +520,7 @@ const app = createApp({
             searchQuery,
             selectedTag,
             allTags,
-            backlinks,
+            relatedNotes,
             showGraph,
             selectedNote,
             selectNote,
