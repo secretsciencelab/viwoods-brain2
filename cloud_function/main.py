@@ -140,7 +140,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 })
         else:
             print("Invalid .note file, no NoteList or PageList found.")
-            return False
+            return False, None
             
         for p in pages:
             page_id = p['id']
@@ -235,18 +235,28 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
             
             final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
 
+    extracted_title = None
+    title_match = re.search(r'^#\s+(.+)$', final_markdown, re.MULTILINE)
+    if title_match:
+        # Sanitize title for filename
+        extracted_title = re.sub(r'[\\/*?:"<>|]', "", title_match.group(1).strip())
+
     hashes_json = json.dumps(new_hashes)
     final_markdown += f"<!-- HASHES:\n{hashes_json}\n-->\n"
     
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_markdown)
         
-    return True
+    return True, extracted_title
 
-def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None):
+def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None, source_note_name=None):
     file_name = os.path.basename(local_file_path)
     media = MediaFileUpload(local_file_path, mimetype='text/markdown')
     
+    file_metadata = {}
+    if source_note_name:
+        file_metadata['appProperties'] = {'source_note': source_note_name}
+        
     # Anti-duplication check: if no known ID, query Drive immediately before uploading
     # to catch any files created by concurrent Cloud Run instances (e.g. from Scheduler retries)
     if not existing_file_id:
@@ -258,12 +268,11 @@ def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id
             
     if existing_file_id:
         print(f"Updating existing {file_name} in Google Drive...")
-        file = service.files().update(fileId=existing_file_id, media_body=media, fields='id').execute()
+        file_metadata['name'] = file_name # Ensure rename happens if title changed
+        file = service.files().update(fileId=existing_file_id, media_body=media, body=file_metadata, fields='id').execute()
     else:
-        file_metadata = {
-            'name': file_name,
-            'parents': [parent_folder_id]
-        }
+        file_metadata['name'] = file_name
+        file_metadata['parents'] = [parent_folder_id]
         print(f"Uploading {file_name} back to Google Drive...")
         file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     print(f"Successfully saved File ID: {file.get('id')}")
@@ -276,7 +285,7 @@ def get_files_in_folder(service, parent_id, current_path=""):
     while True:
         results = service.files().list(
             q=query, 
-            fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime)",
+            fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime, appProperties)",
             pageToken=page_token
         ).execute()
         items = results.get("files", [])
@@ -324,7 +333,14 @@ def sync_drive_notes(request):
     
             all_files = get_files_in_folder(service, folder_id)
             
-            existing_mds = {f["folder_path"] + "/" + f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
+            existing_mds = {}
+            for f in all_files:
+                if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]:
+                    key = f.get("folder_path", "") + "/" + f["name"]
+                    props = f.get("appProperties", {})
+                    if "source_note" in props:
+                        key = f.get("folder_path", "") + "/" + props["source_note"].replace(".note", ".md")
+                    existing_mds[key] = f
             
             docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
             
@@ -363,7 +379,7 @@ def sync_drive_notes(request):
                 try:
                     clean_note_name = doc["name"].replace(".note", "")
                     is_daily = "Daily" in doc.get("folder_path", "") or clean_note_name.startswith("day_")
-                    success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
+                    success, custom_title = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")
@@ -373,7 +389,13 @@ def sync_drive_notes(request):
                         continue
                         
                 if success:
-                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id)
+                    # Rename the local file if a custom title was found so it uploads with the correct name
+                    if custom_title:
+                        new_local_md_path = os.path.join("/tmp", f"{custom_title}.md")
+                        os.rename(local_md_path, new_local_md_path)
+                        local_md_path = new_local_md_path
+                        
+                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id, source_note_name=doc["name"])
                     processed_count += 1
                     total_processed_count += 1
                     
