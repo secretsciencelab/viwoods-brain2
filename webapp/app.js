@@ -1,4 +1,4 @@
-const { createApp, ref, computed } = Vue;
+const { createApp, ref, computed, onMounted } = Vue;
 
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
@@ -16,6 +16,30 @@ const app = createApp({
         let accessToken = null;
         let tokenClient = null;
 
+        const checkExistingAuth = () => {
+            const savedToken = localStorage.getItem('brain2_access_token');
+            const expiresAt = localStorage.getItem('brain2_token_expires');
+            
+            if (savedToken && expiresAt && Date.now() < parseInt(expiresAt)) {
+                accessToken = savedToken;
+                isAuthenticated.value = true;
+                loadNotebooks();
+            } else {
+                if (savedToken) {
+                    // Clear expired token
+                    localStorage.removeItem('brain2_access_token');
+                    localStorage.removeItem('brain2_token_expires');
+                }
+                if (!clientId.value) {
+                    openSettings();
+                }
+            }
+        };
+
+        onMounted(() => {
+            checkExistingAuth();
+        });
+
         const openSettings = () => {
             clientIdInput.value = clientId.value;
             showSettings.value = true;
@@ -25,9 +49,6 @@ const app = createApp({
             clientId.value = clientIdInput.value.trim();
             localStorage.setItem('brain2_client_id', clientId.value);
             showSettings.value = false;
-            if (clientId.value && !isAuthenticated.value) {
-                initGoogleAuth();
-            }
         };
 
         // Initialize Google Identity Services
@@ -44,6 +65,12 @@ const app = createApp({
                     if (tokenResponse && tokenResponse.access_token) {
                         accessToken = tokenResponse.access_token;
                         isAuthenticated.value = true;
+                        
+                        const expiresIn = tokenResponse.expires_in || 3600;
+                        const expiresAt = Date.now() + (expiresIn * 1000);
+                        localStorage.setItem('brain2_access_token', accessToken);
+                        localStorage.setItem('brain2_token_expires', expiresAt.toString());
+                        
                         await loadNotebooks();
                     }
                 },
