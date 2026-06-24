@@ -196,13 +196,13 @@ main {
 .heatmap-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 8px;
     align-content: flex-start;
 }
 .heatmap-cell {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     background: #262626;
     transition: transform 0.1s;
     cursor: pointer;
