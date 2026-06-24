@@ -6,6 +6,7 @@
     <title>brain2</title>
     <!-- Google Fonts for modern typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <!-- Vue 3 CDN -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Google Identity Services -->
@@ -22,11 +23,11 @@
             <h1 @click="selectedNote = null; searchQuery = ''; selectedTag = null;" style="cursor: pointer;" title="Go to Home">brain2</h1>
             <div class="header-actions">
                 <button @click="toggleTheme" class="icon-btn" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-                    {{ isDarkMode ? '☀️' : '🌙' }}
+                    <span class="material-symbols-outlined">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
                 </button>
-                <button @click="openSettings" class="icon-btn" title="Settings">⚙️</button>
+                <button @click="openSettings" class="icon-btn" title="Settings"><span class="material-symbols-outlined">settings</span></button>
                 <button v-if="!isAuthenticated" @click="initGoogleAuth" class="connect-btn">
-                    <span class="icon">🔗</span> Connect Google Drive
+                    <span class="icon material-symbols-outlined" style="font-size: 1.1rem; top: 1px; position: relative;">link</span> Connect Google Drive
                 </button>
                 <div v-else class="status-badge">
                     <span class="indicator"></span> Connected
@@ -39,7 +40,7 @@
                 
                 <div class="sidebar-controls" v-if="!isLoading">
                     <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
-                    <button @click="showGraph = true" class="icon-btn graph-btn" title="Graph View">🕸️ Graph</button>
+                    <button @click="showGraph = true" class="icon-btn graph-btn" title="Graph View" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Graph</button>
                 </div>
                 
                 <div v-if="searchQuery || selectedTag" class="active-filter-indicator">
@@ -75,7 +76,7 @@
                     <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
                     
                     <div v-if="relatedNotes.length > 0" class="backlinks-panel">
-                        <h3>🏷️ Related Notes</h3>
+                        <h3 style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.2rem;">sell</span> Related Notes</h3>
                         <ul class="backlinks-list">
                             <li v-for="link in relatedNotes" :key="link.note.id">
                                 <a href="#" @click.prevent="selectNote(link.note)">
