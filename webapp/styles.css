@@ -376,22 +376,61 @@ main {
 
 .markdown-body h1 {
     font-size: 2.25rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-primary);
     letter-spacing: -0.04em;
     margin-top: 0;
     margin-bottom: 8px;
+    line-height: 1.2;
 }
 
 .markdown-body h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 24px;
+    margin-bottom: 12px;
+    letter-spacing: -0.03em;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+    line-height: 1.3;
+}
+
+.markdown-body h3 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 20px;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+}
+
+.markdown-body h4 {
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-top: 16px;
     margin-bottom: 8px;
-    letter-spacing: -0.02em;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 4px;
+    line-height: 1.4;
+}
+
+.markdown-body h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.markdown-body h6 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 16px;
+    margin-bottom: 8px;
 }
 
 .markdown-body p {

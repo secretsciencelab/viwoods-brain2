@@ -541,6 +541,16 @@ const app = createApp({
                 return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
             });
             
+            // Ensure only ONE H1 heading exists in the entire document. Demote subsequent H1s to H2s.
+            let h1Count = 0;
+            rawMd = rawMd.replace(/^#\s+(.*)$/gm, (match, headingText) => {
+                h1Count++;
+                if (h1Count > 1) {
+                    return `## ${headingText}`;
+                }
+                return match;
+            });
+            
             // Subtly style inline #tags
             rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
                 // Ensure it's not a markdown heading by checking if there's a space after the #
