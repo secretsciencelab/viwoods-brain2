@@ -551,14 +551,14 @@ main {
     background: var(--text-primary);
     color: var(--bg-base);
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.2s;
 }
 
@@ -570,11 +570,11 @@ main {
 .status-badge {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
+    gap: 6px;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     background: var(--bg-surface);
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 999px;
     border: 1px solid var(--border-color);
 }
@@ -598,12 +598,12 @@ main {
 .icon-btn {
     background: transparent;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
     color: var(--text-secondary);
     transition: all 0.2s;
-    padding: 8px;
-    border-radius: 8px;
+    padding: 6px;
+    border-radius: 6px;
 }
 
 .icon-btn:hover {
