@@ -536,6 +536,9 @@ const app = createApp({
                 return `${space}<span class="inline-tag">${tag}</span>`;
             });
             
+            // Prevent Setext heading confusion by ensuring a blank line before horizontal rules
+            rawMd = rawMd.replace(/([^\s])\s*\n---(?:\s*\n|$)/g, '$1\n\n---\n');
+            
             let html = marked.parse(rawMd);
             
             // Post-process HTML to convert timestamp blockquotes into beautiful badges
