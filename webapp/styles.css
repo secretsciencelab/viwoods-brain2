@@ -267,26 +267,15 @@ main {
 /* Heatmap */
 .heatmap-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    padding: 4px;
-    overflow-y: auto;
-    max-height: 250px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-}
-.heatmap-grid::-webkit-scrollbar {
-    width: 4px;
-}
-.heatmap-grid::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
+    grid-template-columns: repeat(7, 10px);
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 0;
 }
 .heatmap-cell {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    height: auto;
-    border-radius: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
     background: #262626;
     transition: transform 0.1s;
     cursor: pointer;
