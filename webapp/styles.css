@@ -343,6 +343,9 @@ main {
 
 .markdown-body img {
     max-width: 320px;
+    width: 320px;
+    aspect-ratio: 320 / 426; /* Exact Viwoods aspect ratio to instantly reserve space */
+    object-fit: contain;
     margin: 16px 0 16px 32px;
     float: right;
     clear: right;
