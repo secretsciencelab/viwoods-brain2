@@ -61,7 +61,8 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
 ### Step 4: Cloud Scheduler
 1. Go to **Cloud Scheduler** in Google Cloud.
 2. Create a new job targeting the HTTP URL of your newly deployed Cloud Run service.
-3. Set the frequency using Cron syntax (e.g., `0 2 * * *` to run at 2 AM every night).
+3. **CRITICAL:** Under the "Configure the job's execution" > "Retry config" section, set the **Attempt deadline** to `30m` (30 minutes). The default is 3 minutes, which will cause a `DEADLINE_EXCEEDED` error if you process many handwriting files at once!
+4. Set the frequency using Cron syntax (e.g., `0 2 * * *` to run at 2 AM every night).
 
 ## 🛠 Useful Commands
 
