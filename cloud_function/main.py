@@ -145,13 +145,36 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
         elif page_list_file:
             with z.open(page_list_file) as f:
                 page_list = json.load(f)
+                
+            # Try to load PageResource.json to find the actual mainBmp and path files for each page
+            resource_file = next((f for f in z.namelist() if f.endswith('PageResource.json')), None)
+            page_resources = {}
+            if resource_file:
+                with z.open(resource_file) as f:
+                    resources = json.load(f)
+                    for r in resources:
+                        pid = r.get('pid')
+                        if pid not in page_resources:
+                            page_resources[pid] = {'main': None, 'paths': []}
+                        if r.get('resourceType') == 1 and r.get('fileName', '').startswith('mainBmp_'):
+                            page_resources[pid]['main'] = r.get('fileName')
+                        elif r.get('resourceType') == 7 and r.get('fileName', '').startswith('path_'):
+                            page_resources[pid]['paths'].append(r.get('fileName'))
+            
             for page in page_list:
                 page_id = page['id']
+                res = page_resources.get(page_id, {'main': None, 'paths': []})
+                main_bmp = res['main']
+                paths = res['paths']
+                
+                image_names = [main_bmp] if main_bmp else [f"mainBmp_{page_id}.png", f"screenshotBmp_{page_id}.png"]
+                hash_files = paths if paths else [f"path_{page_id}.json", f"screenshotBmp_{page_id}.png"]
+                
                 pages.append({
                     'id': page_id,
                     'lastModifiedTime': page.get('lastModifiedTime'),
-                    'image_names': [f"screenshotBmp_{page_id}.png", f"mainBmp_{page_id}.png"],
-                    'hash_files': [f"screenshotBmp_{page_id}.png"]
+                    'image_names': image_names,
+                    'hash_files': hash_files
                 })
         else:
             print("Invalid .note file, no NoteList or PageList found.")
