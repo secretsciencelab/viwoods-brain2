@@ -263,7 +263,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
         
     return True, internal_dt
 
-def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None, modified_time=None):
+def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None, modified_time=None, source_md5=None):
     file_name = os.path.basename(local_file_path)
     media = MediaFileUpload(local_file_path, mimetype='text/markdown')
     
@@ -281,6 +281,8 @@ def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id
         body = {}
         if modified_time:
             body['modifiedTime'] = modified_time
+        if source_md5:
+            body['appProperties'] = {'source_md5': source_md5}
         file = service.files().update(fileId=existing_file_id, body=body, media_body=media, fields='id').execute()
     else:
         file_metadata = {
@@ -289,6 +291,8 @@ def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id
         }
         if modified_time:
             file_metadata['modifiedTime'] = modified_time
+        if source_md5:
+            file_metadata['appProperties'] = {'source_md5': source_md5}
         print(f"Uploading {file_name} back to Google Drive...")
         file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     print(f"Successfully saved File ID: {file.get('id')}")
@@ -301,7 +305,7 @@ def get_files_in_folder(service, parent_id, current_path=""):
     while True:
         results = service.files().list(
             q=query, 
-            fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime)",
+            fields="nextPageToken, files(id, name, mimeType, parents, modifiedTime, md5Checksum, appProperties)",
             pageToken=page_token
         ).execute()
         items = results.get("files", [])
@@ -372,11 +376,18 @@ def sync_drive_notes(request):
                 if expected_md_path in existing_mds:
                     md_file = existing_mds[expected_md_path]
                     
+                    doc_md5 = doc.get("md5Checksum")
+                    md_app_props = md_file.get("appProperties", {})
+                    
+                    if doc_md5 and md_app_props and doc_md5 == md_app_props.get("source_md5"):
+                        print(f"Skipping {doc['name']} (MD5 checksum matches).")
+                        continue
+                        
                     doc_time = datetime.datetime.fromisoformat(doc["modifiedTime"].replace("Z", "+00:00"))
                     md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
                     
                     if doc_time <= md_time:
-                        print(f"Skipping {doc['name']} (Markdown is up to date).")
+                        print(f"Skipping {doc['name']} (Markdown is up to date based on timestamp).")
                         continue
                     
                     existing_md_id = md_file["id"]
@@ -407,7 +418,8 @@ def sync_drive_notes(request):
                         
                 if success:
                     original_modified_time = internal_dt or doc.get('modifiedTime')
-                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id, modified_time=original_modified_time)
+                    source_md5 = doc.get("md5Checksum")
+                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id, modified_time=original_modified_time, source_md5=source_md5)
                     processed_count += 1
                     total_processed_count += 1
                     
