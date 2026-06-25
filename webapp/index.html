@@ -20,8 +20,17 @@
 <body>
     <div id="app" v-cloak>
         <header>
-            <h1 @click="selectedNote = null; searchQuery = ''; selectedTag = null;" style="cursor: pointer;" title="Go to Home">brain2</h1>
-            <div class="header-actions">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <h1 @click="selectedNote = null; searchQuery = ''; selectedTag = null;" style="cursor: pointer;" title="Go to Home">brain2</h1>
+                <div class="header-search desktop-only" v-if="!isLoading">
+                    <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
+                </div>
+            </div>
+            
+            <div class="header-actions desktop-only">
+                <button v-if="!isLoading" @click="showGraph = true" class="icon-btn graph-btn" title="Graph View" style="display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Graph
+                </button>
                 <button @click="toggleTheme" class="icon-btn" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
                     <span class="material-symbols-outlined">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
                 </button>
@@ -33,15 +42,37 @@
                     <span class="indicator"></span> Connected
                 </div>
             </div>
+            
+            <button class="mobile-menu-btn mobile-only" @click="showMobileMenu = !showMobileMenu">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
         </header>
+
+        <div v-if="showMobileMenu" class="mobile-menu mobile-only">
+            <div class="mobile-search" v-if="!isLoading">
+                <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
+            </div>
+            <div class="mobile-actions">
+                <button v-if="!isLoading" @click="showGraph = true; showMobileMenu = false;" class="icon-btn graph-btn">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Graph
+                </button>
+                <button @click="toggleTheme(); showMobileMenu = false;" class="icon-btn">
+                    <span class="material-symbols-outlined">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span> Theme
+                </button>
+                <button @click="openSettings(); showMobileMenu = false;" class="icon-btn">
+                    <span class="material-symbols-outlined">settings</span> Settings
+                </button>
+                <button v-if="!isAuthenticated" @click="initGoogleAuth(); showMobileMenu = false;" class="connect-btn">
+                    <span class="icon material-symbols-outlined" style="font-size: 1.1rem; top: 1px; position: relative;">link</span> Connect
+                </button>
+                <div v-else class="status-badge">
+                    <span class="indicator"></span> Connected
+                </div>
+            </div>
+        </div>
 
         <main>
             <div class="sidebar">
-                
-                <div class="sidebar-controls" v-if="!isLoading">
-                    <input type="text" v-model="searchQuery" placeholder="Search notes..." class="search-input">
-                    <button @click="showGraph = true" class="icon-btn graph-btn" title="Graph View" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Graph</button>
-                </div>
                 
                 <div v-if="searchQuery || selectedTag" class="active-filter-indicator">
                     <span>Filtering by: <strong>{{ selectedTag || searchQuery }}</strong></span>

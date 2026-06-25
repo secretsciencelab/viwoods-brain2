@@ -113,6 +113,58 @@ header h1::before {
 }
 
 /* Layout */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-search {
+    margin-left: 24px;
+    width: 300px;
+}
+
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: flex !important;
+}
+
+.mobile-menu {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mobile-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
 main {
     display: flex;
     flex: 1;
@@ -1012,6 +1064,12 @@ main {
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+    .mobile-only {
+        display: flex !important;
+    }
     main {
         flex-direction: column;
     }
@@ -1037,13 +1095,6 @@ main {
     }
     header h1 {
         font-size: 1rem;
-    }
-    .header-actions {
-        gap: 8px;
-    }
-    .connect-btn {
-        padding: 6px 10px;
-        font-size: 0.75rem;
     }
     .modal {
         width: 90vw;

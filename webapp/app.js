@@ -33,6 +33,7 @@ const app = createApp({
         const noteContents = ref({});
         const relatedNotes = ref([]);
         const showGraph = ref(false);
+        const showMobileMenu = ref(false);
 
         const scrollToHeading = (id) => {
             const el = document.getElementById(id);
