@@ -380,7 +380,7 @@ def sync_drive_notes(request):
             
             existing_mds = {f["folder_path"] + "/" + f["name"]: f for f in all_files if f["name"].endswith(".md") and f["name"] not in ["All_Notes_Master.md", "Scratch_Master.md", "Work_Master.md", "TODO_Master.md"]}
             
-            docs_to_process = [f for f in all_files if f["name"].endswith(".note")]
+            docs_to_process = [f for f in all_files if f["name"].endswith(".note") and not f["name"].lower().endswith(".pdf.note")]
             
             processed_count = 0
             
