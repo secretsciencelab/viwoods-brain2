@@ -10,11 +10,11 @@
 
 A completely serverless, automated pipeline that turns your Viwoods e-ink tablet into a smart, searchable Second Brain.
 
-This tool automatically detects new handwritten Viwoods .note files in your Google Drive, uses Google's powerful **Gemini 2.5 Pro** model to flawlessly transcribe your handwriting into formatted Markdown, and syncs the text back to Google Drive. It even compiles "Master" Markdown files perfectly formatted for ingestion into **Google NotebookLM** or **Obsidian**.
+This tool automatically detects new handwritten Viwoods .note files in your Google Drive, uses the **Gemini 2.5 Pro** model to transcribe your handwriting into formatted Markdown, and syncs the text back to Google Drive. It compiles "Master" Markdown files formatted for ingestion into **Google NotebookLM** or **Obsidian**.
 
 ## ✨ Features
 
-- **Flawless Handwriting OCR:** Uses Gemini 2.5 Pro to transcribe messy handwriting with near-perfect accuracy.
+- **Handwriting OCR:** Uses Gemini 2.5 Pro to transcribe messy handwriting.
 - **Visual Syntax Recognition:** Draw specific shapes on your tablet to trigger Markdown formatting:
   - Draw an empty square `[ ]` to create a Markdown Checkbox (`- [ ]`).
   - Draw a vertical line `|` or bracket `[` in the margin to create a Markdown Blockquote (`>`).
