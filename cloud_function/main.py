@@ -117,6 +117,12 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
         note_list_file = next((f for f in z.namelist() if f.endswith('_NoteList.json')), None)
         page_list_file = next((f for f in z.namelist() if f.endswith('PageListFileInfo.json')), None)
         
+        internal_dt = None
+        target_file = note_list_file or page_list_file
+        if target_file:
+            dt_tuple = z.getinfo(target_file).date_time
+            internal_dt = f"{dt_tuple[0]:04d}-{dt_tuple[1]:02d}-{dt_tuple[2]:02d}T{dt_tuple[3]:02d}:{dt_tuple[4]:02d}:{dt_tuple[5]:02d}.000Z"
+        
         pages = []
         if note_list_file:
             with z.open(note_list_file) as f:
@@ -140,7 +146,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 })
         else:
             print("Invalid .note file, no NoteList or PageList found.")
-            return False
+            return False, None
             
         for p in pages:
             page_id = p['id']
@@ -242,9 +248,9 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_markdown)
         
-    return True
+    return True, internal_dt
 
-def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None):
+def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id=None, modified_time=None):
     file_name = os.path.basename(local_file_path)
     media = MediaFileUpload(local_file_path, mimetype='text/markdown')
     
@@ -259,12 +265,17 @@ def upload_to_drive(service, local_file_path, parent_folder_id, existing_file_id
             
     if existing_file_id:
         print(f"Updating existing {file_name} in Google Drive...")
-        file = service.files().update(fileId=existing_file_id, media_body=media, fields='id').execute()
+        body = {}
+        if modified_time:
+            body['modifiedTime'] = modified_time
+        file = service.files().update(fileId=existing_file_id, body=body, media_body=media, fields='id').execute()
     else:
         file_metadata = {
             'name': file_name,
             'parents': [parent_folder_id]
         }
+        if modified_time:
+            file_metadata['modifiedTime'] = modified_time
         print(f"Uploading {file_name} back to Google Drive...")
         file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     print(f"Successfully saved File ID: {file.get('id')}")
@@ -335,7 +346,7 @@ def sync_drive_notes(request):
             
             for doc in docs_to_process:
                 clean_note_name = doc["name"].replace(".note", "")
-                if "Daily" in doc.get("folder_path", "") and clean_note_name.startswith("day_"):
+                if clean_note_name.startswith("day_"):
                     print(f"Skipping daily note entirely: {doc['name']}")
                     continue
 
@@ -371,7 +382,8 @@ def sync_drive_notes(request):
                 try:
                     clean_note_name = doc["name"].replace(".note", "")
                     is_daily = "Daily" in doc.get("folder_path", "") or clean_note_name.startswith("day_")
-                    success = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
+                    
+                    success, internal_dt = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")
@@ -381,7 +393,8 @@ def sync_drive_notes(request):
                         continue
                         
                 if success:
-                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id)
+                    original_modified_time = internal_dt or doc.get('modifiedTime')
+                    upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id, modified_time=original_modified_time)
                     processed_count += 1
                     total_processed_count += 1
                     
