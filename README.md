@@ -19,6 +19,8 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
   - Draw an empty square `[ ]` to create a Markdown Checkbox (`- [ ]`).
   - Draw a vertical line `|` or bracket `[` in the margin to create a Markdown Blockquote (`>`).
   - Draw a horizontal line across the page to create a section break (`---`).
+  - Write a `#` symbol followed by a word (e.g. `#idea`) anywhere to generate a tag for the Knowledge Graph.
+  - Write text larger and underline it at the top of a page to create a document Title / Heading (`#`).
 - **Folder Aware & Master Compiling:** Automatically categorizes your notes into `Scratch_Master.md` and `Work_Master.md` based on their subdirectories, allowing you to easily separate contexts in NotebookLM.
 - **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
