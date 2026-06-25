@@ -29,6 +29,7 @@ const app = createApp({
 
         const searchQuery = ref('');
         const selectedTag = ref(null);
+        const selectedDate = ref(null);
         const allTags = ref([]);
         const noteContents = ref({});
         const relatedNotes = ref([]);
@@ -664,6 +665,7 @@ const app = createApp({
             filteredFileTree,
             searchQuery,
             selectedTag,
+            selectedDate,
             allTags,
             relatedNotes,
             showGraph,

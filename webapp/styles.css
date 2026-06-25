@@ -282,6 +282,10 @@ main {
 .heatmap-cell:hover {
     transform: scale(1.2);
 }
+.heatmap-cell.active {
+    box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px #a853ba;
+    transform: scale(1.1);
+}
 .heat-0 { background: #262626; }
 .heat-1 { background: rgba(56, 189, 248, 0.3); }
 .heat-2 { background: rgba(56, 189, 248, 0.6); }

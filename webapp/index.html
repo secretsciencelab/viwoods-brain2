@@ -74,15 +74,15 @@
         <main>
             <div class="sidebar">
                 
-                <div v-if="searchQuery || selectedTag" class="active-filter-indicator">
-                    <span>Filtering by: <strong>{{ selectedTag || searchQuery }}</strong></span>
-                    <button @click="searchQuery = ''; selectedTag = null; selectedNote = null;" class="icon-btn clear-filter-btn" title="Clear Filter">✕</button>
+                <div v-if="searchQuery || selectedTag || selectedDate" class="active-filter-indicator">
+                    <span>Filtering by: <strong>{{ selectedTag || selectedDate || searchQuery }}</strong></span>
+                    <button @click="searchQuery = ''; selectedTag = null; selectedDate = null; selectedNote = null;" class="icon-btn clear-filter-btn" title="Clear Filter">✕</button>
                 </div>
 
                 <div v-if="allTags.length > 0" class="tags-panel">
                     <div class="tag-list">
-                        <span class="tag" :class="{ active: selectedTag === null }" @click="selectedTag = null">All</span>
-                        <span v-for="tag in allTags" :key="tag" class="tag" :class="{ active: selectedTag === tag }" @click="selectedTag = tag">
+                        <span class="tag" :class="{ active: selectedTag === null }" @click="selectedTag = null; selectedDate = null">All</span>
+                        <span v-for="tag in allTags" :key="tag" class="tag" :class="{ active: selectedTag === tag }" @click="selectedTag = tag; selectedDate = null">
                             {{ tag }}
                         </span>
                     </div>
@@ -136,7 +136,7 @@
                 <div v-else-if="!selectedNote" class="right-sidebar heatmap-sidebar">
                     <h3>Activity (Last 30 Days)</h3>
                     <div class="heatmap-grid">
-                        <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="getHeatmapClass(day.count)" :title="day.date + ': ' + day.count + ' updates'"></div>
+                        <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="[getHeatmapClass(day.count), { active: selectedDate === day.date }]" :title="day.date + ': ' + day.count + ' updates'" @click="selectedDate = selectedDate === day.date ? null : day.date" style="cursor: pointer;"></div>
                     </div>
                 </div>
             </div>
