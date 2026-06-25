@@ -523,7 +523,12 @@ const app = createApp({
         
         const handleMarkdownClick = (e) => {
             if (e.target.tagName === 'IMG') {
-                lightboxImage.value = e.target.src;
+                let src = e.target.src;
+                // If it's an optimized Google thumbnail, upgrade it to ultra-high resolution for the lightbox
+                if (src.includes('=s800')) {
+                    src = src.replace('=s800', '=s2400');
+                }
+                lightboxImage.value = src;
             } else if (e.target.classList.contains('internal-link')) {
                 e.preventDefault();
                 const noteName = e.target.getAttribute('data-note').toLowerCase();
