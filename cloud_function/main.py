@@ -218,7 +218,8 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                                 ]
                             )
                             if response.text:
-                                page_markdown = response.text.strip()
+                                timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
+                                page_markdown = f"> *Last updated: {timestamp}*\n\n" + response.text.strip()
                             else:
                                 page_markdown = "[No text generated or response blocked by safety filters]"
                         except Exception as e:
