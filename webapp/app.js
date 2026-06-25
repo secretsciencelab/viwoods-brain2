@@ -527,7 +527,7 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
-            // Extract tags and move them to the bottom of their respective page block
+            // Extract tags and move them to the bottom of their respective page block, and enforce H1 rule
             rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
                 let tags = [];
                 // Extract lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
@@ -538,17 +538,18 @@ const app = createApp({
                 if (tags.length > 0) {
                     content += `\n\n<div class="tags-container">\n\n${tags.join(' ')}\n\n</div>\n`;
                 }
+                
+                // Ensure only ONE H1 heading exists per page. Demote subsequent H1s to H2s.
+                let h1Count = 0;
+                content = content.replace(/^#\s+(.*)$/gm, (m, headingText) => {
+                    h1Count++;
+                    if (h1Count > 1) {
+                        return `## ${headingText}`;
+                    }
+                    return m;
+                });
+                
                 return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
-            });
-            
-            // Ensure only ONE H1 heading exists in the entire document. Demote subsequent H1s to H2s.
-            let h1Count = 0;
-            rawMd = rawMd.replace(/^#\s+(.*)$/gm, (match, headingText) => {
-                h1Count++;
-                if (h1Count > 1) {
-                    return `## ${headingText}`;
-                }
-                return match;
             });
             
             // Subtly style inline #tags
