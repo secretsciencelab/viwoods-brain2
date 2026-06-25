@@ -201,9 +201,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
             print("Invalid .note file, no NoteList or PageList found.")
             return False, None
             
-        for p in pages:
-            page_id = p['id']
+        import threading
+        _google_api_lock = threading.Lock()
             
+        def process_single_page(p):
+            page_id = p['id']
             page_hash_content = b""
             for hf in p['hash_files']:
                 if hf in z.namelist():
@@ -211,7 +213,6 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                         page_hash_content += f.read()
                         
             page_hash = hashlib.md5(page_hash_content).hexdigest()
-            new_hashes[page_id] = page_hash
             
             page_markdown = ""
             if page_id in existing_hashes and existing_hashes[page_id] == page_hash:
@@ -298,16 +299,27 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                             page_markdown = "[No text generated or response blocked by safety filters]"
                     except Exception as e:
                         print(f"Gemini API Error for page {page_id}: {e}")
-                        page_markdown = "[Error communicating with Gemini API]"
+                        raise e
                     
                 if service and attachments_folder_id and img_path:
-                    upload_image_to_drive(service, img_path, attachments_folder_id)
+                    with _google_api_lock:
+                        upload_image_to_drive(service, img_path, attachments_folder_id)
                     page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(img_path)})\n\n" + page_markdown
                     
                 if img_path and os.path.exists(img_path):
                     os.remove(img_path)
             
-            final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
+            return page_id, page_hash, page_markdown
+            
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # Map retains the original order of the pages list
+            results = list(executor.map(process_single_page, pages))
+            
+        for page_id, page_hash, page_markdown in results:
+            new_hashes[page_id] = page_hash
+            if page_markdown:
+                final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
 
     hashes_json = json.dumps(new_hashes)
     final_markdown += f"<!-- HASHES:\n{hashes_json}\n-->\n"
