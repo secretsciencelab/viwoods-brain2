@@ -265,12 +265,29 @@ main {
 }
 
 /* Heatmap */
+.heatmap-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 0;
+}
+.heatmap-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.heatmap-month-label {
+    width: 30px;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-weight: 600;
+    text-transform: uppercase;
+}
 .heatmap-grid {
     display: grid;
     grid-template-columns: repeat(7, 10px);
-    justify-content: center;
     gap: 3px;
-    padding: 8px 0;
 }
 .heatmap-cell {
     width: 10px;

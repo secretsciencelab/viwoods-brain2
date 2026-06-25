@@ -128,8 +128,15 @@
 
                 <div v-else-if="!selectedNote" class="right-sidebar heatmap-sidebar">
                     <h3>Activity (Last 6 Months)</h3>
-                    <div class="heatmap-grid">
-                        <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="[getHeatmapClass(day.count), { active: selectedDate === day.date }]" :title="day.date + ': ' + day.count + ' updates'" @click="selectedDate = selectedDate === day.date ? null : day.date" style="cursor: pointer;"></div>
+                    <div class="heatmap-container">
+                        <div v-for="(week, index) in heatmapWeeks" :key="index" class="heatmap-row">
+                            <div class="heatmap-month-label">
+                                <span v-if="isNewMonth(week, index, heatmapWeeks)">{{ getMonthName(week) }}</span>
+                            </div>
+                            <div class="heatmap-grid">
+                                <div v-for="day in week" :key="day.date" class="heatmap-cell" :class="[getHeatmapClass(day.count), { active: selectedDate === day.date }]" :title="day.date + ': ' + day.count + ' updates'" @click="selectedDate = selectedDate === day.date ? null : day.date"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

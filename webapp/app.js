@@ -100,6 +100,31 @@ const app = createApp({
             return days;
         });
 
+        const heatmapWeeks = computed(() => {
+            const weeks = [];
+            let currentWeek = [];
+            pastYearDays.value.forEach((day, index) => {
+                currentWeek.push(day);
+                if (currentWeek.length === 7 || index === pastYearDays.value.length - 1) {
+                    weeks.push(currentWeek);
+                    currentWeek = [];
+                }
+            });
+            return weeks;
+        });
+
+        const isNewMonth = (week, index, weeks) => {
+            if (index === 0) return true;
+            const currentMonth = new Date(week[0].date).getMonth();
+            const previousMonth = new Date(weeks[index - 1][0].date).getMonth();
+            return currentMonth !== previousMonth;
+        };
+
+        const getMonthName = (week) => {
+            const d = new Date(week[0].date);
+            return d.toLocaleString('default', { month: 'short' });
+        };
+
         const getHeatmapClass = (count) => {
             if (count === 0) return 'heat-0';
             if (count <= 2) return 'heat-1';
@@ -704,6 +729,9 @@ const app = createApp({
             documentOutline,
             scrollToHeading,
             pastYearDays,
+            heatmapWeeks,
+            isNewMonth,
+            getMonthName,
             getHeatmapClass,
             isDarkMode,
             toggleTheme
