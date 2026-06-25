@@ -485,7 +485,7 @@ main {
     background: var(--bg-surface-hover);
     padding: 6px 12px;
     border-radius: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     margin-top: 8px;
     border: 1px solid var(--border-color);
     letter-spacing: 0.5px;
