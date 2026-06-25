@@ -341,7 +341,7 @@ const app = createApp({
         const filteredFileTree = computed(() => {
             if (!fileTree.value || !fileTree.value.children) return { children: [] };
             
-            if (!searchQuery.value && !selectedTag.value) {
+            if (!searchQuery.value && !selectedTag.value && !selectedDate.value) {
                 return fileTree.value;
             }
             
