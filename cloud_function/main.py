@@ -24,8 +24,15 @@ def get_drive_service():
         token_info = json.loads(token_json_str)
         credentials = Credentials.from_authorized_user_info(token_info, SCOPES)
     else:
-        print("Falling back to Service Account for Drive API authentication...")
-        credentials, project = google.auth.default(scopes=SCOPES)
+        try:
+            credentials, project = google.auth.default(scopes=SCOPES)
+        except google.auth.exceptions.DefaultCredentialsError:
+            print("Falling back to token.json for Drive API authentication...")
+            token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'token.json')
+            if os.path.exists(token_path):
+                credentials = Credentials.from_authorized_user_file(token_path, SCOPES)
+            else:
+                raise
         
     return build("drive", "v3", credentials=credentials)
 
