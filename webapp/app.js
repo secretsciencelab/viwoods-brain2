@@ -517,6 +517,14 @@ const app = createApp({
         const closeLightbox = () => {
             lightboxImage.value = null;
         };
+
+        onMounted(() => {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightboxImage.value) {
+                    closeLightbox();
+                }
+            });
+        });
         
         const handleMarkdownClick = (e) => {
             if (e.target.tagName === 'IMG') {
