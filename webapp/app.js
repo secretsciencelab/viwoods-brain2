@@ -520,8 +520,13 @@ const app = createApp({
 
         onMounted(() => {
             window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && lightboxImage.value) {
-                    closeLightbox();
+                if (e.key === 'Escape') {
+                    if (lightboxImage.value) {
+                        closeLightbox();
+                    }
+                    if (showGraph.value) {
+                        showGraph.value = false;
+                    }
                 }
             });
         });
