@@ -134,7 +134,7 @@
                 </div>
 
                 <div v-else-if="!selectedNote" class="right-sidebar heatmap-sidebar">
-                    <h3>Activity (Last 30 Days)</h3>
+                    <h3>Activity (Last 6 Months)</h3>
                     <div class="heatmap-grid">
                         <div v-for="day in pastYearDays" :key="day.date" class="heatmap-cell" :class="[getHeatmapClass(day.count), { active: selectedDate === day.date }]" :title="day.date + ': ' + day.count + ' updates'" @click="selectedDate = selectedDate === day.date ? null : day.date" style="cursor: pointer;"></div>
                     </div>

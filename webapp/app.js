@@ -80,14 +80,22 @@ const app = createApp({
         const pastYearDays = computed(() => {
             const days = [];
             const today = new Date();
-            for (let i = 30; i >= 0; i--) { // 30 days of activity
-                const d = new Date(today);
-                d.setDate(today.getDate() - i);
-                const dateStr = getLocalDateStr(d);
+            
+            // Go back 26 weeks (~6 months)
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - (26 * 7));
+            
+            // Adjust to the Sunday of that week
+            startDate.setDate(startDate.getDate() - startDate.getDay());
+            
+            const iterDate = new Date(startDate);
+            while (iterDate <= today) {
+                const dateStr = getLocalDateStr(iterDate);
                 days.push({
                     date: dateStr,
                     count: dailyActivity.value[dateStr] || 0
                 });
+                iterDate.setDate(iterDate.getDate() + 1);
             }
             return days;
         });
