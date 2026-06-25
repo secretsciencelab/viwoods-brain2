@@ -275,9 +275,11 @@ main {
     display: flex;
     align-items: center;
     gap: 12px;
+    width: 100%;
 }
 .heatmap-month-label {
     width: 30px;
+    flex-shrink: 0;
     font-size: 0.65rem;
     color: var(--text-secondary);
     text-align: right;
@@ -286,12 +288,14 @@ main {
 }
 .heatmap-grid {
     display: grid;
-    grid-template-columns: repeat(7, 10px);
-    gap: 3px;
+    grid-template-columns: repeat(7, 1fr);
+    flex-grow: 1;
+    gap: 4px;
 }
 .heatmap-cell {
-    width: 10px;
-    height: 10px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
     border-radius: 2px;
     background: #262626;
     transition: transform 0.1s;
