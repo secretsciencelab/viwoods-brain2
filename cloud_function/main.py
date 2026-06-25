@@ -155,19 +155,25 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                     for r in resources:
                         pid = r.get('pid')
                         if pid not in page_resources:
-                            page_resources[pid] = {'main': None, 'paths': []}
+                            page_resources[pid] = {'main': None, 'screenshot': None, 'paths': []}
                         if r.get('resourceType') == 1 and r.get('fileName', '').startswith('mainBmp_'):
                             page_resources[pid]['main'] = r.get('fileName')
+                        elif r.get('resourceType') == 2 and r.get('fileName', '').startswith('screenshotBmp_'):
+                            page_resources[pid]['screenshot'] = r.get('fileName')
                         elif r.get('resourceType') == 7 and r.get('fileName', '').startswith('path_'):
                             page_resources[pid]['paths'].append(r.get('fileName'))
             
             for page in page_list:
                 page_id = page['id']
-                res = page_resources.get(page_id, {'main': None, 'paths': []})
+                res = page_resources.get(page_id, {'main': None, 'screenshot': None, 'paths': []})
                 main_bmp = res['main']
+                screenshot_bmp = res['screenshot']
                 paths = res['paths']
                 
-                image_names = [main_bmp] if main_bmp else [f"mainBmp_{page_id}.png", f"screenshotBmp_{page_id}.png"]
+                # Prefer screenshotBmp if available, as it contains all rendered layers
+                best_image = screenshot_bmp if screenshot_bmp else main_bmp
+                
+                image_names = [best_image] if best_image else [f"screenshotBmp_{page_id}.png", f"mainBmp_{page_id}.png"]
                 hash_files = paths if paths else [f"path_{page_id}.json", f"screenshotBmp_{page_id}.png"]
                 
                 pages.append({
@@ -220,10 +226,14 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                             if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
                                 if img.mode == 'P':
                                     img = img.convert('RGBA')
-                                alpha = img.split()[-1] # The alpha channel
-                                inverted_alpha = ImageOps.invert(alpha)
-                                inverted_alpha.save(img_path, 'PNG')
-                                if inverted_alpha.getextrema() == (255, 255):
+                                
+                                # Correctly flatten onto white background
+                                background = Image.new('RGB', img.size, (255, 255, 255))
+                                background.paste(img, mask=img.split()[-1])
+                                background.save(img_path, 'PNG')
+                                
+                                # Check if blank
+                                if background.convert('L').getextrema() == (255, 255):
                                     is_blank = True
                             elif img.mode != 'RGB':
                                 img = img.convert('RGB')
