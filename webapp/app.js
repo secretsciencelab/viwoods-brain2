@@ -527,8 +527,8 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
-            // Swap Tags and Headers if Tags are immediately above a Header
-            rawMd = rawMd.replace(/^((?:#[a-zA-Z0-9_-]+[ \t]*)+)\n(#\s+.*)$/gm, '$2\n$1');
+            // Swap Tags and Headers if Tags are immediately above a Header, and clean up any accidental "# " prefix added by Gemini
+            rawMd = rawMd.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_-]+[ \t]*)+)\n(#\s+.*)$/gm, '$2\n$1');
             
             // Subtly style inline #tags
             rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
