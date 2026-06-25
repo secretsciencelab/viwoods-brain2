@@ -667,6 +667,7 @@ const app = createApp({
             allTags,
             relatedNotes,
             showGraph,
+            showMobileMenu,
             selectedNote,
             selectNote,
             parsedMarkdown,
