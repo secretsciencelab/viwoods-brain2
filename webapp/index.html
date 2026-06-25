@@ -74,19 +74,12 @@
         <main>
             <div class="sidebar">
                 
-                <div v-if="searchQuery || selectedTag || selectedDate" class="active-filter-indicator">
-                    <span>Filtering by: <strong>{{ selectedTag || selectedDate || searchQuery }}</strong></span>
-                    <button @click="searchQuery = ''; selectedTag = null; selectedDate = null; selectedNote = null;" class="icon-btn clear-filter-btn" title="Clear Filter">✕</button>
+                <div v-if="searchQuery || selectedDate" class="active-filter-indicator">
+                    <span>Filtering by: <strong>{{ selectedDate || searchQuery }}</strong></span>
+                    <button @click="searchQuery = ''; selectedDate = null; selectedNote = null;" class="icon-btn clear-filter-btn" title="Clear Filter">✕</button>
                 </div>
 
-                <div v-if="allTags.length > 0" class="tags-panel">
-                    <div class="tag-list">
-                        <span class="tag" :class="{ active: selectedTag === null }" @click="selectedTag = null; selectedDate = null">All</span>
-                        <span v-for="tag in allTags" :key="tag" class="tag" :class="{ active: selectedTag === tag }" @click="selectedTag = tag; selectedDate = null">
-                            {{ tag }}
-                        </span>
-                    </div>
-                </div>
+                <!-- Tags have been removed from the left sidebar based on user feedback -->
                 
                 <div v-if="isLoading" class="sidebar-loader">
                     <div class="spinner"></div>
