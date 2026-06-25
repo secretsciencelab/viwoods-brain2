@@ -578,6 +578,19 @@ const app = createApp({
             
             let html = marked.parse(rawMd);
             
+            // Post-process HTML to wrap pages and inject page numbers
+            let pageCounter = 1;
+            html = html.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
+                let wrapped = `
+                    <div class="page-block" data-page-id="${pageId}">
+                        <div class="page-number-indicator">Page ${pageCounter}</div>
+                        ${content}
+                    </div>
+                `;
+                pageCounter++;
+                return wrapped;
+            });
+            
             // Post-process HTML to convert timestamp blockquotes into beautiful badges
             html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, 
                 '<div class="page-timestamp"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Last updated: $1</div>'
@@ -595,6 +608,7 @@ const app = createApp({
 
         // Lightbox Logic
         const lightboxImage = ref(null);
+        const reversePageOrder = ref(false);
         
         const closeLightbox = () => {
             lightboxImage.value = null;
@@ -755,6 +769,7 @@ const app = createApp({
             parsedMarkdown,
             initGoogleAuth,
             lightboxImage,
+            reversePageOrder,
             closeLightbox,
             handleMarkdownClick,
             documentOutline,

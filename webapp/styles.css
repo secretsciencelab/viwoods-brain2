@@ -427,8 +427,76 @@ main {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-top: 12px;
+    margin-top: 24px;
     margin-bottom: 12px;
+}
+
+/* Page Blocks & Ordering */
+.markdown-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.markdown-body.reverse-order {
+    flex-direction: column-reverse;
+}
+
+.page-block {
+    position: relative;
+    padding: 24px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.page-block:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.page-number-indicator {
+    position: absolute;
+    top: -12px;
+    right: 0;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.page-block:first-child .page-number-indicator {
+    top: 0;
+}
+
+/* Controls */
+.note-view:not(:has(.page-block:nth-child(2))) .note-controls {
+    display: none;
+}
+
+.note-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.toggle-control input {
+    accent-color: var(--primary-color);
 }
 
 .markdown-body p {

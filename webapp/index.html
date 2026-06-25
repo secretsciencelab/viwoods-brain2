@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=21">
+    <link rel="stylesheet" href="styles.css?v=22">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -98,7 +98,13 @@
                     <p>Decrypting Notebook...</p>
                 </div>
                 <div v-else-if="selectedNote" class="note-view">
-                    <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
+                    <div class="note-controls">
+                        <label class="toggle-control">
+                            <input type="checkbox" v-model="reversePageOrder">
+                            <span class="toggle-label">Most recent first (Reverse pages)</span>
+                        </label>
+                    </div>
+                    <div class="markdown-body" :class="{ 'reverse-order': reversePageOrder }" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
                     
                     <div v-if="relatedNotes.length > 0" class="backlinks-panel">
                         <h3 style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.2rem;">sell</span> Related Notes</h3>
@@ -180,6 +186,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=18"></script>
+    <script src="app.js?v=22"></script>
 </body>
 </html>
