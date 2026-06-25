@@ -136,11 +136,26 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 note_list = json.load(f)
             for page in note_list:
                 page_id = page.get('pageId', page.get('id'))
+                image_names = [f"{page_id}.png", f"{page_id}.jpg"]
+                
+                # Check for inserted layout images in V1
+                layout_img_file = f"{note_name}_{page_id}_LayoutImage.json"
+                if layout_img_file in z.namelist():
+                    try:
+                        with z.open(layout_img_file) as img_f:
+                            layouts = json.load(img_f)
+                            for lay in layouts:
+                                if 'imgUrl' in lay:
+                                    img_filename = lay['imgUrl'].split('/')[-1]
+                                    image_names.append(img_filename)
+                    except Exception as e:
+                        print(f"Error parsing layout image for V1: {e}")
+                
                 pages.append({
                     'id': page_id,
                     'lastModifiedTime': page.get('lastModifiedTime'),
-                    'image_names': [f"{page_id}.png", f"{page_id}.jpg"],
-                    'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", f"{page_id}_LayoutImage.json"]
+                    'image_names': image_names,
+                    'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", layout_img_file]
                 })
         elif page_list_file:
             with z.open(page_list_file) as f:
@@ -204,95 +219,93 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_markdown = get_page_text_from_md(existing_md_content, page_id)
             else:
                 print(f"Page {page_id} changed! OCRing with Gemini...")
-                image_file = None
+                valid_image_bytes = []
+                img_path = None
+                
                 for img_name in p['image_names']:
                     match = next((f for f in z.namelist() if f.endswith(img_name)), None)
                     if match:
-                        image_file = match
-                        break
-                
-                if image_file:
-                    img_path = f"/tmp/{os.path.basename(image_file)}"
-                    
-                    # Extract the nested file to /tmp/
-                    with z.open(image_file) as source, open(img_path, "wb") as target:
-                        target.write(source.read())
+                        img_path = f"/tmp/{os.path.basename(match)}"
                         
-                    # Flatten image onto white background if transparent
-                    is_blank = False
-                    try:
-                        from PIL import Image, ImageOps
-                        with Image.open(img_path) as img:
-                            if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
-                                if img.mode == 'P':
-                                    img = img.convert('RGBA')
-                                
-                                alpha = img.split()[-1]
-                                if alpha.getextrema() == (0, 0):
-                                    is_blank = True
-                                else:
-                                    # Correctly flatten onto white background
-                                    background = Image.new('RGB', img.size, (255, 255, 255))
-                                    background.paste(img, mask=alpha)
+                        # Extract the nested file to /tmp/
+                        with z.open(match) as source, open(img_path, "wb") as target:
+                            target.write(source.read())
+                            
+                        # Flatten image onto white background if transparent
+                        is_blank = False
+                        try:
+                            from PIL import Image, ImageOps
+                            with Image.open(img_path) as img:
+                                if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+                                    if img.mode == 'P':
+                                        img = img.convert('RGBA')
                                     
-                                    # If the flattened image is entirely white, the strokes were white (dark mode)!
-                                    if background.convert('L').getextrema() == (255, 255):
-                                        # Flatten onto a black background instead so white strokes are visible
-                                        background = Image.new('RGB', img.size, (0, 0, 0))
+                                    alpha = img.split()[-1]
+                                    if alpha.getextrema() == (0, 0):
+                                        is_blank = True
+                                    else:
+                                        # Correctly flatten onto white background
+                                        background = Image.new('RGB', img.size, (255, 255, 255))
                                         background.paste(img, mask=alpha)
                                         
-                                    background.save(img_path, 'PNG')
-                                    
-                            elif img.mode != 'RGB':
-                                img = img.convert('RGB')
-                                img.save(img_path, 'PNG')
-                                if img.convert('L').getextrema() == (255, 255):
-                                    is_blank = True
-                    except ImportError:
-                        print("Pillow not installed, skipping transparency flattening.")
-                    except Exception as e:
-                        print(f"Error processing image transparency: {e}")
-                    
-                    # Read the raw image bytes to send inline (bypassing the slow File API)
-                    with open(img_path, "rb") as img_file:
-                        image_bytes = img_file.read()
-                        
-                    if is_blank:
-                        print(f"Page {page_id} is completely blank. Skipping Gemini OCR.")
-                        page_markdown = ""
-                    elif is_daily:
-                        print(f"Page {page_id} is a Daily note. Skipping Gemini OCR as requested.")
-                        page_markdown = ""
-                    else:
-                        try:
-                            from google.genai import types
-                            response = client.models.generate_content(
-                                model="gemini-2.5-flash",
-                                contents=[
-                                    types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
-                                    prompt
-                                ]
-                            )
-                            if response.text:
-                                if p.get('lastModifiedTime'):
-                                    dt = datetime.datetime.fromtimestamp(p['lastModifiedTime'] / 1000.0)
-                                    timestamp = dt.strftime("%B %d, %Y at %I:%M %p")
-                                else:
-                                    timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
-                                page_markdown = f"> *Last updated: {timestamp}*\n\n" + response.text.strip()
-                            else:
-                                page_markdown = "[No text generated or response blocked by safety filters]"
+                                        # If the flattened image is entirely white, the strokes were white (dark mode)!
+                                        if background.convert('L').getextrema() == (255, 255):
+                                            # Flatten onto a black background instead so white strokes are visible
+                                            background = Image.new('RGB', img.size, (0, 0, 0))
+                                            background.paste(img, mask=alpha)
+                                            
+                                        background.save(img_path, 'PNG')
+                                        
+                                elif img.mode != 'RGB':
+                                    img = img.convert('RGB')
+                                    img.save(img_path, 'PNG')
+                                    if img.convert('L').getextrema() == (255, 255):
+                                        is_blank = True
+                        except ImportError:
+                            print("Pillow not installed, skipping transparency flattening.")
                         except Exception as e:
-                            print(f"Gemini API Error for page {page_id}: {e}")
-                            page_markdown = "[Error communicating with Gemini API]"
+                            print(f"Error processing image transparency: {e}")
                         
-                    if service and attachments_folder_id:
-                        upload_image_to_drive(service, img_path, attachments_folder_id)
-                        page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(image_file)})\n\n" + page_markdown
-                        
-                    os.remove(img_path)
+                        if not is_blank:
+                            # Read the raw image bytes to send inline (bypassing the slow File API)
+                            with open(img_path, "rb") as img_file:
+                                valid_image_bytes.append(img_file.read())
+                                
+                if not valid_image_bytes:
+                    print(f"Page {page_id} is completely blank. Skipping Gemini OCR.")
+                    page_markdown = ""
+                elif is_daily:
+                    print(f"Page {page_id} is a Daily note. Skipping Gemini OCR as requested.")
+                    page_markdown = ""
                 else:
-                    page_markdown = f"[Warning: Could not find image for page {page_id} in the .note file]\n\n" + page_markdown
+                    try:
+                        from google.genai import types
+                        contents = [types.Part.from_bytes(data=b, mime_type="image/png") for b in valid_image_bytes]
+                        contents.append(prompt)
+                        
+                        response = client.models.generate_content(
+                            model="gemini-2.5-flash",
+                            contents=contents
+                        )
+                        if response.text:
+                            if p.get('lastModifiedTime'):
+                                dt = datetime.datetime.fromtimestamp(p['lastModifiedTime'] / 1000.0)
+                                timestamp = dt.strftime("%B %d, %Y at %I:%M %p")
+                            else:
+                                timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
+                            page_markdown = f"> *Last updated: {timestamp}*\n\n" + response.text.strip()
+                        else:
+                            page_markdown = "[No text generated or response blocked by safety filters]"
+                    except Exception as e:
+                        print(f"Gemini API Error for page {page_id}: {e}")
+                        page_markdown = "[Error communicating with Gemini API]"
+                    
+                if service and attachments_folder_id and img_path:
+                    upload_image_to_drive(service, img_path, attachments_folder_id)
+                    page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(img_path)})\n\n" + page_markdown
+                    
+                if img_path and os.path.exists(img_path):
+                    os.remove(img_path)
             
             final_markdown += f"<!-- PAGE_{page_id}_START -->\n{page_markdown}\n<!-- PAGE_{page_id}_END -->\n\n"
 
