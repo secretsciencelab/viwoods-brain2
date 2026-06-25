@@ -334,6 +334,11 @@ def sync_drive_notes(request):
             processed_count = 0
             
             for doc in docs_to_process:
+                clean_note_name = doc["name"].replace(".note", "")
+                if "Daily" in doc.get("folder_path", "") and clean_note_name.startswith("day_"):
+                    print(f"Skipping daily note entirely: {doc['name']}")
+                    continue
+
                 expected_md_name = doc["name"].replace(".note", ".md")
                 expected_md_path = doc["folder_path"] + "/" + expected_md_name
                     
