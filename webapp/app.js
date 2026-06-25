@@ -449,19 +449,25 @@ const app = createApp({
                 
                 // 3. Get all images in that folder
                 let q3 = encodeURIComponent(`'${specificAttFolderId}' in parents and trashed=false`);
-                let res3 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q3}&fields=files(id,name)`, { headers: { Authorization: `Bearer ${accessToken}` } });
+                let res3 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q3}&fields=files(id,name,thumbnailLink)`, { headers: { Authorization: `Bearer ${accessToken}` } });
                 let data3 = await res3.json();
                 
-                // 4. Download each image as a Blob and create ObjectURL
+                // 4. Use Google Drive's fast thumbnail links instead of downloading massive blobs
                 for (let file of data3.files) {
-                    fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    })
-                    .then(r => r.blob())
-                    .then(blob => {
-                        // Vue's reactivity will instantly update the computed markdown!
-                        imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
-                    });
+                    if (file.thumbnailLink) {
+                        // Upgrade the default s220 thumbnail to s800 for crisp but lightweight viewing
+                        let fastImageUrl = file.thumbnailLink.replace(/=s\d+$/, '=s800');
+                        imageBlobUrls.value[file.name] = fastImageUrl;
+                    } else {
+                        // Fallback to media blob if thumbnail is unavailable
+                        fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        })
+                        .then(r => r.blob())
+                        .then(blob => {
+                            imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
+                        });
+                    }
                 }
             } catch (err) {
                 console.error("Error loading images:", err);
