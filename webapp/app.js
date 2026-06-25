@@ -545,6 +545,12 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
+            // Subtly style inline #tags
+            rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
+                // Ensure it's not a markdown heading by checking if there's a space after the #
+                return `${space}<span class="inline-tag">${tag}</span>`;
+            });
+            
             let html = marked.parse(rawMd);
             
             // Post-process HTML to convert timestamp blockquotes into beautiful badges
