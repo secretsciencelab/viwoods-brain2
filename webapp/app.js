@@ -61,11 +61,16 @@ const app = createApp({
             return outline;
         });
 
+        const getLocalDateStr = (dateObj) => {
+            const d = new Date(dateObj);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+
         const dailyActivity = computed(() => {
             const counts = {};
             notes.value.forEach(note => {
                 if (note.modifiedTime) {
-                    const dateStr = note.modifiedTime.substring(0, 10);
+                    const dateStr = getLocalDateStr(note.modifiedTime);
                     counts[dateStr] = (counts[dateStr] || 0) + 1;
                 }
             });
@@ -78,7 +83,7 @@ const app = createApp({
             for (let i = 30; i >= 0; i--) { // 30 days of activity
                 const d = new Date(today);
                 d.setDate(today.getDate() - i);
-                const dateStr = d.toISOString().substring(0, 10);
+                const dateStr = getLocalDateStr(d);
                 days.push({
                     date: dateStr,
                     count: dailyActivity.value[dateStr] || 0
@@ -359,13 +364,19 @@ const app = createApp({
                             matches = false;
                         }
                     }
+                    if (selectedDate.value) {
+                        const note = notes.value.find(n => n.id === node.id);
+                        if (!note || !note.modifiedTime || getLocalDateStr(note.modifiedTime) !== selectedDate.value) {
+                            matches = false;
+                        }
+                    }
                     return matches;
                 }
                 
                 if (node.children) {
                     node.children = node.children.filter(filterNode);
                     // Automatically expand folders if searching
-                    if (searchQuery.value || selectedTag.value) {
+                    if (searchQuery.value || selectedTag.value || selectedDate.value) {
                         node.expanded = true;
                     }
                     return node.children.length > 0;
