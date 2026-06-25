@@ -153,6 +153,26 @@ header h1::before {
     gap: 8px;
 }
 
+.mobile-actions .icon-btn,
+.mobile-actions .connect-btn,
+.mobile-actions .status-badge {
+    width: 100%;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+}
+
+.mobile-search {
+    width: 100%;
+}
+
+.mobile-search .search-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .mobile-menu-btn {
     background: none;
     border: none;
