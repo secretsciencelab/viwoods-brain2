@@ -227,14 +227,22 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                                 if img.mode == 'P':
                                     img = img.convert('RGBA')
                                 
-                                # Correctly flatten onto white background
-                                background = Image.new('RGB', img.size, (255, 255, 255))
-                                background.paste(img, mask=img.split()[-1])
-                                background.save(img_path, 'PNG')
-                                
-                                # Check if blank
-                                if background.convert('L').getextrema() == (255, 255):
+                                alpha = img.split()[-1]
+                                if alpha.getextrema() == (0, 0):
                                     is_blank = True
+                                else:
+                                    # Correctly flatten onto white background
+                                    background = Image.new('RGB', img.size, (255, 255, 255))
+                                    background.paste(img, mask=alpha)
+                                    
+                                    # If the flattened image is entirely white, the strokes were white (dark mode)!
+                                    if background.convert('L').getextrema() == (255, 255):
+                                        # Flatten onto a black background instead so white strokes are visible
+                                        background = Image.new('RGB', img.size, (0, 0, 0))
+                                        background.paste(img, mask=alpha)
+                                        
+                                    background.save(img_path, 'PNG')
+                                    
                             elif img.mode != 'RGB':
                                 img = img.convert('RGB')
                                 img.save(img_path, 'PNG')
