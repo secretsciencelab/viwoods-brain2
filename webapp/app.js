@@ -530,8 +530,8 @@ const app = createApp({
             // Extract tags and move them to the bottom of their respective page block
             rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
                 let tags = [];
-                // Extract lines that consist purely of tags
-                content = content.replace(/^((?:#[a-zA-Z0-9_-]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
+                // Extract lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
+                content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_-]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
                     tags.push(tagLine.trim());
                     return ''; 
                 });
