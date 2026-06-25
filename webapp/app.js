@@ -535,19 +535,34 @@ const app = createApp({
                     tags.push(tagLine.trim());
                     return ''; 
                 });
+                // Enforce strict H1 rule: Only allowed if it's the very first line of the actual note content.
+                let lines = content.split(/\r?\n/);
+                let ocrStarted = false;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+                    if (!ocrStarted) {
+                        // Skip empty lines, images, and the auto-generated timestamp blockquote
+                        if (line.trim() === '' || line.startsWith('![') || line.startsWith('>')) {
+                            continue;
+                        }
+                        ocrStarted = true;
+                        // If the very first line of text is an H1, allow it
+                        if (line.startsWith('# ')) {
+                            continue; 
+                        }
+                    }
+                    
+                    // Once OCR has started, any H1 encountered must be demoted to H2
+                    if (ocrStarted && line.startsWith('# ')) {
+                        lines[i] = '## ' + line.substring(2);
+                    }
+                }
+                content = lines.join('\n');
+                
                 if (tags.length > 0) {
                     content += `\n\n<div class="tags-container">\n\n${tags.join(' ')}\n\n</div>\n`;
                 }
-                
-                // Ensure only ONE H1 heading exists per page. Demote subsequent H1s to H2s.
-                let h1Count = 0;
-                content = content.replace(/^#\s+(.*)$/gm, (m, headingText) => {
-                    h1Count++;
-                    if (h1Count > 1) {
-                        return `## ${headingText}`;
-                    }
-                    return m;
-                });
                 
                 return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
             });
