@@ -612,7 +612,7 @@ const app = createApp({
                     from: t1,
                     to: t2,
                     color: { color: '#38bdf8', opacity: Math.min(0.5 + (weight * 0.15), 1.0) },
-                    value: weight * 2,
+                    value: Math.max(0.5, weight * 0.5),
                     title: `Co-occur in ${weight} notes`
                 });
             });
