@@ -196,34 +196,13 @@ const app = createApp({
         };
 
         const extractTags = (content) => {
-            if (!content) return { explicit: [], all: [] };
-            const explicitTags = content.match(/#[\w-]+/g) || [];
+            if (!content) return { all: [] };
             
-            const tags = [...explicitTags];
-            const headings = content.match(/^#{1,6}\s+(.+)$/gm) || [];
-            
-            headings.forEach(h => {
-                let rawHeading = h.replace(/^#{1,6}\s+/, '').trim();
-                
-                // 1. Strip dates (e.g., 6/16, 12-24, 2024/06/16)
-                rawHeading = rawHeading.replace(/\b\d{1,4}[\/-]\d{1,2}(?:[\/-]\d{1,4})?\b/g, ' ').trim();
-                
-                // 2. Strip leading articles (The, A, An)
-                rawHeading = rawHeading.replace(/^(the|a|an)\s+/i, '');
-                
-                // 3. Tokenize into words
-                let words = rawHeading.toLowerCase().split(/[^a-z0-9]+/);
-                words = words.filter(w => w.length > 0);
-                
-                // 4. Length check: concise headings (1 to 4 words)
-                // We no longer blindly stem plurals or destroy valid prepositions like 'to'.
-                if (words.length > 0 && words.length <= 4) {
-                    tags.push('#' + words.join('-'));
-                }
-            });
+            // Preprocess content to catch spaced tags on their own line (e.g. "# GAMING")
+            const normalized = content.replace(/(^|\n)#{1,3}\s+([a-zA-Z0-9_-]+)\s*(\n|$)/g, '$1#$2$3');
+            const tags = normalized.match(/#[a-zA-Z0-9_-]+/g) || [];
             
             return {
-                explicit: [...new Set(explicitTags.map(t => t.toLowerCase()))],
                 all: [...new Set(tags.map(t => t.toLowerCase()))]
             };
         };
@@ -544,6 +523,10 @@ const app = createApp({
             rawMd = rawMd.replace(/\[\[(.*?)\]\]/g, (match, noteName) => {
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
+            
+            // Fix Gemini transcribing handwritten tags with a space (e.g. "# GAMING" instead of "#GAMING")
+            // If a line is exactly "# Word" or "## Word", convert it back to a tag.
+            rawMd = rawMd.replace(/(^|\n)#{1,3}\s+([a-zA-Z0-9_-]+)\s*(\n|$)/g, '$1#$2$3');
             
             // Subtly style inline #tags
             rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
