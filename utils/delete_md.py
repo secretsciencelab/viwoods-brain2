@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'cloud_function'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cloud_function'))
 from main import get_drive_service, get_files_in_folder
 
 service = get_drive_service()
