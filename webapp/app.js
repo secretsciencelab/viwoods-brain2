@@ -527,8 +527,19 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
-            // Swap Tags and Headers if Tags are immediately above a Header, and clean up any accidental "# " prefix added by Gemini
-            rawMd = rawMd.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_-]+[ \t]*)+)\r?\n(#\s+.*)$/gm, '$2\n$1');
+            // Extract tags and move them to the bottom of their respective page block
+            rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
+                let tags = [];
+                // Extract lines that consist purely of tags
+                content = content.replace(/^((?:#[a-zA-Z0-9_-]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
+                    tags.push(tagLine.trim());
+                    return ''; 
+                });
+                if (tags.length > 0) {
+                    content += `\n\n<div class="tags-container">\n\n${tags.join(' ')}\n\n</div>\n`;
+                }
+                return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
+            });
             
             // Subtly style inline #tags
             rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {

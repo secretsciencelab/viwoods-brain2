@@ -761,7 +761,34 @@ main {
     background: var(--bg-surface-hover);
 }
 
-/* Append to styles.css */
+.inline-tag {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    margin-right: 4px;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.inline-tag:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-color);
+}
+
 /* Tree View Styles */
 .tree-root {
     overflow-y: auto;
