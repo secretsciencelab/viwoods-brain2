@@ -527,9 +527,7 @@ const app = createApp({
                 return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
             });
             
-            // Fix Gemini transcribing handwritten tags with a space (e.g. "# GAMING" instead of "#GAMING")
-            // If a line is exactly "# Word" or "## Word", convert it back to a tag.
-            rawMd = rawMd.replace(/(^|\n)#{1,3}\s+([a-zA-Z0-9_-]+)\s*(\n|$)/g, '$1#$2$3');
+
             
             // Subtly style inline #tags
             rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
