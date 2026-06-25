@@ -379,18 +379,19 @@ main {
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.04em;
-    margin-bottom: 32px;
+    margin-top: 0;
+    margin-bottom: 8px;
 }
 
 .markdown-body h2 {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-top: 48px;
-    margin-bottom: 16px;
+    margin-top: 16px;
+    margin-bottom: 8px;
     letter-spacing: -0.02em;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
+    padding-bottom: 4px;
 }
 
 .markdown-body p {
