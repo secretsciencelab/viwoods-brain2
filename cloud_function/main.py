@@ -131,6 +131,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_id = page.get('pageId', page.get('id'))
                 pages.append({
                     'id': page_id,
+                    'lastModifiedTime': page.get('lastModifiedTime'),
                     'image_names': [f"{page_id}.png", f"{page_id}.jpg"],
                     'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", f"{page_id}_LayoutImage.json"]
                 })
@@ -141,6 +142,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_id = page['id']
                 pages.append({
                     'id': page_id,
+                    'lastModifiedTime': page.get('lastModifiedTime'),
                     'image_names': [f"screenshotBmp_{page_id}.png", f"mainBmp_{page_id}.png"],
                     'hash_files': [f"screenshotBmp_{page_id}.png"]
                 })
@@ -224,7 +226,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                                 ]
                             )
                             if response.text:
-                                timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
+                                if p.get('lastModifiedTime'):
+                                    dt = datetime.datetime.fromtimestamp(p['lastModifiedTime'] / 1000.0)
+                                    timestamp = dt.strftime("%B %d, %Y at %I:%M %p")
+                                else:
+                                    timestamp = datetime.datetime.now().strftime("%B %d, %Y at %I:%M %p")
                                 page_markdown = f"> *Last updated: {timestamp}*\n\n" + response.text.strip()
                             else:
                                 page_markdown = "[No text generated or response blocked by safety filters]"
