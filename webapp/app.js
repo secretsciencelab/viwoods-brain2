@@ -3,9 +3,9 @@ const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vu
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
 const renderer = {
-    code(code, infostring, escaped) {
-        if ((infostring === 'xml' || infostring === 'svg') && code.trim().startsWith('<svg') && code.trim().endsWith('</svg>')) {
-            return `<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">${code}</div>`;
+    code(token) {
+        if (token && (token.lang === 'xml' || token.lang === 'svg') && token.text && token.text.trim().startsWith('<svg') && token.text.trim().endsWith('</svg>')) {
+            return `<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">${token.text}</div>`;
         }
         return false;
     }
