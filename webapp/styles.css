@@ -1487,6 +1487,7 @@ main {
     }
     header.header-hidden {
         margin-top: -64px;
+        position: relative;
     }
     header h1 {
         font-size: 1rem;
