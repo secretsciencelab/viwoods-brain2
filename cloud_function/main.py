@@ -521,7 +521,8 @@ def sync_drive_notes(request):
                     
                 def process_master_file(md):
                     try:
-                        local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
+                        local_service = get_drive_service()
+                        local_md = download_file(local_service, md['id'], md['name'], dest_folder="/tmp/compile")
                         with open(local_md, "r", encoding="utf-8") as f:
                             content = f.read()
                         
