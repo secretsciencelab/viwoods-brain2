@@ -363,6 +363,7 @@ main {
 
 /* Markdown Rendering */
 .note-view {
+    position: relative;
     max-width: 720px;
     margin: 48px auto 0;
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -474,11 +475,12 @@ main {
 }
 
 .note-controls {
+    position: absolute;
+    top: -44px;
+    right: 0;
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px dashed var(--border-color);
+    z-index: 10;
 }
 
 .sort-btn .material-symbols-outlined {
