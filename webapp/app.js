@@ -507,11 +507,14 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            if (selectedNote.value && selectedNote.value.name === 'TODO_Master.md') {
-                // The backend outputs `## Folder/Path/Note.md` or `## /Note.md`
-                // We convert these into internal links so they are clickable
+            if (selectedNote.value && selectedNote.value.name.endsWith('Master.md')) {
+                // The backend outputs `## Folder/Path/Note.md` (TODO) or `## Source: Folder/Path/Note.md`
+                // We convert these into internal links and reduce their size
+                rawMd = rawMd.replace(/^##\s+Source:\s*\/?(.*?\.md)\s*$/gm, (match, path) => {
+                    return `#### Source: [[${path}]]`;
+                });
                 rawMd = rawMd.replace(/^##\s+\/?(.*?\.md)\s*$/gm, (match, path) => {
-                    return `## [[${path}]]`;
+                    return `#### [[${path}]]`;
                 });
             }
 
