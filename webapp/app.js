@@ -17,6 +17,22 @@ const app = createApp({
             document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light');
         };
         
+        const isHeaderHidden = ref(false);
+        let lastScrollTop = 0;
+        const handleScroll = (e) => {
+            if (window.innerWidth > 768) {
+                if (isHeaderHidden.value) isHeaderHidden.value = false;
+                return;
+            }
+            const st = e.target.scrollTop;
+            if (st > lastScrollTop && st > 50) {
+                isHeaderHidden.value = true;
+            } else if (st < lastScrollTop) {
+                isHeaderHidden.value = false;
+            }
+            lastScrollTop = st;
+        };
+
         onMounted(() => {
             document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light');
         });
@@ -949,6 +965,8 @@ const app = createApp({
         };
 
         return {
+            isHeaderHidden,
+            handleScroll,
             clientId,
             clientIdInput,
             showSettings,

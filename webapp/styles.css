@@ -1483,6 +1483,10 @@ main {
     }
     header {
         padding: 0 16px;
+        transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    header.header-hidden {
+        margin-top: -64px;
     }
     header h1 {
         font-size: 1rem;

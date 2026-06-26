@@ -21,7 +21,7 @@
 </head>
 <body>
     <div id="app" v-cloak>
-        <header>
+        <header :class="{ 'header-hidden': isHeaderHidden }">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <h1 @click="selectedNote = null; searchQuery = ''; selectedTag = null;" style="cursor: pointer;" title="Go to Home">brain2</h1>
                 <div class="header-search desktop-only" v-if="!isLoading">
@@ -93,7 +93,7 @@
                 </div>
             </div>
             
-            <div class="content">
+            <div class="content" @scroll="handleScroll">
                 <div v-if="isContentLoading" class="content-loader">
                     <div class="spinner large"></div>
                     <p>Decrypting Notebook...</p>
