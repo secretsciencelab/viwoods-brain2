@@ -40,7 +40,8 @@ def download_file(service, file_id, file_name, dest_folder="/tmp"):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
     
-    file_path = os.path.join(dest_folder, file_name)
+    # Prepend file_id to guarantee unique local paths for files with identical names across different folders
+    file_path = os.path.join(dest_folder, f"{file_id}_{file_name}")
     request = service.files().get_media(fileId=file_id)
     fh = io.FileIO(file_path, "wb")
     downloader = MediaIoBaseDownload(fh, request)
