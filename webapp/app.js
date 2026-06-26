@@ -645,19 +645,20 @@ const app = createApp({
         const fetchWeather = async (lat = 37.7749, lon = -122.4194) => {
             try {
                 weatherError.value = null;
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1`);
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=2`);
                 const data = await res.json();
                 if (data.error) throw new Error(data.reason);
                 weatherData.value = data;
                 
-                // Parse hourly forecast (next 6 hours starting from current hour)
+                // Parse hourly forecast (next 24 hours starting from current hour)
                 const currentHour = new Date().getHours();
                 weatherHourly.value = [];
-                for (let i = currentHour; i < currentHour + 6 && i < 24; i++) {
+                // Open-Meteo returns 48 hours when forecast_days=2, index matches hour of the first day
+                for (let i = currentHour; i < currentHour + 24 && i < data.hourly.time.length; i++) {
                     const date = new Date(data.hourly.time[i]);
                     weatherHourly.value.push({
                         time: data.hourly.time[i],
-                        label: date.getHours() === currentHour ? 'Now' : date.toLocaleTimeString([], { hour: 'numeric' }),
+                        label: i === currentHour ? 'Now' : date.toLocaleTimeString([], { hour: 'numeric' }),
                         temp: data.hourly.temperature_2m[i],
                         rain: data.hourly.precipitation_probability[i],
                         code: data.hourly.weather_code[i]
