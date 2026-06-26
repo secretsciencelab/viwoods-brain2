@@ -343,7 +343,7 @@ main {
     justify-content: flex-start;
     height: 100%;
     animation: fadeIn 0.5s ease;
-    padding: 32px;
+    padding: 0;
     width: 100%;
 }
 
