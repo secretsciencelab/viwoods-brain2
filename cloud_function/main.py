@@ -518,26 +518,37 @@ def sync_drive_notes(request):
                 if not cat_data["files"]:
                     continue
                     
-                for md in cat_data["files"]:
-                    local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
+                def process_master_file(md):
                     try:
+                        local_md = download_file(service, md['id'], md['name'], dest_folder="/tmp/compile")
                         with open(local_md, "r", encoding="utf-8") as f:
                             content = f.read()
-                        # strip out the hashes block so the master file is clean
+                        
                         clean_content = re.sub(r'<!-- HASHES:\s*.*?\s*-->', '', content, flags=re.DOTALL)
                         clean_content = re.sub(r'<!-- PAGE_.*_START -->', '', clean_content)
                         clean_content = re.sub(r'<!-- PAGE_.*_END -->', '', clean_content)
                         
-                        cat_data["content"] += f"\n\n## Source: {md.get('folder_path', '')}/{md['name']}\n\n{clean_content.strip()}\n"
+                        folder_path = md.get('folder_path', '')
+                        name = md['name']
+                        chunk = f"\n\n## Source: {folder_path}/{name}\n\n{clean_content.strip()}\n"
                         
                         todos = [line.strip() for line in clean_content.split("\n") if line.strip().startswith("- [ ]")]
+                        todo_chunk = ""
                         if todos:
-                            todo_content += f"## {md.get('folder_path', '')}/{md['name']}\n"
-                            for t in todos:
-                                todo_content += f"{t}\n"
-                            todo_content += "\n"
+                            todo_chunk = f"## {folder_path}/{name}\n" + "\n".join(todos) + "\n\n"
+                            
+                        return chunk, todo_chunk
                     except Exception as e:
-                        pass
+                        return "", ""
+
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                    results = list(executor.map(process_master_file, cat_data["files"]))
+                    
+                for chunk, todo_chunk in results:
+                    cat_data["content"] += chunk
+                    if todo_chunk:
+                        todo_content += todo_chunk
                         
                 master_path = f"/tmp/{cat_data['filename']}"
                 with open(master_path, "w", encoding="utf-8") as f:
