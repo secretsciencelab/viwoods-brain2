@@ -405,7 +405,6 @@ const app = createApp({
 
         const selectNote = async (note, isSilent = false) => {
             selectedNote.value = note;
-            reversePageOrder.value = false;
             if (!isSilent) {
                 isContentLoading.value = true;
                 imageBlobUrls.value = {}; // Reset images for new note
@@ -619,7 +618,12 @@ const app = createApp({
 
         // Lightbox Logic
         const lightboxImage = ref(null);
-        const reversePageOrder = ref(false);
+        
+        // Reverse Page Order Logic
+        const reversePageOrder = ref(localStorage.getItem('reversePageOrder') === 'true');
+        watch(reversePageOrder, (newValue) => {
+            localStorage.setItem('reversePageOrder', newValue);
+        });
         
         const closeLightbox = () => {
             lightboxImage.value = null;
