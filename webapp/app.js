@@ -2,6 +2,16 @@ const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vu
 
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
+const renderer = {
+    code(code, infostring, escaped) {
+        if ((infostring === 'xml' || infostring === 'svg') && code.trim().startsWith('<svg') && code.trim().endsWith('</svg>')) {
+            return `<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">${code}</div>`;
+        }
+        return false;
+    }
+};
+marked.use({ renderer });
+
 const app = createApp({
     setup() {
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
