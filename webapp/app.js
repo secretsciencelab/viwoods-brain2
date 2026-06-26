@@ -10,7 +10,7 @@ const renderer = {
         return false;
     }
 };
-marked.use({ renderer });
+marked.use({ renderer, breaks: true, gfm: true });
 
 const app = createApp({
     setup() {
