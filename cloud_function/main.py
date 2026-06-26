@@ -532,7 +532,26 @@ def sync_drive_notes(request):
                         name = md['name']
                         chunk = f"\n\n## Source: {folder_path}/{name}\n\n{clean_content.strip()}\n"
                         
-                        todos = [line.strip() for line in clean_content.split("\n") if re.search(r'[-*]\s*\[\s*\]', line)]
+                        todos = []
+                        in_todo = False
+                        current_todo = []
+                        for line in clean_content.split("\n"):
+                            if re.search(r'\[\s*\]|☐', line):
+                                if in_todo:
+                                    todos.append(" ".join(current_todo))
+                                in_todo = True
+                                clean_line = line.strip()
+                                if clean_line.startswith("[") or clean_line.startswith("☐"):
+                                    clean_line = "- " + clean_line.replace("☐", "[ ]", 1)
+                                current_todo = [clean_line]
+                            elif in_todo:
+                                if not line.strip() or re.search(r'^\s*(?:[-*+]|\d+\.)\s+', line):
+                                    todos.append(" ".join(current_todo))
+                                    in_todo = False
+                                else:
+                                    current_todo.append(line.strip())
+                        if in_todo:
+                            todos.append(" ".join(current_todo))
                         todo_chunk = ""
                         if todos:
                             todo_chunk = f"## {folder_path}/{name}\n" + "\n".join(todos) + "\n\n"
