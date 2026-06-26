@@ -377,14 +377,13 @@ main {
 }
 
 .widgets-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 24px;
     width: 100%;
 }
 
 .widget {
-    flex: 0 0 450px;
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 20px;
@@ -1493,11 +1492,10 @@ main {
         padding: 24px;
     }
     .widget {
-        flex: 1 1 100%;
-        max-width: 100%;
         box-sizing: border-box;
     }
     .widgets-grid {
+        grid-template-columns: 1fr;
         gap: 16px;
     }
 }
