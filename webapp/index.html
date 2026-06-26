@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=26">
+    <link rel="stylesheet" href="styles.css?v=28">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -99,10 +99,9 @@
                 </div>
                 <div v-else-if="selectedNote" class="note-view">
                     <div class="note-controls">
-                        <label class="toggle-control">
-                            <input type="checkbox" v-model="reversePageOrder">
-                            <span class="toggle-label">Reverse order</span>
-                        </label>
+                        <button class="icon-btn sort-btn" :class="{ reversed: reversePageOrder }" @click="reversePageOrder = !reversePageOrder" :title="reversePageOrder ? 'Sort: Oldest first' : 'Sort: Newest first'">
+                            <span class="material-symbols-outlined">sort</span>
+                        </button>
                     </div>
                     <div class="markdown-body" v-html="parsedMarkdown" @click="handleMarkdownClick"></div>
                     
@@ -186,6 +185,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=27"></script>
+    <script src="app.js?v=28"></script>
 </body>
 </html>

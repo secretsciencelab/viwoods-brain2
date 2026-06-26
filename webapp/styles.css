@@ -481,18 +481,12 @@ main {
     border-bottom: 1px dashed var(--border-color);
 }
 
-.toggle-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-weight: 500;
+.sort-btn .material-symbols-outlined {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.toggle-control input {
-    accent-color: var(--primary-color);
+.sort-btn.reversed .material-symbols-outlined {
+    transform: scaleY(-1);
 }
 
 .markdown-body p {
