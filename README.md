@@ -25,6 +25,16 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
 - **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
 
+## 📝 Note-Taking System
+
+This repository is designed around a specific organizational workflow on the Viwoods e-ink tablet:
+
+- **Folders (Contexts):** Used to separate completely different lives (e.g., `Personal` vs `Work`).
+- **Notebooks (Topics):** Used to separate specific topics within a context (e.g., `Notes`, `Sketches`, `To-do`, `Fitness`). Notebooks are created for each calendar year and retired at the end of the year.
+- **Hashtags (Linking):** Inside each notebook, hashtags are written directly in the handwriting to link content to specific tags. For example, a `Fitness` notebook might contain `#running`, `#mtb`, and `#climbing` log entries.
+
+Using a combination of AI (Gemini OCR), cloud processing, and the powerful web app included in this repository, this raw handwriting is dynamically parsed and synthesized to generate a rich Knowledge Graph mapping all of your Folders, Notebooks, Notes, Pages, and Tags together.
+
 ## 🏗 Architecture
 
 1. **E-Ink Tablet:** Syncs raw handwritten `.note` files to a specific Google Drive folder (e.g., `Viwoods-Note`).
