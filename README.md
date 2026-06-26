@@ -76,6 +76,8 @@ gcloud beta run services logs tail secondbrain-gdrive --region us-central1 --pro
 This repository includes a front-end **Web Application** (`/webapp`) hosted on GitHub Pages that provides a beautiful, native-like interface to view and read your processed Markdown files directly from your browser.
 
 ### Features
+- **Interactive Dashboard:** Start your day with a customizable widget dashboard.
+- **Weather Commute Widget:** A live weather widget using Chart.js to visualize temperature and rain probability for the next 24 hours, leveraging Open-Meteo's free geocoding and forecasting API (supports zip codes or browser geolocation).
 - **Direct Google Drive Integration:** Connects securely to your Google Drive to load the transcribed `.md` files dynamically.
 - **Auto-Sync:** Silently polls Google Drive every 60 seconds in the background to hot-swap content without disrupting your reading or closing expanded folders.
 - **Persistent Sessions:** Your Google Drive token is securely cached in your browser's local storage so you don't have to log in on every page refresh.
