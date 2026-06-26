@@ -246,32 +246,62 @@ const app = createApp({
                     return;
                 }
                 const rootFolderId = data.files[0].id;
+                
+                // Preserve tree expansion state before fetching
+                const oldExpandedState = {};
+                const storeExpandedState = (node, path) => {
+                    if (node.isFolder) {
+                        oldExpandedState[path] = node.expanded;
+                        node.children.forEach(c => storeExpandedState(c, path + '/' + c.name));
+                    }
+                };
+                if (fileTree.value) storeExpandedState(fileTree.value, 'root');
 
+                const restoreExpandedState = (node, path) => {
+                    if (node.isFolder) {
+                        if (oldExpandedState[path] !== undefined) {
+                            node.expanded = oldExpandedState[path];
+                        }
+                        node.children.forEach(c => restoreExpandedState(c, path + '/' + c.name));
+                    }
+                };
+
+                const allNotesList = [];
+                
                 const fetchAllMarkdown = async (parentId, path = "") => {
-                    let collectedFiles = [];
                     let q = encodeURIComponent(`'${parentId}' in parents and (name contains '.md' or mimeType='application/vnd.google-apps.folder') and name != '_attachments' and trashed=false`);
-                    // IMPORTANT: Added 'parents' and 'modifiedTime' to fields
                     let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,parents,modifiedTime)&orderBy=name`, {
                         headers: { Authorization: `Bearer ${accessToken}` }
                     });
                     let result = await response.json();
                     
-                    if (!result.files) return collectedFiles;
+                    if (!result.files) return;
+
+                    let folderPromises = [];
 
                     for (let file of result.files) {
                         if (file.mimeType === 'application/vnd.google-apps.folder') {
                             const subFolderPath = path ? `${path}/${file.name}` : file.name;
-                            const subFiles = await fetchAllMarkdown(file.id, subFolderPath);
-                            collectedFiles = collectedFiles.concat(subFiles);
+                            folderPromises.push(fetchAllMarkdown(file.id, subFolderPath));
                         } else if (file.name.endsWith('.md') && (!file.name.toLowerCase().endsWith('master.md') || file.name === 'TODO_Master.md')) {
                             file.displayName = path ? `${path}/${file.name}` : file.name;
-                            collectedFiles.push(file);
+                            allNotesList.push(file);
                         }
                     }
-                    return collectedFiles;
+                    
+                    // Progressively update the UI as soon as files from this directory are found
+                    if (allNotesList.length > 0) {
+                        const updatedTree = buildTree(allNotesList);
+                        restoreExpandedState(updatedTree, 'root');
+                        fileTree.value = updatedTree;
+                        notes.value = [...allNotesList];
+                    }
+
+                    await Promise.all(folderPromises);
                 };
 
-                const allNotes = await fetchAllMarkdown(rootFolderId);
+                await fetchAllMarkdown(rootFolderId);
+                const allNotes = allNotesList;
                 
                 const fetchAllNoteContents = async (files) => {
                     const contents = {};
@@ -302,30 +332,9 @@ const app = createApp({
                     noteContents.value = contents;
                     allTags.value = Array.from(tagSet).sort();
                 };
-                // Background fetch
+                // Background fetch for contents
                 fetchAllNoteContents(allNotes);
-                
-                // Preserve tree expansion state
-                const oldExpandedState = {};
-                const storeExpandedState = (node, path) => {
-                    if (node.isFolder) {
-                        oldExpandedState[path] = node.expanded;
-                        node.children.forEach(c => storeExpandedState(c, path + '/' + c.name));
-                    }
-                };
-                if (fileTree.value) storeExpandedState(fileTree.value, 'root');
 
-                const newTree = buildTree(allNotes);
-
-                const restoreExpandedState = (node, path) => {
-                    if (node.isFolder) {
-                        if (oldExpandedState[path] !== undefined) {
-                            node.expanded = oldExpandedState[path];
-                        }
-                        node.children.forEach(c => restoreExpandedState(c, path + '/' + c.name));
-                    }
-                };
-                restoreExpandedState(newTree, 'root');
 
                 notes.value = allNotes;
                 fileTree.value = newTree;
