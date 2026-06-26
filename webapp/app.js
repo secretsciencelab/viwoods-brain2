@@ -747,6 +747,12 @@ const app = createApp({
             });
         };
 
+        watch(selectedNote, (newVal) => {
+            if (!newVal && weatherHourly.value.length > 0) {
+                nextTick(() => renderCharts());
+            }
+        });
+
         const updateWeatherZip = async () => {
             if (!weatherZipInput.value.trim()) return;
             try {
