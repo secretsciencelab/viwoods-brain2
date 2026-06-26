@@ -229,6 +229,21 @@ const app = createApp({
                 }
                 current.children.push({ ...f, name: parts[parts.length - 1], isFolder: false });
             });
+
+            // Recursively sort: folders first, then alphabetically
+            const sortTree = (node) => {
+                if (node.isFolder && node.children) {
+                    node.children.sort((a, b) => {
+                        if (a.isFolder === b.isFolder) {
+                            return a.name.localeCompare(b.name);
+                        }
+                        return a.isFolder ? -1 : 1;
+                    });
+                    node.children.forEach(sortTree);
+                }
+            };
+            sortTree(tree);
+
             return tree;
         };
 
