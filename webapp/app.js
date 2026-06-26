@@ -627,6 +627,10 @@ const app = createApp({
 
         // Dashboard Widgets Logic
         const weatherData = ref(null);
+        const weatherHourly = ref([]);
+        const weatherError = ref(null);
+        const weatherZipInput = ref(localStorage.getItem('weatherZip') || '');
+        
         const getWeatherIcon = (code) => {
             if (code === 0) return 'sunny';
             if (code <= 3) return 'partly_cloudy_day';
@@ -640,15 +644,54 @@ const app = createApp({
         
         const fetchWeather = async (lat = 37.7749, lon = -122.4194) => {
             try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph`);
-                weatherData.value = await res.json();
+                weatherError.value = null;
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.reason);
+                weatherData.value = data;
+                
+                // Parse hourly forecast (next 6 hours starting from current hour)
+                const currentHour = new Date().getHours();
+                weatherHourly.value = [];
+                for (let i = currentHour; i < currentHour + 6 && i < 24; i++) {
+                    const date = new Date(data.hourly.time[i]);
+                    weatherHourly.value.push({
+                        time: data.hourly.time[i],
+                        label: date.getHours() === currentHour ? 'Now' : date.toLocaleTimeString([], { hour: 'numeric' }),
+                        temp: data.hourly.temperature_2m[i],
+                        rain: data.hourly.precipitation_probability[i],
+                        code: data.hourly.weather_code[i]
+                    });
+                }
             } catch (e) {
                 console.error("Weather fetch failed", e);
+                weatherError.value = "Failed to load weather data.";
             }
         };
 
-        // Try to get user's location, fallback to SF
-        if (navigator.geolocation) {
+        const updateWeatherZip = async () => {
+            if (!weatherZipInput.value.trim()) return;
+            try {
+                weatherData.value = null;
+                weatherError.value = null;
+                localStorage.setItem('weatherZip', weatherZipInput.value.trim());
+                // Geocode zip
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherZipInput.value)}&count=1&language=en&format=json`);
+                const geo = await res.json();
+                if (geo.results && geo.results.length > 0) {
+                    fetchWeather(geo.results[0].latitude, geo.results[0].longitude);
+                } else {
+                    weatherError.value = "Location not found for this zip code.";
+                }
+            } catch (e) {
+                weatherError.value = "Error looking up location.";
+            }
+        };
+
+        // Try to get location
+        if (weatherZipInput.value) {
+            updateWeatherZip();
+        } else if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
                 () => fetchWeather() // fallback
@@ -825,6 +868,10 @@ const app = createApp({
             heatmapWeeks,
             isNewMonth,
             weatherData,
+            weatherHourly,
+            weatherError,
+            weatherZipInput,
+            updateWeatherZip,
             getWeatherIcon,
             getMonthName,
             getHeatmapClass,

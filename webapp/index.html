@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=30">
+    <link rel="stylesheet" href="styles.css?v=31">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -118,33 +118,46 @@
                     </div>
                 </div>
                 <div v-else class="dashboard">
-                    <div class="dashboard-header">
-                        <img src="wireframe_brain.png" alt="Wireframe Brain" class="empty-state-img">
-                        <h2>brain2</h2>
-                        <p>Select a notebook from the sidebar, or check your daily widgets below.</p>
-                    </div>
-                    
                     <div class="widgets-grid">
-                        <div v-if="weatherData" class="widget weather-widget">
+                        <div class="widget weather-widget" :class="{ loading: !weatherData && !weatherError }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined widget-icon">thermostat</span>
-                                <h3>Current Conditions</h3>
+                                <h3>Weather Forecast</h3>
+                                <div style="flex: 1"></div>
+                                <div class="weather-zip">
+                                    <input type="text" v-model="weatherZipInput" @keyup.enter="updateWeatherZip" placeholder="Zip code..." title="Enter zip code and press Enter">
+                                </div>
                             </div>
-                            <div class="weather-content">
+                            
+                            <div v-if="weatherError" class="weather-error">
+                                <span class="material-symbols-outlined">error</span>
+                                <span>{{ weatherError }}</span>
+                            </div>
+                            
+                            <div v-else-if="weatherData" class="weather-content">
                                 <div class="weather-main">
                                     <span class="material-symbols-outlined weather-main-icon">{{ getWeatherIcon(weatherData.current.weather_code) }}</span>
                                     <div class="weather-temp">{{ Math.round(weatherData.current.temperature_2m) }}°F</div>
-                                </div>
-                                <div class="weather-details">
-                                    <div class="weather-detail-item">
+                                    <div class="weather-detail-item" style="margin-left: 12px;" title="Wind Speed">
                                         <span class="material-symbols-outlined">air</span>
                                         <span>{{ weatherData.current.wind_speed_10m }} mph</span>
                                     </div>
                                 </div>
+                                
+                                <div class="hourly-forecast">
+                                    <div v-for="hour in weatherHourly" :key="hour.time" class="hourly-item">
+                                        <div class="hourly-time">{{ hour.label }}</div>
+                                        <span class="material-symbols-outlined hourly-icon">{{ getWeatherIcon(hour.code) }}</span>
+                                        <div class="hourly-temp">{{ Math.round(hour.temp) }}°</div>
+                                        <div class="hourly-rain" v-if="hour.rain > 0">
+                                            <span class="material-symbols-outlined">water_drop</span>
+                                            {{ hour.rain }}%
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div v-else class="widget weather-widget loading">
-                            <div class="spinner"></div>
+                            
+                            <div v-else class="spinner" style="margin: 40px auto;"></div>
                         </div>
                     </div>
                 </div>
@@ -211,6 +224,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=30"></script>
+    <script src="app.js?v=31"></script>
 </body>
 </html>
