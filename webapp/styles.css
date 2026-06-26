@@ -379,7 +379,7 @@ main {
 
 .widgets-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 400px);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
     gap: 24px;
     width: 100%;
 }
@@ -1470,7 +1470,8 @@ main {
         max-height: 40vh;
     }
     .content {
-        padding: 24px;
+        padding: 16px;
+        overflow-x: hidden;
     }
     .right-sidebar {
         display: none;
@@ -1492,6 +1493,7 @@ main {
     }
     .widget {
         box-sizing: border-box;
+        padding: 16px;
     }
     .widgets-grid {
         grid-template-columns: 1fr;
