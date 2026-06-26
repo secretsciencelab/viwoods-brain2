@@ -675,66 +675,76 @@ const app = createApp({
             }
         };
 
-        let tempChartInstance = null;
-        let rainChartInstance = null;
+        let comboChartInstance = null;
         
         const renderCharts = () => {
-            const tempCtx = document.getElementById('tempChart');
-            const rainCtx = document.getElementById('rainChart');
+            const comboCtx = document.getElementById('comboChart');
+            if (!comboCtx) return;
             
-            if (!tempCtx || !rainCtx) return;
-            
-            if (tempChartInstance) tempChartInstance.destroy();
-            if (rainChartInstance) rainChartInstance.destroy();
+            if (comboChartInstance) comboChartInstance.destroy();
             
             const labels = weatherHourly.value.map(h => h.label);
             const temps = weatherHourly.value.map(h => h.temp);
             const rains = weatherHourly.value.map(h => h.rain);
             
-            tempChartInstance = new Chart(tempCtx, {
-                type: 'line',
+            comboChartInstance = new Chart(comboCtx, {
                 data: {
                     labels,
-                    datasets: [{
-                        label: 'Temperature (°F)',
-                        data: temps,
-                        borderColor: '#fbbf24',
-                        backgroundColor: 'rgba(251, 191, 36, 0.2)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 2,
-                        pointHoverRadius: 5
-                    }]
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Temperature (°F)',
+                            data: temps,
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            yAxisID: 'yTemp'
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Rain (%)',
+                            data: rains,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4,
+                            yAxisID: 'yRain'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            labels: { color: '#9ca3af', font: { size: 10 }, usePointStyle: true, boxWidth: 6 }
+                        },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
                     scales: {
-                        x: { display: false },
-                        y: { display: true, ticks: { font: { size: 10 }, color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    }
-                }
-            });
-            
-            rainChartInstance = new Chart(rainCtx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Chance of Rain (%)',
-                        data: rains,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: true, ticks: { font: { size: 10 }, color: '#9ca3af', maxRotation: 45, minRotation: 45 }, grid: { display: false } },
-                        y: { min: 0, max: 100, display: true, ticks: { font: { size: 10 }, color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                        x: { 
+                            display: true, 
+                            ticks: { font: { size: 10 }, color: '#9ca3af', maxRotation: 45, minRotation: 45 }, 
+                            grid: { display: false } 
+                        },
+                        yTemp: { 
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { font: { size: 10 }, color: '#fbbf24' }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' } 
+                        },
+                        yRain: { 
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            ticks: { font: { size: 10 }, color: '#3b82f6' }, 
+                            grid: { display: false } 
+                        }
                     }
                 }
             });
