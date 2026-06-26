@@ -537,13 +537,14 @@ def sync_drive_notes(request):
                         in_todo = False
                         current_todo = []
                         for line in clean_content.split("\n"):
-                            if re.search(r'\[\s*\]|☐', line):
+                            if re.search(r'\[\s*\]|☐|\(\s*\)', line):
                                 if in_todo:
                                     todos.append(" ".join(current_todo))
                                 in_todo = True
                                 clean_line = line.strip()
-                                if clean_line.startswith("[") or clean_line.startswith("☐"):
-                                    clean_line = "- " + clean_line.replace("☐", "[ ]", 1)
+                                if re.match(r'^[☐\[\(]', clean_line):
+                                    clean_line = "- " + clean_line
+                                clean_line = re.sub(r'☐|\(\s*\)', '[ ]', clean_line, count=1)
                                 current_todo = [clean_line]
                             elif in_todo:
                                 if not line.strip() or re.search(r'^\s*(?:[-*+]|\d+\.)\s+', line):
@@ -559,7 +560,9 @@ def sync_drive_notes(request):
                             
                         return chunk, todo_chunk
                     except Exception as e:
-                        return "", ""
+                        import traceback
+                        tb = traceback.format_exc()
+                        return f"\n\n## ERROR PROCESSING {md['name']}\n\n```\n{tb}\n```\n\n", ""
 
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
