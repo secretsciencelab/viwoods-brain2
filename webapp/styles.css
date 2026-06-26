@@ -1483,11 +1483,14 @@ main {
     }
     header {
         padding: 0 16px;
-        transition: margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: height 0.3s ease, padding 0.3s ease, border-width 0.3s ease;
+        overflow: hidden;
     }
     header.header-hidden {
-        margin-top: -64px;
-        position: relative;
+        height: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-bottom-width: 0 !important;
     }
     header h1 {
         font-size: 1rem;
