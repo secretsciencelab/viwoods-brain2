@@ -324,15 +324,12 @@ main {
 .dashboard {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     height: 100%;
-    text-align: center;
     animation: fadeIn 0.5s ease;
-    padding: 24px;
+    padding: 32px;
     width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
 }
 
 .dashboard-header {
@@ -365,13 +362,14 @@ main {
 }
 
 .widgets-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 24px;
     width: 100%;
 }
 
 .widget {
+    flex: 0 0 450px;
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 20px;
