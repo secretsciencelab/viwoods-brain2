@@ -13,9 +13,10 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Marked for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=31">
+    <link rel="stylesheet" href="styles.css?v=33">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -144,15 +145,14 @@
                                     </div>
                                 </div>
                                 
-                                <div class="hourly-forecast">
-                                    <div v-for="hour in weatherHourly" :key="hour.time" class="hourly-item">
-                                        <div class="hourly-time">{{ hour.label }}</div>
-                                        <span class="material-symbols-outlined hourly-icon">{{ getWeatherIcon(hour.code) }}</span>
-                                        <div class="hourly-temp">{{ Math.round(hour.temp) }}°</div>
-                                        <div class="hourly-rain" v-if="hour.rain > 0">
-                                            <span class="material-symbols-outlined">water_drop</span>
-                                            {{ hour.rain }}%
-                                        </div>
+                                <div class="weather-charts">
+                                    <div class="chart-container">
+                                        <div class="chart-title"><span class="material-symbols-outlined">device_thermostat</span> Temperature</div>
+                                        <canvas id="tempChart"></canvas>
+                                    </div>
+                                    <div class="chart-container">
+                                        <div class="chart-title"><span class="material-symbols-outlined">water_drop</span> Chance of Rain</div>
+                                        <canvas id="rainChart"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -224,6 +224,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
 </body>
 </html>
