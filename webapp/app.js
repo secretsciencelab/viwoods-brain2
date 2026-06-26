@@ -518,7 +518,9 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            
+            // Completely hide legacy SVG code blocks
+            rawMd = rawMd.replace(/```(?:xml|svg|html)\n?[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?\n?```/gi, '');
+
             if (selectedNote.value && selectedNote.value.name.endsWith('Master.md')) {
                 // The backend outputs `## Folder/Path/Note.md` (TODO) or `## Source: Folder/Path/Note.md`
                 // We convert these into internal links and reduce their size
