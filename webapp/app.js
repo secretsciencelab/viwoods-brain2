@@ -335,9 +335,9 @@ const app = createApp({
                 // Background fetch for contents
                 fetchAllNoteContents(allNotes);
 
-
                 notes.value = allNotes;
-                fileTree.value = newTree;
+                fileTree.value = buildTree(allNotes);
+                restoreExpandedState(fileTree.value, 'root');
 
                 // Check if currently selected note got updated
                 if (isSilent && selectedNote.value) {
