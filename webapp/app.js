@@ -518,8 +518,6 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            // Unwrap SVG code blocks so they render as scalable graphics instead of code
-            rawMd = rawMd.replace(/```(?:xml|svg|html)[\s\S]*?(<svg[\s\S]*?<\/svg>)[\s\S]*?```/gi, '\n<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">\n$1\n</div>\n');
             
             if (selectedNote.value && selectedNote.value.name.endsWith('Master.md')) {
                 // The backend outputs `## Folder/Path/Note.md` (TODO) or `## Source: Folder/Path/Note.md`
