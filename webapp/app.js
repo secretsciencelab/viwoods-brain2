@@ -209,8 +209,8 @@ const app = createApp({
             if (!content) return { all: [] };
             
             // Preprocess content to catch spaced tags on their own line (e.g. "# GAMING")
-            const normalized = content.replace(/(^|\n)#{1,3}\s+([a-zA-Z0-9_-]+)\s*(\n|$)/g, '$1#$2$3');
-            const tags = normalized.match(/#[a-zA-Z0-9_-]+/g) || [];
+            const normalized = content.replace(/(^|\n)#{1,3}\s+([a-zA-Z0-9_\-\/]+)\s*(\n|$)/g, '$1#$2$3');
+            const tags = normalized.match(/#[a-zA-Z0-9_\-\/]+/g) || [];
             
             return {
                 all: [...new Set(tags.map(t => t.toLowerCase()))]
@@ -546,7 +546,7 @@ const app = createApp({
             rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
                 let tags = [];
                 // Extract lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
-                content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_-]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
+                content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
                     tags.push(tagLine.trim());
                     return ''; 
                 });
@@ -583,7 +583,7 @@ const app = createApp({
             });
             
             // Subtly style inline #tags
-            rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_-]+)/g, (match, space, tag) => {
+            rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_\-\/]+)/g, (match, space, tag) => {
                 // Ensure it's not a markdown heading by checking if there's a space after the #
                 return `${space}<span class="inline-tag">${tag}</span>`;
             });
