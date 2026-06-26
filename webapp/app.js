@@ -405,6 +405,7 @@ const app = createApp({
 
         const selectNote = async (note, isSilent = false) => {
             selectedNote.value = note;
+            reversePageOrder.value = false;
             if (!isSilent) {
                 isContentLoading.value = true;
                 imageBlobUrls.value = {}; // Reset images for new note
@@ -579,6 +580,7 @@ const app = createApp({
             
             // Post-process HTML to wrap pages and inject page numbers
             let pageCounter = 1;
+            let pages = [];
             html = html.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
                 let wrapped = `
                     <div class="page-block" data-page-id="${pageId}">
@@ -586,8 +588,18 @@ const app = createApp({
                         ${content}
                     </div>
                 `;
+                pages.push(wrapped);
                 pageCounter++;
-                return wrapped;
+                return `<!-- PAGE_PLACEHOLDER -->`;
+            });
+            
+            if (reversePageOrder.value) {
+                pages.reverse();
+            }
+            
+            let pageIndex = 0;
+            html = html.replace(/<!-- PAGE_PLACEHOLDER -->/g, () => {
+                return pages[pageIndex++];
             });
             
             // Post-process HTML to convert timestamp blockquotes into beautiful badges

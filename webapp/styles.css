@@ -437,10 +437,6 @@ main {
     flex-direction: column;
 }
 
-.markdown-body.reverse-order {
-    flex-direction: column-reverse;
-}
-
 .page-block {
     position: relative;
     padding: 24px 0;
