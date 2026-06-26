@@ -2,15 +2,7 @@ const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vu
 
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
-const renderer = {
-    code(token) {
-        if (token && (token.lang === 'xml' || token.lang === 'svg') && token.text && token.text.trim().startsWith('<svg') && token.text.trim().endsWith('</svg>')) {
-            return `<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">${token.text}</div>`;
-        }
-        return false;
-    }
-};
-marked.use({ renderer, breaks: true, gfm: true });
+marked.use({ breaks: true, gfm: true });
 
 const app = createApp({
     setup() {
@@ -518,7 +510,7 @@ const app = createApp({
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
             // Unwrap SVG code blocks so they render as scalable graphics instead of code
-            rawMd = rawMd.replace(/```(?:xml|svg|html)\n?([\s\S]*?<svg[\s\S]*?<\/svg>)\n?```/gi, '\n<div class="svg-container">\n$1\n</div>\n');
+            rawMd = rawMd.replace(/```(?:xml|svg|html)[\s\S]*?(<svg[\s\S]*?<\/svg>)[\s\S]*?```/gi, '\n<div class="svg-container" style="display: flex; justify-content: center; margin: 20px 0; max-width: 100%; overflow: hidden;">\n$1\n</div>\n');
             
             if (selectedNote.value && selectedNote.value.name.endsWith('Master.md')) {
                 // The backend outputs `## Folder/Path/Note.md` (TODO) or `## Source: Folder/Path/Note.md`
