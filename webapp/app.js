@@ -624,6 +624,38 @@ const app = createApp({
         watch(reversePageOrder, (newValue) => {
             localStorage.setItem('reversePageOrder', newValue);
         });
+
+        // Dashboard Widgets Logic
+        const weatherData = ref(null);
+        const getWeatherIcon = (code) => {
+            if (code === 0) return 'sunny';
+            if (code <= 3) return 'partly_cloudy_day';
+            if (code <= 48) return 'foggy';
+            if (code <= 67) return 'rainy';
+            if (code <= 77) return 'ac_unit'; // Snow
+            if (code <= 82) return 'rainy';
+            if (code <= 99) return 'thunderstorm';
+            return 'cloud';
+        };
+        
+        const fetchWeather = async (lat = 37.7749, lon = -122.4194) => {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+                weatherData.value = await res.json();
+            } catch (e) {
+                console.error("Weather fetch failed", e);
+            }
+        };
+
+        // Try to get user's location, fallback to SF
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+                () => fetchWeather() // fallback
+            );
+        } else {
+            fetchWeather();
+        }
         
         const closeLightbox = () => {
             lightboxImage.value = null;
@@ -792,6 +824,8 @@ const app = createApp({
             pastYearDays,
             heatmapWeeks,
             isNewMonth,
+            weatherData,
+            getWeatherIcon,
             getMonthName,
             getHeatmapClass,
             isDarkMode,
