@@ -147,6 +147,21 @@ header h1::before {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.page-block img, .svg-container svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 16px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.svg-container {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+}
+
 .mobile-actions {
     display: flex;
     flex-direction: column;
