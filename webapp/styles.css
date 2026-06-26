@@ -1492,4 +1492,12 @@ main {
         width: 90vw;
         padding: 24px;
     }
+    .widget {
+        flex: 1 1 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .widgets-grid {
+        gap: 16px;
+    }
 }
