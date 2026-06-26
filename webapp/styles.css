@@ -482,21 +482,6 @@ main {
     flex-direction: column;
 }
 
-.chart-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-}
-.chart-title .material-symbols-outlined {
-    font-size: 1rem;
-}
-
 .hourly-item {
     display: flex;
     flex-direction: column;

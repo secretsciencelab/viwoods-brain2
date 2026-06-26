@@ -717,10 +717,7 @@ const app = createApp({
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { 
-                            display: true,
-                            labels: { color: '#9ca3af', font: { size: 10 }, usePointStyle: true, boxWidth: 6 }
-                        },
+                        legend: { display: false },
                         tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
