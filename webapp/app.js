@@ -909,14 +909,17 @@ const app = createApp({
                         let tasksData = await tasksRes.json();
                         
                         if (tasksData.items && tasksData.items.length > 0) {
-                            groups.push({
-                                name: taskList.title,
-                                tasks: tasksData.items.map(t => ({
-                                    id: t.id,
-                                    title: t.title,
-                                    icon: 'check_circle'
-                                }))
-                            });
+                            const openTasks = tasksData.items.filter(t => t.status === 'needsAction');
+                            if (openTasks.length > 0) {
+                                groups.push({
+                                    name: taskList.title,
+                                    tasks: openTasks.map(t => ({
+                                        id: t.id,
+                                        title: t.title,
+                                        icon: 'check_circle'
+                                    }))
+                                });
+                            }
                         }
                     }
                     googleTasks.value = groups;
