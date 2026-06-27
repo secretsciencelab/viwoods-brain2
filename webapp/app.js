@@ -699,10 +699,22 @@ const app = createApp({
         // Lightbox Logic
         const lightboxImage = ref(null);
         
-        // Reverse Page Order Logic
-        const reversePageOrder = ref(localStorage.getItem('reversePageOrder') === 'true');
-        watch(reversePageOrder, (newValue) => {
-            localStorage.setItem('reversePageOrder', newValue);
+        // Reverse Page Order Logic per notebook
+        const notebookOrders = ref(JSON.parse(localStorage.getItem('notebookOrders') || '{}'));
+        watch(notebookOrders, (newVal) => {
+            localStorage.setItem('notebookOrders', JSON.stringify(newVal));
+        }, { deep: true });
+
+        const reversePageOrder = computed({
+            get: () => {
+                if (!selectedNote.value) return false;
+                return notebookOrders.value[selectedNote.value.id] || false;
+            },
+            set: (val) => {
+                if (selectedNote.value) {
+                    notebookOrders.value[selectedNote.value.id] = val;
+                }
+            }
         });
 
         // Dashboard Widgets Logic
