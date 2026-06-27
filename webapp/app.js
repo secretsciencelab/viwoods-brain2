@@ -1060,8 +1060,21 @@ const app = createApp({
                 // Sort combined items by date descending
                 allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
                 
-                // Take top 15
-                newsItems.value = allItems.slice(0, 15);
+                // Take top 25 overall so we have enough
+                const topItems = allItems.slice(0, 25);
+                
+                // Group by source
+                const grouped = {};
+                topItems.forEach(item => {
+                    const sourceName = item.source.replace(/^"|"$|Google News - /ig, '').trim();
+                    if (!grouped[sourceName]) {
+                        grouped[sourceName] = { source: sourceName, articles: [] };
+                    }
+                    grouped[sourceName].articles.push(item);
+                });
+                
+                // Convert to array
+                newsItems.value = Object.values(grouped);
             } catch (err) {
                 console.error("Failed to fetch news", err);
                 newsError.value = "Unable to load news feeds.";

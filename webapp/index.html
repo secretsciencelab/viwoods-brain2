@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=57">
+    <link rel="stylesheet" href="styles.css?v=58">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -219,12 +219,16 @@
                                 </div>
                                 <div v-else-if="newsError" class="news-error">{{ newsError }}</div>
                                 <div v-else-if="newsItems.length === 0" class="no-tasks">No news configured. Add topics in Settings!</div>
-                                <ul v-else class="news-list">
-                                    <li v-for="article in newsItems" :key="article.link" class="news-item">
-                                        <div class="news-source">{{ article.source }}</div>
-                                        <a :href="article.link" target="_blank" class="news-title">{{ article.title }}</a>
-                                    </li>
-                                </ul>
+                                <div v-else class="news-groups">
+                                    <div v-for="group in newsItems" :key="group.source" class="news-group">
+                                        <div class="news-source">{{ group.source }}</div>
+                                        <ul class="news-list">
+                                            <li v-for="article in group.articles" :key="article.link" class="news-item">
+                                                <a :href="article.link" target="_blank" class="news-title">{{ article.title }}</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -349,6 +353,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=57"></script>
+    <script src="app.js?v=58"></script>
 </body>
 </html>

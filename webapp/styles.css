@@ -936,19 +936,29 @@ main {
     font-size: 0.85rem;
     padding: 12px 0;
 }
+.news-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.news-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 .news-list {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 .news-item {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 6px 8px;
+    padding: 4px 8px;
     background: transparent;
     border-radius: 4px;
     border-left: 2px solid var(--border-color);
@@ -958,11 +968,12 @@ main {
     background: var(--bg-hover);
 }
 .news-source {
-    font-size: 0.65rem;
-    color: var(--accent-color);
+    font-size: 0.7rem;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 700;
+    margin-bottom: 2px;
 }
 .news-title {
     font-size: 0.85rem;
