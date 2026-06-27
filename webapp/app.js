@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
 
-const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
+const SCOPES = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/tasks.readonly";
 
 marked.use({ breaks: true, gfm: true });
 
@@ -883,7 +883,76 @@ const app = createApp({
         } else {
             fetchWeather();
         }
+
+        // Dashboard Tasks Logic
+        const handwrittenTasks = ref([]);
+        const googleTasks = ref([]);
+        const combinedTasks = computed(() => {
+            return [...googleTasks.value, ...handwrittenTasks.value];
+        });
+
+        const fetchGoogleTasks = async () => {
+            if (!isAuthenticated.value || !accessToken) return;
+            try {
+                // Get default task list (usually @default)
+                let res = await fetch(`https://tasks.googleapis.com/tasks/v1/users/@me/lists`, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                if (res.status === 401) return;
+                
+                let data = await res.json();
+                if (data.items && data.items.length > 0) {
+                    const taskListId = data.items[0].id;
+                    let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=false&maxResults=5`, {
+                        headers: { Authorization: `Bearer ${accessToken}` }
+                    });
+                    let tasksData = await tasksRes.json();
+                    
+                    if (tasksData.items) {
+                        googleTasks.value = tasksData.items.map(t => ({
+                            id: t.id,
+                            title: t.title,
+                            source: 'Google Tasks',
+                            icon: 'check_circle'
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch Google Tasks", e);
+            }
+        };
+
+        const extractHandwrittenTasks = () => {
+            const tasks = [];
+            let idCounter = 0;
+            // Iterate over all note contents
+            for (const [noteId, content] of Object.entries(noteContents.value)) {
+                if (!content) continue;
+                const lines = content.split('\n');
+                for (const line of lines) {
+                    if (line.trim().startsWith('- [ ] ')) {
+                        tasks.push({
+                            id: `hw_${idCounter++}`,
+                            title: line.replace(/^- \[ \] /, '').trim(),
+                            source: 'Handwritten Notes',
+                            icon: 'draw'
+                        });
+                    }
+                }
+            }
+            // Reverse so we see the newest first, or just slice top 5
+            handwrittenTasks.value = tasks.reverse().slice(0, 5); 
+        };
+
+        watch(noteContents, () => {
+            extractHandwrittenTasks();
+        }, { deep: true });
         
+        watch(isAuthenticated, (val) => {
+            if (val) {
+                fetchGoogleTasks();
+            }
+        });
         const closeLightbox = () => {
             lightboxImage.value = null;
         };
