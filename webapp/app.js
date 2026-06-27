@@ -1060,13 +1060,20 @@ const app = createApp({
                                 
                                 let redditSub = "";
                                 if (feedObj.url.includes("reddit.com/r/")) {
-                                    const match = feedObj.url.match(/reddit\.com\/r\/([^\/]+)/);
+                                    const match = feedObj.url.match(/reddit\.com\/r\/([^\/\.\?]+)/);
                                     if (match) redditSub = ` [r/${match[1]}]`;
                                 }
 
                                 data.items.forEach(item => {
                                     item.source = (data.feed.title || 'News');
-                                    item.title = decodeHtml(item.title || '') + redditSub;
+                                    let itemRedditSub = "";
+                                    if (item.link && item.link.includes("reddit.com/r/")) {
+                                        const match = item.link.match(/reddit\.com\/r\/([^\/\.\?]+)/);
+                                        if (match) itemRedditSub = ` [r/${match[1]}]`;
+                                    } else {
+                                        itemRedditSub = redditSub;
+                                    }
+                                    item.title = decodeHtml(item.title || '') + itemRedditSub;
                                     item.isCustom = feedObj.isCustom;
                                     allItems.push(item);
                                 });
