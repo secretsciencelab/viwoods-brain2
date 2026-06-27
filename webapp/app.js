@@ -960,7 +960,18 @@ const app = createApp({
             }
             
             // Only keep groups that actually have tasks
-            handwrittenTasks.value = groups.filter(g => g.tasks.length > 0); 
+            const filteredGroups = groups.filter(g => g.tasks.length > 0);
+            
+            // Sort to ensure 'TO DO' notebooks appear at the very top
+            filteredGroups.sort((a, b) => {
+                const aIsTodo = a.name.toLowerCase().includes('to do');
+                const bIsTodo = b.name.toLowerCase().includes('to do');
+                if (aIsTodo && !bIsTodo) return -1;
+                if (!aIsTodo && bIsTodo) return 1;
+                return 0; // maintain original relative order otherwise
+            });
+            
+            handwrittenTasks.value = filteredGroups; 
         };
 
         watch(noteContents, () => {
