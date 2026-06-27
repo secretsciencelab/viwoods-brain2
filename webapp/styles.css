@@ -497,19 +497,19 @@ main {
 
 /* Tasks Widget */
 .tasks-content {
-    margin-top: 16px;
+    margin-top: 12px;
     display: flex;
     flex-direction: column;
 }
 .tasks-groups {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 .task-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 .task-group-header {
     display: flex;
@@ -518,11 +518,11 @@ main {
     color: var(--text-secondary);
 }
 .task-group-header .material-symbols-outlined {
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 .task-group-header h4 {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -530,12 +530,12 @@ main {
 .task-subgroup {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
     margin-top: 4px;
     margin-left: 8px;
 }
 .task-subgroup-title {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -554,20 +554,23 @@ main {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 .task-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: var(--bg-base);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    gap: 8px;
+    padding: 4px 8px;
+    background: transparent;
+    border-radius: 4px;
+    border-left: 2px solid var(--border-color);
+}
+.task-item:hover {
+    background: var(--bg-hover);
 }
 .task-icon {
     color: var(--accent-color);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     flex-shrink: 0;
 }
 .task-details {
@@ -577,9 +580,9 @@ main {
     width: 100%;
 }
 .task-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 400;
     line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
