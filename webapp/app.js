@@ -1027,12 +1027,12 @@ const app = createApp({
             // Map topics to Google News RSS
             topics.forEach(topic => {
                 const encodedTopic = encodeURIComponent(topic);
-                rssUrls.push(`https://news.google.com/rss/search?q=${encodedTopic}&hl=en-US&gl=US&ceid=US:en`);
+                rssUrls.push({ url: `https://news.google.com/rss/search?q=${encodedTopic}&hl=en-US&gl=US&ceid=US:en`, isCustom: false });
             });
             
             // Add custom RSS
             customRss.forEach(url => {
-                if (url.startsWith('http')) rssUrls.push(url);
+                if (url.startsWith('http')) rssUrls.push({ url, isCustom: true });
             });
             
             if (rssUrls.length === 0) {
@@ -1045,8 +1045,8 @@ const app = createApp({
                 const allItems = [];
                 
                 // Fetch each RSS feed via rss2json
-                const promises = rssUrls.map(url => {
-                    const encodedUrl = encodeURIComponent(url);
+                const promises = rssUrls.map(feedObj => {
+                    const encodedUrl = encodeURIComponent(feedObj.url);
                     return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`)
                         .then(res => res.json())
                         .then(data => {
@@ -1057,14 +1057,22 @@ const app = createApp({
                                     txt.innerHTML = html;
                                     return txt.value;
                                 };
+                                
+                                let redditSub = "";
+                                if (feedObj.url.includes("reddit.com/r/")) {
+                                    const match = feedObj.url.match(/reddit\.com\/r\/([^\/]+)/);
+                                    if (match) redditSub = ` (r/${match[1]})`;
+                                }
+
                                 data.items.forEach(item => {
-                                    item.source = data.feed.title || 'News';
+                                    item.source = (data.feed.title || 'News') + redditSub;
                                     item.title = decodeHtml(item.title || '');
+                                    item.isCustom = feedObj.isCustom;
                                     allItems.push(item);
                                 });
                             }
                         })
-                        .catch(err => console.error("Error fetching RSS", url, err));
+                        .catch(err => console.error("Error fetching RSS", feedObj.url, err));
                 });
                 
                 await Promise.all(promises);
@@ -1080,13 +1088,19 @@ const app = createApp({
                 topItems.forEach(item => {
                     const sourceName = item.source.replace(/["']/g, '').replace(/\s*-\s*Google News/ig, '').trim();
                     if (!grouped[sourceName]) {
-                        grouped[sourceName] = { source: sourceName, articles: [] };
+                        grouped[sourceName] = { source: sourceName, articles: [], isCustom: item.isCustom };
                     }
                     grouped[sourceName].articles.push(item);
                 });
                 
-                // Convert to array
-                newsItems.value = Object.values(grouped);
+                // Convert to array and sort custom feeds first
+                const groupsArr = Object.values(grouped);
+                groupsArr.sort((a, b) => {
+                    if (a.isCustom && !b.isCustom) return -1;
+                    if (!a.isCustom && b.isCustom) return 1;
+                    return 0;
+                });
+                newsItems.value = groupsArr;
             } catch (err) {
                 console.error("Failed to fetch news", err);
                 newsError.value = "Unable to load news feeds.";
