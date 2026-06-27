@@ -894,7 +894,6 @@ const app = createApp({
         const fetchGoogleTasks = async () => {
             if (!isAuthenticated.value || !accessToken) return;
             try {
-                // Get default task list (usually @default)
                 let res = await fetch(`https://tasks.googleapis.com/tasks/v1/users/@me/lists`, {
                     headers: { Authorization: `Bearer ${accessToken}` }
                 });
@@ -903,7 +902,7 @@ const app = createApp({
                 let data = await res.json();
                 if (data.items && data.items.length > 0) {
                     const taskListId = data.items[0].id;
-                    let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=false&maxResults=5`, {
+                    let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=false&maxResults=100`, {
                         headers: { Authorization: `Bearer ${accessToken}` }
                     });
                     let tasksData = await tasksRes.json();
@@ -926,7 +925,6 @@ const app = createApp({
             const tasks = [];
             let idCounter = 0;
             
-            // Find TODO_Master.md
             const todoNote = notes.value.find(n => n.name === 'TODO_Master.md');
             if (!todoNote) return;
             
@@ -945,7 +943,7 @@ const app = createApp({
                 }
             }
             
-            handwrittenTasks.value = tasks.slice(0, 5); 
+            handwrittenTasks.value = tasks; 
         };
 
         watch(noteContents, () => {
