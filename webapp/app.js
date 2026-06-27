@@ -9,8 +9,11 @@ const app = createApp({
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
-        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": ""}'));
+        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": ""}'));
         if (widgetSettings.value.excludedLists === undefined) widgetSettings.value.excludedLists = "";
+        if (widgetSettings.value.showNews === undefined) widgetSettings.value.showNews = true;
+        if (widgetSettings.value.newsTopics === undefined) widgetSettings.value.newsTopics = "Technology, Artificial Intelligence";
+        if (widgetSettings.value.customRss === undefined) widgetSettings.value.customRss = "";
         
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
@@ -195,6 +198,9 @@ const app = createApp({
                 extractHandwrittenTasks();
             } else {
                 initGoogleAuth();
+            }
+            if (widgetSettings.value.showNews) {
+                fetchNews();
             }
         };
 
@@ -998,6 +1004,79 @@ const app = createApp({
             handwrittenTasks.value = filteredGroups; 
         };
 
+        const newsItems = ref([]);
+        const isNewsLoading = ref(false);
+        const newsError = ref('');
+
+        const fetchNews = async () => {
+            if (!widgetSettings.value.showNews) return;
+            isNewsLoading.value = true;
+            newsError.value = '';
+            
+            const topics = (widgetSettings.value.newsTopics || "").split(',').map(s => s.trim()).filter(s => s);
+            const customRss = (widgetSettings.value.customRss || "").split(',').map(s => s.trim()).filter(s => s);
+            
+            const rssUrls = [];
+            
+            // Map topics to Google News RSS
+            topics.forEach(topic => {
+                const encodedTopic = encodeURIComponent(topic);
+                rssUrls.push(`https://news.google.com/rss/search?q=${encodedTopic}&hl=en-US&gl=US&ceid=US:en`);
+            });
+            
+            // Add custom RSS
+            customRss.forEach(url => {
+                if (url.startsWith('http')) rssUrls.push(url);
+            });
+            
+            if (rssUrls.length === 0) {
+                isNewsLoading.value = false;
+                newsItems.value = [];
+                return;
+            }
+
+            try {
+                const allItems = [];
+                
+                // Fetch each RSS feed via rss2json
+                const promises = rssUrls.map(url => {
+                    const encodedUrl = encodeURIComponent(url);
+                    // Add a cache buster so we don't always hit rss2json's cache
+                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}&api_key=&order_dir=desc&count=5`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'ok' && data.items) {
+                                // Inject source title
+                                data.items.forEach(item => {
+                                    item.source = data.feed.title || 'News';
+                                    allItems.push(item);
+                                });
+                            }
+                        })
+                        .catch(err => console.error("Error fetching RSS", url, err));
+                });
+                
+                await Promise.all(promises);
+                
+                // Sort combined items by date descending
+                allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+                
+                // Take top 15
+                newsItems.value = allItems.slice(0, 15);
+            } catch (err) {
+                console.error("Failed to fetch news", err);
+                newsError.value = "Unable to load news feeds.";
+            } finally {
+                isNewsLoading.value = false;
+            }
+        };
+
+        onMounted(() => {
+            if (widgetSettings.value.showNews) {
+                fetchNews();
+            }
+        });
+
         watch(noteContents, () => {
             extractHandwrittenTasks();
         }, { deep: true });
@@ -1188,7 +1267,10 @@ const app = createApp({
             toggleTheme,
             googleTasks,
             handwrittenTasks,
-            widgetSettings
+            widgetSettings,
+            newsItems,
+            isNewsLoading,
+            newsError
         }
     }
 });
