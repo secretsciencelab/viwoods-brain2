@@ -99,3 +99,17 @@ To use the web app, simply visit the hosted version here:
 **👉 [https://secretsciencelab.github.io/viwoods-brain2/](https://secretsciencelab.github.io/viwoods-brain2/)**
 
 Because the app is fully client-side and only connects directly to Google Drive via your browser, anyone can safely use this hosted URL by just plugging in their own Google Drive Client ID! You do not need to host your own copy.
+
+### ⚠️ Handling the "Google hasn't verified this app" Warning
+When setting up your OAuth Consent Screen, you must add the `https://www.googleapis.com/auth/tasks.readonly` scope (along with `drive.readonly`). Because these are classified as "Restricted" or "Sensitive" scopes, you will encounter a scary **"Google hasn't verified this app"** screen when logging in.
+
+Since this is an open-source project where everyone brings their own Client ID, there are two ways to handle this:
+
+**1. Personal Use (Recommended)**
+If you are the only one using the dashboard, you do *not* need to get your app verified by Google.
+* Keep your OAuth Consent Screen "Publishing status" set to **Testing**.
+* Add your own `@gmail.com` email address to the **Test users** list.
+* When you log in and see the warning, simply click **Advanced -> Go to [Your App Name] (unsafe)**. Since you own the cloud project, bypassing it is 100% secure. *(Note: "Testing" mode usually expires refresh tokens after 7 days, but since this web app fetches a fresh client-side token each session, you will not be affected).*
+
+**2. Public Use (Not Recommended)**
+If you are hosting a public instance of this web app for hundreds of other people to use, you *must* remove that warning. To do that, you have to set your app to **In production** and submit it for formal Google Trust & Safety Verification (requiring a domain, privacy policy, and a YouTube demo video explaining why you need the scopes).
