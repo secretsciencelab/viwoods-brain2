@@ -9,7 +9,8 @@ const app = createApp({
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
-        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true}'));
+        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": ""}'));
+        if (widgetSettings.value.excludedLists === undefined) widgetSettings.value.excludedLists = "";
         
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
@@ -189,7 +190,10 @@ const app = createApp({
             localStorage.setItem('brain2_widget_settings', JSON.stringify(widgetSettings.value));
             showSettings.value = false;
             
-            if (!isAuthenticated.value) {
+            if (isAuthenticated.value) {
+                fetchGoogleTasks();
+                extractHandwrittenTasks();
+            } else {
                 initGoogleAuth();
             }
         };
@@ -910,7 +914,13 @@ const app = createApp({
                 let data = await res.json();
                 if (data.items && data.items.length > 0) {
                     const groups = [];
+                    const excludes = (widgetSettings.value.excludedLists || "").split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+                    
                     for (const taskList of data.items) {
+                        if (excludes.some(ex => taskList.title.toLowerCase().includes(ex))) {
+                            continue;
+                        }
+                        
                         let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskList.id}/tasks?showCompleted=false&maxResults=100`, {
                             headers: { Authorization: `Bearer ${accessToken}` }
                         });
@@ -967,8 +977,14 @@ const app = createApp({
                 }
             }
             
-            // Only keep groups that actually have tasks
-            const filteredGroups = groups.filter(g => g.tasks.length > 0);
+            const excludes = (widgetSettings.value.excludedLists || "").split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+            
+            // Only keep groups that actually have tasks and are not excluded
+            const filteredGroups = groups.filter(g => {
+                if (g.tasks.length === 0) return false;
+                if (excludes.some(ex => g.name.toLowerCase().includes(ex))) return false;
+                return true;
+            });
             
             // Sort to ensure 'TO DO' notebooks appear at the very top
             filteredGroups.sort((a, b) => {

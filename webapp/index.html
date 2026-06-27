@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=53">
+    <link rel="stylesheet" href="styles.css?v=54">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -274,14 +274,20 @@
                         </div>
                     </div>
                     
-                    <div class="toggle-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="widgetSettings.showTasks">
-                            <span class="slider round"></span>
-                        </label>
-                        <div class="toggle-label">
-                            <strong>Tasks</strong>
-                            <span>Shows open items from Google Tasks and your Notebooks</span>
+                    <div class="toggle-group" style="flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" v-model="widgetSettings.showTasks">
+                                <span class="slider round"></span>
+                            </label>
+                            <div class="toggle-label">
+                                <strong>Tasks</strong>
+                                <span>Shows open items from Google Tasks and your Notebooks</span>
+                            </div>
+                        </div>
+                        <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showTasks">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Exclude Notebooks / Lists (comma separated)</label>
+                            <input type="text" v-model="widgetSettings.excludedLists" placeholder="e.g. Groceries, Random Ideas">
                         </div>
                     </div>
                 </div>
@@ -301,6 +307,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=53"></script>
+    <script src="app.js?v=54"></script>
 </body>
 </html>
