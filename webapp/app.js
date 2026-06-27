@@ -1131,7 +1131,8 @@ const app = createApp({
             getMonthName,
             getHeatmapClass,
             isDarkMode,
-            toggleTheme
+            toggleTheme,
+            combinedTasks
         }
     }
 });
