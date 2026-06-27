@@ -1161,8 +1161,8 @@ const app = createApp({
                         const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
                         
                         const toDate = Math.floor(Date.now() / 1000);
-                        const fromDate = toDate - (7 * 24 * 60 * 60);
-                        const candleRes = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=60&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
+                        const fromDate = toDate - (30 * 24 * 60 * 60); // 30 days ago
+                        const candleRes = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
                         
                         const [resQuote, resCandle] = await Promise.all([quoteRes, candleRes]);
                         if (!resQuote.ok) throw new Error(`Status ${resQuote.status}`);
@@ -1182,7 +1182,11 @@ const app = createApp({
                                     return `${x.toFixed(1)},${y.toFixed(1)}`;
                                 });
                                 sparkline = points.join(' ');
+                            } else {
+                                console.warn('Finnhub candle data issue:', symbol, candleData);
                             }
+                        } else {
+                            console.warn('Finnhub candle request failed:', symbol, resCandle.status);
                         }
 
                         if (data && data.c !== undefined && data.c !== 0) {
