@@ -1066,7 +1066,7 @@ const app = createApp({
                 // Group by source
                 const grouped = {};
                 topItems.forEach(item => {
-                    const sourceName = item.source.replace(/^"|"$|Google News - /ig, '').trim();
+                    const sourceName = item.source.replace(/["']/g, '').replace(/\s*-\s*Google News/ig, '').trim();
                     if (!grouped[sourceName]) {
                         grouped[sourceName] = { source: sourceName, articles: [] };
                     }
