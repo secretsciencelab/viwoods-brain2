@@ -17,6 +17,7 @@ const app = createApp({
         if (widgetSettings.value.showStocks === undefined) widgetSettings.value.showStocks = true;
         if (widgetSettings.value.stockSymbols === undefined) widgetSettings.value.stockSymbols = "AAPL, GOOGL, MSFT";
         if (widgetSettings.value.finnhubApiKey === undefined) widgetSettings.value.finnhubApiKey = "";
+        if (widgetSettings.value.rss2jsonApiKey === undefined) widgetSettings.value.rss2jsonApiKey = "";
         
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
@@ -1047,7 +1048,17 @@ const app = createApp({
                 // Fetch each RSS feed via rss2json
                 const promises = rssUrls.map(feedObj => {
                     const encodedUrl = encodeURIComponent(feedObj.url);
-                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`)
+                    let url = `https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`;
+                    const apiKey = widgetSettings.value.rss2jsonApiKey?.trim();
+                    if (apiKey) {
+                        url += `&api_key=${apiKey}`;
+                        // Increase count to 15 for custom feeds if we have an API key
+                        if (feedObj.isCustom) {
+                            url += `&count=15`;
+                        }
+                    }
+                    
+                    return fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'ok' && data.items) {

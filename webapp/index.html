@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=69">
+    <link rel="stylesheet" href="styles.css?v=70">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -367,6 +367,10 @@
                             <label style="font-size: 0.8rem; color: var(--text-secondary);">Custom RSS URLs (comma separated)</label>
                             <input type="text" v-model="widgetSettings.customRss" placeholder="https://news.ycombinator.com/rss">
                         </div>
+                        <div class="input-group" style="width: 100%; margin-top: 6px; margin-left: 60px;" v-if="widgetSettings.showNews">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">rss2json.com API Key (Optional, for >10 items)</label>
+                            <input type="text" v-model="widgetSettings.rss2jsonApiKey" placeholder="Enter API Key">
+                        </div>
                     </div>
 
                     <div class="toggle-group" style="flex-wrap: wrap;">
@@ -406,6 +410,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=69"></script>
+    <script src="app.js?v=70"></script>
 </body>
 </html>
