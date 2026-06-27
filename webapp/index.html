@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=70">
+    <link rel="stylesheet" href="styles.css?v=71">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -255,6 +255,12 @@
                                 <div v-else class="stocks-list">
                                     <div v-for="stock in stockItems" :key="stock.symbol" class="stock-item">
                                         <div class="stock-symbol">{{ stock.symbol }}</div>
+                                        <div class="stock-sparkline" v-if="stock.sparkline" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                                            <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width: 50px; height: 20px; overflow: visible;">
+                                                <polyline :points="stock.sparkline" fill="none" :stroke="stock.change >= 0 ? '#4caf50' : '#f44336'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <div class="stock-sparkline" v-else></div>
                                         <div class="stock-price">${{ stock.currentPrice.toFixed(2) }}</div>
                                         <div class="stock-change" :class="{ 'positive': stock.change > 0, 'negative': stock.change < 0 }">
                                             {{ stock.change > 0 ? '+' : '' }}{{ stock.change.toFixed(2) }} ({{ stock.percentChange > 0 ? '+' : '' }}{{ stock.percentChange.toFixed(2) }}%)
@@ -410,6 +416,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=70"></script>
+    <script src="app.js?v=71"></script>
 </body>
 </html>

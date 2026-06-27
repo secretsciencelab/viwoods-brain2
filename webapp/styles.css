@@ -1010,12 +1010,18 @@ main {
     color: var(--text-primary);
     width: 60px;
 }
+.stock-sparkline {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0 10px;
+}
 .stock-price {
     font-size: 0.9rem;
     color: var(--text-primary);
-    flex-grow: 1;
     text-align: right;
     padding-right: 16px;
+    min-width: 60px;
 }
 .stock-change {
     font-size: 0.8rem;
