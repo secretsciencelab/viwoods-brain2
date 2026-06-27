@@ -15,12 +15,12 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
 ## ✨ Features
 
 - **Handwriting OCR:** Uses Gemini 2.5 Pro to transcribe messy handwriting.
-- **Visual Syntax Recognition:** Draw specific shapes on your tablet to trigger Markdown formatting:
-  - Draw an empty square `[ ]` to create a Markdown Checkbox (`- [ ]`).
-  - Draw a vertical line `|` or bracket `[` in the margin to create a Markdown Blockquote (`>`).
-  - Draw a horizontal line across the page to create a section break (`---`).
-  - Write a `#` symbol followed by a word (e.g. `#idea`) anywhere to generate a tag for the Knowledge Graph.
-  - Write text larger and underline it at the top of a page to create a document Title / Heading (`#`).
+- **Visual Syntax Recognition:** Draw specific shapes and syntax on your tablet to trigger powerful Markdown formatting:
+  - **Checklists & Tasks:** Draw an empty square (`[ ]`) or box at the start of a sentence to create a Markdown Checkbox (`- [ ]`). *Note: The cloud function automatically scans every single note and compiles all open/unchecked items into a centralized `TODO_Master.md` file!*
+  - **Headings & Titles:** Underlined titles at the top of the page or in a new section in the text automatically become headings in the Markdown (`#`).
+  - **Tagging:** Add `#hashtags` (e.g., `#idea`, `#important`) to sections of a page to dynamically tag and link them within the Knowledge Graph.
+  - **Blockquotes:** Draw a vertical line `|` or bracket `[` in the left margin next to a paragraph to create a Markdown Blockquote (`>`).
+  - **Dividers:** Draw a horizontal line completely across the page to create a section break (`---`).
 - **Folder Aware & Master Compiling:** Automatically categorizes your notes into `Scratch_Master.md` and `Work_Master.md` based on their subdirectories, allowing you to easily separate contexts in NotebookLM.
 - **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
