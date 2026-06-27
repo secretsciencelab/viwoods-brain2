@@ -1158,15 +1158,40 @@ const app = createApp({
                 const results = [];
                 const promises = symbols.map(async (symbol) => {
                     try {
-                        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
-                        if (!res.ok) throw new Error(`Status ${res.status}`);
-                        const data = await res.json();
+                        const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
+                        
+                        const toDate = Math.floor(Date.now() / 1000);
+                        const fromDate = toDate - (7 * 24 * 60 * 60);
+                        const candleRes = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=60&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
+                        
+                        const [resQuote, resCandle] = await Promise.all([quoteRes, candleRes]);
+                        if (!resQuote.ok) throw new Error(`Status ${resQuote.status}`);
+                        const data = await resQuote.json();
+                        
+                        let sparkline = '';
+                        if (resCandle.ok) {
+                            const candleData = await resCandle.json();
+                            if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
+                                const prices = candleData.c;
+                                const min = Math.min(...prices);
+                                const max = Math.max(...prices);
+                                const range = max - min || 1;
+                                const points = prices.map((p, i) => {
+                                    const x = (i / (prices.length - 1)) * 100;
+                                    const y = 30 - ((p - min) / range) * 30; // 30 is height
+                                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                                });
+                                sparkline = points.join(' ');
+                            }
+                        }
+
                         if (data && data.c !== undefined && data.c !== 0) {
                             results.push({
                                 symbol,
                                 currentPrice: data.c,
                                 change: data.d,
-                                percentChange: data.dp
+                                percentChange: data.dp,
+                                sparkline
                             });
                         }
                     } catch (err) {
