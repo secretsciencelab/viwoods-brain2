@@ -1051,9 +1051,15 @@ const app = createApp({
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'ok' && data.items) {
-                                // Inject source title
+                                // Inject source title and decode html entities
+                                const decodeHtml = (html) => {
+                                    const txt = document.createElement("textarea");
+                                    txt.innerHTML = html;
+                                    return txt.value;
+                                };
                                 data.items.forEach(item => {
                                     item.source = data.feed.title || 'News';
+                                    item.title = decodeHtml(item.title || '');
                                     allItems.push(item);
                                 });
                             }
