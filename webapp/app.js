@@ -1282,7 +1282,8 @@ const app = createApp({
             widgetSettings,
             newsItems,
             isNewsLoading,
-            newsError
+            newsError,
+            fetchNews
         }
     }
 });
