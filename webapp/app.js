@@ -193,25 +193,57 @@ const app = createApp({
                 return;
             }
             
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId.value,
-                scope: SCOPES,
-                callback: async (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        accessToken = tokenResponse.access_token;
-                        isAuthenticated.value = true;
-                        
-                        const expiresIn = tokenResponse.expires_in || 3600;
-                        const expiresAt = Date.now() + (expiresIn * 1000);
-                        localStorage.setItem('brain2_access_token', accessToken);
-                        localStorage.setItem('brain2_token_expires', expiresAt.toString());
-                        
-                        await loadNotebooks();
+            if (!tokenClient) {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId.value,
+                    scope: SCOPES,
+                    callback: async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            accessToken = tokenResponse.access_token;
+                            isAuthenticated.value = true;
+                            
+                            const expiresIn = tokenResponse.expires_in || 3600;
+                            const expiresAt = Date.now() + (expiresIn * 1000);
+                            localStorage.setItem('brain2_access_token', accessToken);
+                            localStorage.setItem('brain2_token_expires', expiresAt.toString());
+                            
+                            await loadNotebooks();
+                            isRefreshing = false;
+                        }
+                    },
+                    error_callback: (error) => {
+                        console.error("Token request error:", error);
+                        isRefreshing = false;
                     }
-                },
-            });
-            tokenClient.requestAccessToken();
+                });
+            }
+            tokenClient.requestAccessToken({prompt: ''});
         };
+
+        let isRefreshing = false;
+        
+        // Auto-refresh token by piggybacking on user interactions to bypass popup blockers
+        const autoRefreshToken = () => {
+            if (!isAuthenticated.value || !accessToken || isRefreshing || !clientId.value) return;
+            
+            const expiresAt = parseInt(localStorage.getItem('brain2_token_expires') || '0');
+            const timeRemaining = expiresAt - Date.now();
+            
+            // If token is expiring in less than 10 minutes, silently refresh it
+            if (timeRemaining > 0 && timeRemaining < 600000) {
+                isRefreshing = true;
+                if (!tokenClient) {
+                    initGoogleAuth(); // Will set tokenClient and call requestAccessToken
+                } else {
+                    tokenClient.requestAccessToken({prompt: ''});
+                }
+            }
+        };
+
+        onMounted(() => {
+            window.addEventListener('click', autoRefreshToken, { capture: true });
+            window.addEventListener('keydown', autoRefreshToken, { capture: true });
+        });
 
         const extractTags = (content) => {
             if (!content) return { all: [] };
