@@ -336,6 +336,15 @@ const app = createApp({
                     let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,parents,modifiedTime)&orderBy=name`, {
                         headers: { Authorization: `Bearer ${accessToken}` }
                     });
+                    
+                    if (response.status === 401) {
+                        isAuthenticated.value = false;
+                        accessToken = null;
+                        localStorage.removeItem('brain2_access_token');
+                        localStorage.removeItem('brain2_token_expires');
+                        throw new Error("Authentication expired");
+                    }
+                    
                     let result = await response.json();
                     
                     if (!result.files) return;
@@ -411,7 +420,9 @@ const app = createApp({
                 }
             } catch (err) {
                 console.error(err);
-                if (!isSilent) alert("Failed to load notebooks. Check console.");
+                if (!isSilent && err.message !== "Authentication expired") {
+                    alert("Failed to load notebooks. Check console.");
+                }
             } finally {
                 if (!isSilent) isLoading.value = false;
             }
