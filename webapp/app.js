@@ -9,11 +9,14 @@ const app = createApp({
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
-        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": ""}'));
+        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": "", "showStocks": true, "stockSymbols": "AAPL, GOOGL, MSFT", "finnhubApiKey": ""}'));
         if (widgetSettings.value.excludedLists === undefined) widgetSettings.value.excludedLists = "";
         if (widgetSettings.value.showNews === undefined) widgetSettings.value.showNews = true;
         if (widgetSettings.value.newsTopics === undefined) widgetSettings.value.newsTopics = "Technology, Artificial Intelligence";
         if (widgetSettings.value.customRss === undefined) widgetSettings.value.customRss = "";
+        if (widgetSettings.value.showStocks === undefined) widgetSettings.value.showStocks = true;
+        if (widgetSettings.value.stockSymbols === undefined) widgetSettings.value.stockSymbols = "AAPL, GOOGL, MSFT";
+        if (widgetSettings.value.finnhubApiKey === undefined) widgetSettings.value.finnhubApiKey = "";
         
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
@@ -201,6 +204,9 @@ const app = createApp({
             }
             if (widgetSettings.value.showNews) {
                 fetchNews();
+            }
+            if (widgetSettings.value.showStocks) {
+                fetchStocks();
             }
         };
 
@@ -1083,9 +1089,66 @@ const app = createApp({
             }
         };
 
+        const stockItems = ref([]);
+        const isStocksLoading = ref(false);
+        const stocksError = ref('');
+
+        const fetchStocks = async () => {
+            if (!widgetSettings.value.showStocks) return;
+            const apiKey = widgetSettings.value.finnhubApiKey?.trim();
+            if (!apiKey) {
+                stocksError.value = "Please enter your free Finnhub API Key in Settings.";
+                return;
+            }
+
+            isStocksLoading.value = true;
+            stocksError.value = '';
+            
+            const symbols = (widgetSettings.value.stockSymbols || "").split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+            
+            if (symbols.length === 0) {
+                isStocksLoading.value = false;
+                stockItems.value = [];
+                return;
+            }
+
+            try {
+                const results = [];
+                const promises = symbols.map(async (symbol) => {
+                    try {
+                        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
+                        if (!res.ok) throw new Error(`Status ${res.status}`);
+                        const data = await res.json();
+                        if (data && data.c !== undefined && data.c !== 0) {
+                            results.push({
+                                symbol,
+                                currentPrice: data.c,
+                                change: data.d,
+                                percentChange: data.dp
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching stock ${symbol}`, err);
+                    }
+                });
+                
+                await Promise.all(promises);
+                
+                stockItems.value = results.sort((a, b) => a.symbol.localeCompare(b.symbol));
+            } catch (err) {
+                console.error("Failed to fetch stocks", err);
+                stocksError.value = "Unable to load stock data.";
+            } finally {
+                isStocksLoading.value = false;
+            }
+        };
+
         onMounted(() => {
             if (widgetSettings.value.showNews) {
                 fetchNews();
+            }
+            if (widgetSettings.value.showStocks) {
+                fetchStocks();
             }
         });
 
@@ -1283,7 +1346,11 @@ const app = createApp({
             newsItems,
             isNewsLoading,
             newsError,
-            fetchNews
+            fetchNews,
+            stockItems,
+            isStocksLoading,
+            stocksError,
+            fetchStocks
         }
     }
 });
