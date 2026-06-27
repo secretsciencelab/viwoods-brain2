@@ -1159,34 +1159,57 @@ const app = createApp({
                 const promises = symbols.map(async (symbol) => {
                     try {
                         const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
+                        let sparklinePromise = Promise.resolve(null);
                         
-                        const toDate = Math.floor(Date.now() / 1000);
-                        const fromDate = toDate - (30 * 24 * 60 * 60); // 30 days ago
-                        const candleRes = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
+                        const alphaKey = widgetSettings.value.alphaVantageApiKey?.trim();
+                        if (alphaKey) {
+                            sparklinePromise = fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(alphaKey)}`);
+                        } else {
+                            // Fallback to finnhub candle if no alpha key (might get 403 on free tier)
+                            const toDate = Math.floor(Date.now() / 1000);
+                            const fromDate = toDate - (30 * 24 * 60 * 60); // 30 days ago
+                            sparklinePromise = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
+                        }
                         
-                        const [resQuote, resCandle] = await Promise.all([quoteRes, candleRes]);
+                        const [resQuote, resCandle] = await Promise.all([quoteRes, sparklinePromise]);
                         if (!resQuote.ok) throw new Error(`Status ${resQuote.status}`);
                         const data = await resQuote.json();
                         
                         let sparkline = '';
-                        if (resCandle.ok) {
+                        if (resCandle && resCandle.ok) {
                             const candleData = await resCandle.json();
-                            if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
+                            
+                            // Check if Alpha Vantage response
+                            if (candleData['Time Series (Daily)']) {
+                                const ts = candleData['Time Series (Daily)'];
+                                const prices = Object.values(ts).map(d => parseFloat(d['4. close'])).slice(0, 30).reverse();
+                                if (prices.length > 0) {
+                                    const min = Math.min(...prices);
+                                    const max = Math.max(...prices);
+                                    const range = max - min || 1;
+                                    const points = prices.map((p, i) => {
+                                        const x = (i / (prices.length - 1)) * 100;
+                                        const y = 30 - ((p - min) / range) * 30;
+                                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                                    });
+                                    sparkline = points.join(' ');
+                                }
+                            }
+                            // Check if Finnhub response
+                            else if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
                                 const prices = candleData.c;
                                 const min = Math.min(...prices);
                                 const max = Math.max(...prices);
                                 const range = max - min || 1;
                                 const points = prices.map((p, i) => {
                                     const x = (i / (prices.length - 1)) * 100;
-                                    const y = 30 - ((p - min) / range) * 30; // 30 is height
+                                    const y = 30 - ((p - min) / range) * 30;
                                     return `${x.toFixed(1)},${y.toFixed(1)}`;
                                 });
                                 sparkline = points.join(' ');
                             } else {
-                                console.warn('Finnhub candle data issue:', symbol, candleData);
+                                console.warn('Sparkline data issue:', symbol, candleData);
                             }
-                        } else {
-                            console.warn('Finnhub candle request failed:', symbol, resCandle.status);
                         }
 
                         if (data && data.c !== undefined && data.c !== 0) {
