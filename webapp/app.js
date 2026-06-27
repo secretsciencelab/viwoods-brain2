@@ -1061,12 +1061,12 @@ const app = createApp({
                                 let redditSub = "";
                                 if (feedObj.url.includes("reddit.com/r/")) {
                                     const match = feedObj.url.match(/reddit\.com\/r\/([^\/]+)/);
-                                    if (match) redditSub = ` (r/${match[1]})`;
+                                    if (match) redditSub = ` [r/${match[1]}]`;
                                 }
 
                                 data.items.forEach(item => {
-                                    item.source = (data.feed.title || 'News') + redditSub;
-                                    item.title = decodeHtml(item.title || '');
+                                    item.source = (data.feed.title || 'News');
+                                    item.title = decodeHtml(item.title || '') + redditSub;
                                     item.isCustom = feedObj.isCustom;
                                     allItems.push(item);
                                 });
