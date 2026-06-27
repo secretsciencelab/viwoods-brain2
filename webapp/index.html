@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=45">
+    <link rel="stylesheet" href="styles.css?v=46">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -162,18 +162,42 @@
                                 <h2>Brain Tasks</h2>
                             </div>
                             <div class="tasks-content">
-                                <div v-if="combinedTasks.length === 0" class="no-tasks">
+                                <div v-if="googleTasks.length === 0 && handwrittenTasks.length === 0" class="no-tasks">
                                     No pending tasks found.
                                 </div>
-                                <ul v-else class="tasks-list">
-                                    <li v-for="task in combinedTasks" :key="task.id" class="task-item">
-                                        <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
-                                        <div class="task-details">
-                                            <div class="task-title">{{ task.title }}</div>
-                                            <div class="task-source">{{ task.source }}</div>
+                                <div v-else class="tasks-groups">
+                                    <!-- Google Tasks -->
+                                    <div v-if="googleTasks.length > 0" class="task-group">
+                                        <div class="task-group-header">
+                                            <span class="material-symbols-outlined">check_circle</span>
+                                            <h4>Google Tasks</h4>
                                         </div>
-                                    </li>
-                                </ul>
+                                        <ul class="tasks-list">
+                                            <li v-for="task in googleTasks" :key="task.id" class="task-item">
+                                                <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
+                                                <div class="task-details">
+                                                    <div class="task-title">{{ task.title }}</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Handwritten Tasks -->
+                                    <div v-if="handwrittenTasks.length > 0" class="task-group">
+                                        <div class="task-group-header">
+                                            <span class="material-symbols-outlined">draw</span>
+                                            <h4>Notebook Tasks</h4>
+                                        </div>
+                                        <ul class="tasks-list">
+                                            <li v-for="task in handwrittenTasks" :key="task.id" class="task-item">
+                                                <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
+                                                <div class="task-details">
+                                                    <div class="task-title">{{ task.title }}</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -241,6 +265,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=45"></script>
+    <script src="app.js?v=46"></script>
 </body>
 </html>

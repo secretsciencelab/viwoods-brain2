@@ -1134,7 +1134,8 @@ const app = createApp({
             getHeatmapClass,
             isDarkMode,
             toggleTheme,
-            combinedTasks
+            googleTasks,
+            handwrittenTasks
         }
     }
 });
