@@ -922,7 +922,8 @@ const app = createApp({
         };
 
         const extractHandwrittenTasks = () => {
-            const tasks = [];
+            const groups = [];
+            let currentGroup = null;
             let idCounter = 0;
             
             const todoNote = notes.value.find(n => n.name === 'TODO_Master.md');
@@ -933,17 +934,25 @@ const app = createApp({
             
             const lines = content.split('\n');
             for (const line of lines) {
-                if (line.trim().startsWith('- [ ] ')) {
-                    tasks.push({
+                if (line.trim().startsWith('## ')) {
+                    const groupName = line.replace(/^##\s+/, '').trim();
+                    currentGroup = { name: groupName, tasks: [] };
+                    groups.push(currentGroup);
+                } else if (line.trim().startsWith('- [ ] ')) {
+                    if (!currentGroup) {
+                        currentGroup = { name: 'Uncategorized', tasks: [] };
+                        groups.push(currentGroup);
+                    }
+                    currentGroup.tasks.push({
                         id: `hw_${idCounter++}`,
                         title: line.replace(/^- \[ \] /, '').trim(),
-                        source: 'TODO_Master.md',
                         icon: 'draw'
                     });
                 }
             }
             
-            handwrittenTasks.value = tasks; 
+            // Only keep groups that actually have tasks
+            handwrittenTasks.value = groups.filter(g => g.tasks.length > 0); 
         };
 
         watch(noteContents, () => {
