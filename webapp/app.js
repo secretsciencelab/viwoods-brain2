@@ -1041,7 +1041,7 @@ const app = createApp({
                 // Fetch each RSS feed via rss2json
                 const promises = rssUrls.map(url => {
                     const encodedUrl = encodeURIComponent(url);
-                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}&order_dir=desc&count=5`)
+                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`)
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'ok' && data.items) {
