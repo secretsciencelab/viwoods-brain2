@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=51">
+    <link rel="stylesheet" href="styles.css?v=53">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -120,7 +120,7 @@
                 </div>
                 <div v-else class="dashboard">
                     <div class="widgets-grid">
-                        <div class="widget weather-widget" :class="{ loading: !weatherData && !weatherError }">
+                        <div class="widget weather-widget" v-if="widgetSettings.showWeather" :class="{ loading: !weatherData && !weatherError }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined widget-icon">thermostat</span>
                                 <h3>Weather Forecast</h3>
@@ -156,7 +156,7 @@
                         </div>
 
                         <!-- Brain Tasks Widget -->
-                        <div class="widget tasks-widget">
+                        <div class="widget tasks-widget" v-if="widgetSettings.showTasks">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined">format_list_bulleted</span>
                                 <h2>Tasks</h2>
@@ -249,16 +249,46 @@
         <div v-if="showSettings" class="modal-overlay" @click.self="showSettings = false">
             <div class="modal">
                 <h2>Configuration</h2>
-                <p>Since this is an open-source app, your Google credentials are never hardcoded. Enter your Google OAuth Web Client ID below. It will be saved securely in your browser's local storage.</p>
                 
-                <div class="input-group">
-                    <label>Google Client ID</label>
-                    <input type="text" v-model="clientIdInput" placeholder="123456789-abc...apps.googleusercontent.com">
+                <div class="settings-section">
+                    <h3>Authentication</h3>
+                    <p class="settings-desc">Enter your Google OAuth Web Client ID below. It will be saved securely in your browser's local storage.</p>
+                    <div class="input-group">
+                        <label>Google Client ID</label>
+                        <input type="text" v-model="clientIdInput" placeholder="123456789-abc...apps.googleusercontent.com">
+                    </div>
                 </div>
 
-                <div class="modal-actions">
+                <div class="settings-section" style="margin-top: 24px;">
+                    <h3>Widgets</h3>
+                    <p class="settings-desc">Customize which widgets appear on your dashboard.</p>
+                    
+                    <div class="toggle-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" v-model="widgetSettings.showWeather">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="toggle-label">
+                            <strong>Weather & Commute</strong>
+                            <span>Shows daily forecast and chance of rain</span>
+                        </div>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" v-model="widgetSettings.showTasks">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="toggle-label">
+                            <strong>Tasks</strong>
+                            <span>Shows open items from Google Tasks and your Notebooks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 32px;">
                     <button @click="showSettings = false" class="secondary-btn">Cancel</button>
-                    <button @click="saveSettings" class="primary-btn">Save & Connect</button>
+                    <button @click="saveSettings" class="primary-btn">Save Settings</button>
                 </div>
             </div>
         </div>
@@ -271,6 +301,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=52"></script>
+    <script src="app.js?v=53"></script>
 </body>
 </html>

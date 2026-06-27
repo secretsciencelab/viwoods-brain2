@@ -9,6 +9,7 @@ const app = createApp({
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
+        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true}'));
         
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
@@ -181,9 +182,16 @@ const app = createApp({
         };
 
         const saveSettings = () => {
-            clientId.value = clientIdInput.value.trim();
-            localStorage.setItem('brain2_client_id', clientId.value);
+            if (clientIdInput.value) {
+                clientId.value = clientIdInput.value.trim();
+                localStorage.setItem('brain2_client_id', clientId.value);
+            }
+            localStorage.setItem('brain2_widget_settings', JSON.stringify(widgetSettings.value));
             showSettings.value = false;
+            
+            if (!isAuthenticated.value) {
+                initGoogleAuth();
+            }
         };
 
         // Initialize Google Identity Services
@@ -1163,7 +1171,8 @@ const app = createApp({
             isDarkMode,
             toggleTheme,
             googleTasks,
-            handwrittenTasks
+            handwrittenTasks,
+            widgetSettings
         }
     }
 });
