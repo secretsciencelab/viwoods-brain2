@@ -925,23 +925,27 @@ const app = createApp({
         const extractHandwrittenTasks = () => {
             const tasks = [];
             let idCounter = 0;
-            // Iterate over all note contents
-            for (const [noteId, content] of Object.entries(noteContents.value)) {
-                if (!content) continue;
-                const lines = content.split('\n');
-                for (const line of lines) {
-                    if (line.trim().startsWith('- [ ] ')) {
-                        tasks.push({
-                            id: `hw_${idCounter++}`,
-                            title: line.replace(/^- \[ \] /, '').trim(),
-                            source: 'Handwritten Notes',
-                            icon: 'draw'
-                        });
-                    }
+            
+            // Find TODO_Master.md
+            const todoNote = notes.value.find(n => n.name === 'TODO_Master.md');
+            if (!todoNote) return;
+            
+            const content = noteContents.value[todoNote.id];
+            if (!content) return;
+            
+            const lines = content.split('\n');
+            for (const line of lines) {
+                if (line.trim().startsWith('- [ ] ')) {
+                    tasks.push({
+                        id: `hw_${idCounter++}`,
+                        title: line.replace(/^- \[ \] /, '').trim(),
+                        source: 'TODO_Master.md',
+                        icon: 'draw'
+                    });
                 }
             }
-            // Reverse so we see the newest first, or just slice top 5
-            handwrittenTasks.value = tasks.reverse().slice(0, 5); 
+            
+            handwrittenTasks.value = tasks.slice(0, 5); 
         };
 
         watch(noteContents, () => {
