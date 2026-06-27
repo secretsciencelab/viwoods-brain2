@@ -172,14 +172,17 @@
                                             <span class="material-symbols-outlined">check_circle</span>
                                             <h4>Google Tasks</h4>
                                         </div>
-                                        <ul class="tasks-list">
-                                            <li v-for="task in googleTasks" :key="task.id" class="task-item">
-                                                <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
-                                                <div class="task-details">
-                                                    <div class="task-title">{{ task.title }}</div>
-                                                </div>
-                                            </li>
-                                        </ul>
+                                        <div v-for="group in googleTasks" :key="group.name" class="task-subgroup">
+                                            <div class="task-subgroup-title">{{ group.name }}</div>
+                                            <ul class="tasks-list">
+                                                <li v-for="task in group.tasks" :key="task.id" class="task-item">
+                                                    <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
+                                                    <div class="task-details">
+                                                        <div class="task-title">{{ task.title }}</div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                     
                                     <!-- Handwritten Tasks -->
@@ -268,6 +271,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=47"></script>
+    <script src="app.js?v=48"></script>
 </body>
 </html>

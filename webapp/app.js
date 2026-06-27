@@ -901,20 +901,25 @@ const app = createApp({
                 
                 let data = await res.json();
                 if (data.items && data.items.length > 0) {
-                    const taskListId = data.items[0].id;
-                    let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks?showCompleted=false&maxResults=100`, {
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    });
-                    let tasksData = await tasksRes.json();
-                    
-                    if (tasksData.items) {
-                        googleTasks.value = tasksData.items.map(t => ({
-                            id: t.id,
-                            title: t.title,
-                            source: 'Google Tasks',
-                            icon: 'check_circle'
-                        }));
+                    const groups = [];
+                    for (const taskList of data.items) {
+                        let tasksRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskList.id}/tasks?showCompleted=false&maxResults=100`, {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        });
+                        let tasksData = await tasksRes.json();
+                        
+                        if (tasksData.items && tasksData.items.length > 0) {
+                            groups.push({
+                                name: taskList.title,
+                                tasks: tasksData.items.map(t => ({
+                                    id: t.id,
+                                    title: t.title,
+                                    icon: 'check_circle'
+                                }))
+                            });
+                        }
                     }
+                    googleTasks.value = groups;
                 }
             } catch (e) {
                 console.error("Failed to fetch Google Tasks", e);
