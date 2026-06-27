@@ -1041,8 +1041,7 @@ const app = createApp({
                 // Fetch each RSS feed via rss2json
                 const promises = rssUrls.map(url => {
                     const encodedUrl = encodeURIComponent(url);
-                    // Add a cache buster so we don't always hit rss2json's cache
-                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}&api_key=&order_dir=desc&count=5`)
+                    return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}&order_dir=desc&count=5`)
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'ok' && data.items) {
