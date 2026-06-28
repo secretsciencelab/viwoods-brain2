@@ -1156,12 +1156,14 @@ const app = createApp({
 
             try {
                 const results = [];
-                const promises = symbols.map(async (symbol) => {
+                const alphaKey = widgetSettings.value.alphaVantageApiKey?.trim();
+                
+                for (let i = 0; i < symbols.length; i++) {
+                    const symbol = symbols[i];
                     try {
                         const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
                         let sparklinePromise = Promise.resolve(null);
                         
-                        const alphaKey = widgetSettings.value.alphaVantageApiKey?.trim();
                         if (alphaKey) {
                             sparklinePromise = fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(alphaKey)}`);
                         } else {
@@ -1195,6 +1197,10 @@ const app = createApp({
                                     sparkline = points.join(' ');
                                 }
                             }
+                            else if (candleData['Information'] && candleData['Information'].includes('rate limit')) {
+                                console.warn('Alpha Vantage rate limit reached:', candleData['Information']);
+                                stocksError.value = "Alpha Vantage rate limit reached. Please wait a moment and refresh.";
+                            }
                             // Check if Finnhub response
                             else if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
                                 const prices = candleData.c;
@@ -1224,9 +1230,12 @@ const app = createApp({
                     } catch (err) {
                         console.error(`Error fetching stock ${symbol}`, err);
                     }
-                });
-                
-                await Promise.all(promises);
+                    
+                    // Respect Alpha Vantage rate limit (1 req/sec)
+                    if (alphaKey && i < symbols.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                    }
+                }
                 
                 stockItems.value = results.sort((a, b) => a.symbol.localeCompare(b.symbol));
             } catch (err) {
