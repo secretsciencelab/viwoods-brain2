@@ -18,7 +18,7 @@ const app = createApp({
         if (widgetSettings.value.stockSymbols === undefined) widgetSettings.value.stockSymbols = "AAPL, GOOGL, MSFT";
         if (widgetSettings.value.finnhubApiKey === undefined) widgetSettings.value.finnhubApiKey = "";
         if (widgetSettings.value.rss2jsonApiKey === undefined) widgetSettings.value.rss2jsonApiKey = "";
-        if (widgetSettings.value.alphaVantageApiKey === undefined) widgetSettings.value.alphaVantageApiKey = "";
+        if (widgetSettings.value.twelveDataApiKey === undefined) widgetSettings.value.twelveDataApiKey = widgetSettings.value.alphaVantageApiKey || "";
         if (!widgetSettings.value.widgetOrder || widgetSettings.value.widgetOrder.length === 0) {
             widgetSettings.value.widgetOrder = ['weather', 'tasks', 'news', 'stocks'];
         }
@@ -1176,7 +1176,7 @@ const app = createApp({
 
             try {
                 const results = [];
-                const alphaKey = widgetSettings.value.alphaVantageApiKey?.trim();
+                const twelveKey = widgetSettings.value.twelveDataApiKey?.trim();
                 
                 for (let i = 0; i < symbols.length; i++) {
                     const symbol = symbols[i];
@@ -1184,10 +1184,10 @@ const app = createApp({
                         const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
                         let sparklinePromise = Promise.resolve(null);
                         
-                        if (alphaKey) {
-                            sparklinePromise = fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(alphaKey)}`);
+                        if (twelveKey) {
+                            sparklinePromise = fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=30&apikey=${encodeURIComponent(twelveKey)}`);
                         } else {
-                            // Fallback to finnhub candle if no alpha key (might get 403 on free tier)
+                            // Fallback to finnhub candle if no twelve data key (might get 403 on free tier)
                             const toDate = Math.floor(Date.now() / 1000);
                             const fromDate = toDate - (30 * 24 * 60 * 60); // 30 days ago
                             sparklinePromise = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
@@ -1201,10 +1201,9 @@ const app = createApp({
                         if (resCandle && resCandle.ok) {
                             const candleData = await resCandle.json();
                             
-                            // Check if Alpha Vantage response
-                            if (candleData['Time Series (Daily)']) {
-                                const ts = candleData['Time Series (Daily)'];
-                                const prices = Object.values(ts).map(d => parseFloat(d['4. close'])).slice(0, 30).reverse();
+                            // Check if Twelve Data response
+                            if (candleData.values && Array.isArray(candleData.values)) {
+                                const prices = candleData.values.map(d => parseFloat(d.close)).slice(0, 30).reverse();
                                 if (prices.length > 0) {
                                     const min = Math.min(...prices);
                                     const max = Math.max(...prices);
@@ -1217,9 +1216,9 @@ const app = createApp({
                                     sparkline = points.join(' ');
                                 }
                             }
-                            else if (candleData['Information'] && candleData['Information'].includes('rate limit')) {
-                                console.warn('Alpha Vantage rate limit reached:', candleData['Information']);
-                                stocksError.value = "Alpha Vantage rate limit reached. Please wait a moment and refresh.";
+                            else if (candleData.status === 'error' && candleData.code === 429) {
+                                console.warn('Twelve Data rate limit reached:', candleData.message);
+                                stocksError.value = "Twelve Data rate limit reached. Please wait a moment and refresh.";
                             }
                             // Check if Finnhub response
                             else if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
@@ -1251,9 +1250,9 @@ const app = createApp({
                         console.error(`Error fetching stock ${symbol}`, err);
                     }
                     
-                    // Respect Alpha Vantage rate limit (1 req/sec)
-                    if (alphaKey && i < symbols.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 1500));
+                    // Respect Twelve Data rate limit (8 req/min => let's add a small delay anyway to be safe, e.g. 500ms)
+                    if (twelveKey && i < symbols.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
                 }
                 

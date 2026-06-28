@@ -417,8 +417,8 @@
                             <input type="text" v-model="widgetSettings.finnhubApiKey" placeholder="Enter Finnhub API Key">
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 6px; margin-left: 60px;" v-if="widgetSettings.showStocks">
-                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Alpha Vantage API Key (Optional, for 30-day sparklines)</label>
-                            <input type="text" v-model="widgetSettings.alphaVantageApiKey" placeholder="Enter free Alpha Vantage API Key">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">Twelve Data API Key (Optional, for 30-day sparklines - 800 free/day!)</label>
+                            <input type="text" v-model="widgetSettings.twelveDataApiKey" placeholder="Enter free Twelve Data API Key">
                         </div>
                     </div>
                 </div>
@@ -438,6 +438,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=78"></script>
+    <script src="app.js?v=79"></script>
 </body>
 </html>
