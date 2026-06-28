@@ -106,10 +106,10 @@ When setting up your OAuth Consent Screen, you must add the `https://www.googlea
 Since this is an open-source project where everyone brings their own Client ID, there are two ways to handle this:
 
 **1. Personal Use (Recommended)**
-If you are the only one using the dashboard, you do *not* need to get your app verified by Google.
-* Keep your OAuth Consent Screen "Publishing status" set to **Testing**.
-* Add your own `@gmail.com` email address to the **Test users** list.
-* When you log in and see the warning, simply click **Advanced -> Go to [Your App Name] (unsafe)**. Since you own the cloud project, bypassing it is 100% secure. *(Note: "Testing" mode usually expires refresh tokens after 7 days, but since this web app fetches a fresh client-side token each session, you will not be affected).*
+If you are the only one using the dashboard and backend, you do *not* need to get your app verified by Google.
+* In the Google Cloud Console, navigate to **Google Auth Platform -> Audience**.
+* Set your "Publishing status" to **In production** (or click **Publish App**).
+* When you log in and see the "unverified" warning, simply click **Advanced -> Go to [Your App Name] (unsafe)**. Since you own the cloud project, bypassing it is 100% secure. *(Note: Setting the app to "In production" is critical; if you leave it in "Testing", Google will automatically expire your backend Cloud Run refresh token every 7 days! Unverified production apps have a 100-user limit, which is perfect for personal use).*
 
 **2. Public Use (Not Recommended)**
-If you are hosting a public instance of this web app for hundreds of other people to use, you *must* remove that warning. To do that, you have to set your app to **In production** and submit it for formal Google Trust & Safety Verification (requiring a domain, privacy policy, and a YouTube demo video explaining why you need the scopes).
+If you are hosting a public instance of this web app for hundreds of other people to use, you *must* remove that warning. To do that, you have to keep your app **In production** and submit it for formal Google Trust & Safety Verification (requiring a domain, privacy policy, and a YouTube demo video explaining why you need the scopes).
