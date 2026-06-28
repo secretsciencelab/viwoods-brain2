@@ -49,7 +49,7 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
 ### Step 1: Google Cloud & Drive Setup
 1. Create a [Google Cloud Project](https://console.cloud.google.com/) and enable the **Google Drive API**.
 2. Create an **OAuth Client ID** (Desktop App type) and download the JSON file as `credentials.json` into this folder.
-3. Run `python generate_token.py` locally. This will open a browser to log in and automatically generate your required `token.json` file!
+3. Run `python utils/generate_token.py` locally. This will open a browser to log in and automatically generate your required `token.json` file!
 
 ### Step 2: Gemini API Key
 1. Go to [Google AI Studio](https://aistudio.google.com/) and generate a free API Key.
