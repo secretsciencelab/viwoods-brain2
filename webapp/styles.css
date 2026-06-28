@@ -382,6 +382,7 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
     gap: 24px;
     width: 100%;
+    align-items: start;
 }
 
 .widget {
