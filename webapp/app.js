@@ -122,7 +122,7 @@ const app = createApp({
                 const regex = /> \*Last updated: (.*?)\*/g;
                 let m;
                 while ((m = regex.exec(text)) !== null) {
-                    const dateStr = m[1].replace(' at ', ' ');
+                    const dateStr = m[1].replace(' at ', ' ') + ' UTC';
                     const d = new Date(dateStr);
                     if (!isNaN(d)) {
                         const localStr = getLocalDateStr(d);
@@ -531,7 +531,7 @@ const app = createApp({
                             const regex = /> \*Last updated: (.*?)\*/g;
                             let m;
                             while ((m = regex.exec(content)) !== null) {
-                                const dateStr = m[1].replace(' at ', ' ');
+                                const dateStr = m[1].replace(' at ', ' ') + ' UTC';
                                 const d = new Date(dateStr);
                                 if (!isNaN(d) && getLocalDateStr(d) === selectedDate.value) {
                                     foundDateMatch = true;
@@ -770,9 +770,14 @@ const app = createApp({
             });
             
             // Post-process HTML to convert timestamp blockquotes into beautiful badges
-            html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, 
-                '<div class="page-timestamp"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> $1</div>'
-            );
+            html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, (match, ts) => {
+                let localStr = ts;
+                const d = new Date(ts.replace(' at ', ' ') + ' UTC');
+                if (!isNaN(d.getTime())) {
+                    localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+                }
+                return '<div class="page-timestamp"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ' + localStr + '</div>';
+            });
             
             // Post-process HTML to inject id attributes into headings for the Document Outline
             html = html.replace(/<h([1-6])>(.*?)<\/h\1>/g, (match, level, text) => {
