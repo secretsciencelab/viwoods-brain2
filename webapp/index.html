@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=76">
+    <link rel="stylesheet" href="styles.css?v=77">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -120,7 +120,7 @@
                 </div>
                 <div v-else class="dashboard">
                     <div class="widgets-grid">
-                        <div class="widget weather-widget" v-if="widgetSettings.showWeather" :class="{ loading: !weatherData && !weatherError }">
+                        <div class="widget weather-widget" v-if="widgetSettings.showWeather" :class="{ loading: !weatherData && !weatherError }" :style="{ order: getWidgetIndex('weather') }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined widget-icon">thermostat</span>
                                 <h3>Weather Forecast</h3>
@@ -156,7 +156,7 @@
                         </div>
 
                         <!-- Brain Tasks Widget -->
-                        <div class="widget tasks-widget" v-if="widgetSettings.showTasks">
+                        <div class="widget tasks-widget" v-if="widgetSettings.showTasks" :style="{ order: getWidgetIndex('tasks') }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined">format_list_bulleted</span>
                                 <h2>Tasks</h2>
@@ -208,7 +208,7 @@
                         </div>
 
                         <!-- News Feed Widget -->
-                        <div class="widget news-widget" v-if="widgetSettings.showNews" :class="{ loading: isNewsLoading }">
+                        <div class="widget news-widget" v-if="widgetSettings.showNews" :class="{ loading: isNewsLoading }" :style="{ order: getWidgetIndex('news') }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined">newspaper</span>
                                 <h2>News</h2>
@@ -237,7 +237,7 @@
                         </div>
 
                         <!-- Stocks Widget -->
-                        <div class="widget stocks-widget" v-if="widgetSettings.showStocks" :class="{ loading: isStocksLoading }">
+                        <div class="widget stocks-widget" v-if="widgetSettings.showStocks" :class="{ loading: isStocksLoading }" :style="{ order: getWidgetIndex('stocks') }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined">monitoring</span>
                                 <h2>Stocks</h2>
@@ -327,13 +327,19 @@
                     <p class="settings-desc">Customize which widgets appear on your dashboard.</p>
                     
                     <div class="toggle-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" v-model="widgetSettings.showWeather">
-                            <span class="slider round"></span>
-                        </label>
-                        <div class="toggle-label">
-                            <strong>Weather & Commute</strong>
-                            <span>Shows daily forecast and chance of rain</span>
+                        <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" v-model="widgetSettings.showWeather">
+                                <span class="slider round"></span>
+                            </label>
+                            <div class="toggle-label" style="flex: 1;">
+                                <strong>Weather & Commute</strong>
+                                <span>Shows daily forecast and chance of rain</span>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="icon-btn" @click="moveWidget('weather', -1)" :disabled="getWidgetIndex('weather') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button class="icon-btn" @click="moveWidget('weather', 1)" :disabled="getWidgetIndex('weather') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
+                            </div>
                         </div>
                     </div>
                     
@@ -343,9 +349,13 @@
                                 <input type="checkbox" v-model="widgetSettings.showTasks">
                                 <span class="slider round"></span>
                             </label>
-                            <div class="toggle-label">
+                            <div class="toggle-label" style="flex: 1;">
                                 <strong>Tasks</strong>
                                 <span>Shows open items from Google Tasks and your Notebooks</span>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="icon-btn" @click="moveWidget('tasks', -1)" :disabled="getWidgetIndex('tasks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button class="icon-btn" @click="moveWidget('tasks', 1)" :disabled="getWidgetIndex('tasks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showTasks">
@@ -360,9 +370,13 @@
                                 <input type="checkbox" v-model="widgetSettings.showNews">
                                 <span class="slider round"></span>
                             </label>
-                            <div class="toggle-label">
+                            <div class="toggle-label" style="flex: 1;">
                                 <strong>News</strong>
                                 <span>Fetches news from your favorite topics and custom RSS feeds</span>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="icon-btn" @click="moveWidget('news', -1)" :disabled="getWidgetIndex('news') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button class="icon-btn" @click="moveWidget('news', 1)" :disabled="getWidgetIndex('news') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showNews">
@@ -385,9 +399,13 @@
                                 <input type="checkbox" v-model="widgetSettings.showStocks">
                                 <span class="slider round"></span>
                             </label>
-                            <div class="toggle-label">
+                            <div class="toggle-label" style="flex: 1;">
                                 <strong>Stocks</strong>
                                 <span>Real-time stock market quotes</span>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="icon-btn" @click="moveWidget('stocks', -1)" :disabled="getWidgetIndex('stocks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button class="icon-btn" @click="moveWidget('stocks', 1)" :disabled="getWidgetIndex('stocks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showStocks">
@@ -420,6 +438,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=75"></script>
+    <script src="app.js?v=77"></script>
 </body>
 </html>

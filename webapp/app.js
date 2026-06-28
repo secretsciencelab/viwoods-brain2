@@ -9,7 +9,7 @@ const app = createApp({
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
-        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": "", "showStocks": true, "stockSymbols": "AAPL, GOOGL, MSFT", "finnhubApiKey": ""}'));
+        const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": "", "showStocks": true, "stockSymbols": "AAPL, GOOGL, MSFT", "finnhubApiKey": "", "widgetOrder": ["weather", "tasks", "news", "stocks"]}'));
         if (widgetSettings.value.excludedLists === undefined) widgetSettings.value.excludedLists = "";
         if (widgetSettings.value.showNews === undefined) widgetSettings.value.showNews = true;
         if (widgetSettings.value.newsTopics === undefined) widgetSettings.value.newsTopics = "Technology, Artificial Intelligence";
@@ -18,7 +18,27 @@ const app = createApp({
         if (widgetSettings.value.stockSymbols === undefined) widgetSettings.value.stockSymbols = "AAPL, GOOGL, MSFT";
         if (widgetSettings.value.finnhubApiKey === undefined) widgetSettings.value.finnhubApiKey = "";
         if (widgetSettings.value.rss2jsonApiKey === undefined) widgetSettings.value.rss2jsonApiKey = "";
-        
+        if (widgetSettings.value.alphaVantageApiKey === undefined) widgetSettings.value.alphaVantageApiKey = "";
+        if (!widgetSettings.value.widgetOrder || widgetSettings.value.widgetOrder.length === 0) {
+            widgetSettings.value.widgetOrder = ['weather', 'tasks', 'news', 'stocks'];
+        }
+
+        const getWidgetIndex = (id) => {
+            return widgetSettings.value.widgetOrder.indexOf(id);
+        };
+
+        const moveWidget = (id, direction) => {
+            const arr = widgetSettings.value.widgetOrder;
+            const index = arr.indexOf(id);
+            if (index < 0) return;
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < arr.length) {
+                const temp = arr[index];
+                arr[index] = arr[newIndex];
+                arr[newIndex] = temp;
+            }
+        };
+
         const isDarkMode = ref(localStorage.getItem('brain2_theme') !== 'light');
         const toggleTheme = () => {
             isDarkMode.value = !isDarkMode.value;
@@ -1453,7 +1473,9 @@ const app = createApp({
             stockItems,
             isStocksLoading,
             stocksError,
-            fetchStocks
+            fetchStocks,
+            getWidgetIndex,
+            moveWidget
         }
     }
 });
