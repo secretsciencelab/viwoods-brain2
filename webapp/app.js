@@ -517,7 +517,30 @@ const app = createApp({
                     }
                     if (selectedDate.value) {
                         const note = notes.value.find(n => n.id === node.id);
-                        if (!note || !note.modifiedTime || getLocalDateStr(note.modifiedTime) !== selectedDate.value) {
+                        const content = noteContents.value[node.id] || '';
+                        
+                        let foundDateMatch = false;
+                        
+                        // Check notebook timestamp
+                        if (note && note.modifiedTime && getLocalDateStr(note.modifiedTime) === selectedDate.value) {
+                            foundDateMatch = true;
+                        }
+                        
+                        // Check page timestamps
+                        if (!foundDateMatch) {
+                            const regex = /> \*Last updated: (.*?)\*/g;
+                            let m;
+                            while ((m = regex.exec(content)) !== null) {
+                                const dateStr = m[1].replace(' at ', ' ');
+                                const d = new Date(dateStr);
+                                if (!isNaN(d) && getLocalDateStr(d) === selectedDate.value) {
+                                    foundDateMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (!foundDateMatch) {
                             matches = false;
                         }
                     }
