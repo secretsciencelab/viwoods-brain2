@@ -47,32 +47,28 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
 ## 🚀 Setup Guide
 
 ### Step 1: Google Cloud & Drive Setup
-1. Create a [Google Cloud Project](https://console.cloud.google.com/).
-2. Enable the **Google Drive API** in your project.
-3. Generate an OAuth Client ID (Desktop App) to authenticate your personal Google Drive account. You will need to export the resulting `token.json` file. (This bypasses strict storage quota limits placed on standard Service Accounts).
+1. Create a [Google Cloud Project](https://console.cloud.google.com/) and enable the **Google Drive API**.
+2. Create an **OAuth Client ID** (Desktop App type) and download the JSON file as `credentials.json` into this folder.
+3. Run `python generate_token.py` locally. This will open a browser to log in and automatically generate your required `token.json` file!
 
 ### Step 2: Gemini API Key
 1. Go to [Google AI Studio](https://aistudio.google.com/) and generate a free API Key.
-2. *(Note: The free tier currently allows 20 requests per day for Gemini 2.5. If you process more than 20 notebooks a day, enable "Pay-As-You-Go" billing on your Google Cloud project).*
 
 ### Step 3: Deploying to Cloud Run
 1. Fork this repository to your own GitHub account.
-2. In Google Cloud, navigate to **Cloud Run** and click **Deploy Container > Continuously deploy from a repository**.
-3. Point it to your forked repository.
-4. Set the Build Configuration:
+2. In Google Cloud, go to **Cloud Run** and click **Deploy Container > Continuously deploy from a repository**.
+3. Point it to your forked repository and set:
    - **Build type:** Buildpacks
    - **Context directory:** `/cloud_function`
-5. Under **Variables & Secrets**, add the following Environment Variables:
+4. Under **Variables & Secrets**, add the following Environment Variables:
    - `GEMINI_API_KEY`: Your key from Step 2.
-   - `DRIVE_TOKEN_JSON`: Paste the entire raw JSON string from your `token.json` file (from Step 1).
-   - `DRIVE_FOLDERS` (Optional): A comma-separated list of folder names to scan. Defaults to `Viwoods-Note`.
-6. Click **Deploy**.
+   - `DRIVE_TOKEN_JSON`: Paste the entire contents of your generated `token.json` file.
+   - `DRIVE_FOLDERS` (Optional): E.g., `Viwoods-Note`.
 
 ### Step 4: Cloud Scheduler
-1. Go to **Cloud Scheduler** in Google Cloud.
-2. Create a new job targeting the HTTP URL of your newly deployed Cloud Run service.
-3. **CRITICAL:** Under the "Configure the job's execution" > "Retry config" section, set the **Attempt deadline** to `30m` (30 minutes). The default is 3 minutes, which will cause a `DEADLINE_EXCEEDED` error if you process many handwriting files at once!
-4. Set the frequency using Cron syntax (e.g., `0 2 * * *` to run at 2 AM every night).
+1. Go to **Cloud Scheduler** in Google Cloud and create a new HTTP job targeting your Cloud Run URL.
+2. **CRITICAL:** Under Retry config, set the **Attempt deadline** to `30m` (30 minutes) to prevent timeouts when processing many files.
+3. Set your cron schedule (e.g., `0 2 * * *` for nightly).
 
 ## 🛠 Useful Commands
 
