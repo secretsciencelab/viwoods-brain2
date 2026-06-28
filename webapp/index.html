@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Vis-network for Knowledge Graph -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <link rel="stylesheet" href="styles.css?v=77">
+    <link rel="stylesheet" href="styles.css?v=82">
     <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
@@ -237,21 +237,21 @@
                         </div>
 
                         <!-- Stocks Widget -->
-                        <div class="widget stocks-widget" v-if="widgetSettings.showStocks" :class="{ loading: isStocksLoading }" :style="{ order: getWidgetIndex('stocks') }">
+                        <div class="widget stocks-widget" v-if="widgetSettings.showStocks" :class="{ loading: isStocksLoading && stockItems.length === 0 }" :style="{ order: getWidgetIndex('stocks') }">
                             <div class="widget-header">
                                 <span class="material-symbols-outlined">monitoring</span>
                                 <h2>Stocks</h2>
                                 <div style="flex-grow: 1;"></div>
-                                <button @click="fetchStocks" class="icon-btn" title="Refresh Stocks" style="width: 24px; height: 24px; font-size: 16px;">
+                                <button @click="fetchStocks" class="icon-btn" :class="{ 'spin-anim': isStocksLoading }" title="Refresh Stocks" style="width: 24px; height: 24px; font-size: 16px;">
                                     <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
                                 </button>
                             </div>
                             <div class="stocks-content">
-                                <div v-if="isStocksLoading" class="loader-spinner">
+                                <div v-if="isStocksLoading && stockItems.length === 0" class="loader-spinner">
                                     <div class="spinner"></div>
                                 </div>
                                 <div v-else-if="stocksError" class="news-error">{{ stocksError }}</div>
-                                <div v-else-if="stockItems.length === 0" class="no-tasks">No stocks configured.</div>
+                                <div v-else-if="stockItems.length === 0 && !isStocksLoading" class="no-tasks">No stocks configured.</div>
                                 <div v-else class="stocks-list">
                                     <div v-for="stock in stockItems" :key="stock.symbol" class="stock-item">
                                         <div class="stock-symbol">{{ stock.symbol }}</div>
@@ -436,6 +436,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=81"></script>
+    <script src="app.js?v=82"></script>
 </body>
 </html>

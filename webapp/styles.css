@@ -1436,6 +1436,15 @@ input:checked + .slider:before {
     to { transform: rotate(360deg); }
 }
 
+.spin-anim span {
+    animation: spin 1s linear infinite;
+}
+
+.spin-anim {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 .sidebar-loader {
     display: flex;
     align-items: center;

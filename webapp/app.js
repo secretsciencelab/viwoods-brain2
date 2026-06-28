@@ -1176,11 +1176,14 @@ const app = createApp({
             }
 
             try {
-                const results = [];
                 const twelveKey = widgetSettings.value.twelveDataApiKey?.trim();
+                stockItems.value = []; // Clear current items for fresh incremental load
                 
-                for (let i = 0; i < symbols.length; i++) {
-                    const symbol = symbols[i];
+                const fetchPromises = symbols.map(async (symbol, i) => {
+                    // Stagger start times to respect API burst limits
+                    if (i > 0) {
+                        await new Promise(resolve => setTimeout(resolve, i * 500));
+                    }
                     try {
                         const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
                         let sparklinePromise = Promise.resolve(null);
@@ -1188,9 +1191,8 @@ const app = createApp({
                         if (twelveKey) {
                             sparklinePromise = fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=30&apikey=${encodeURIComponent(twelveKey)}`);
                         } else {
-                            // Fallback to finnhub candle if no twelve data key (might get 403 on free tier)
                             const toDate = Math.floor(Date.now() / 1000);
-                            const fromDate = toDate - (30 * 24 * 60 * 60); // 30 days ago
+                            const fromDate = toDate - (30 * 24 * 60 * 60);
                             sparklinePromise = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
                         }
                         
@@ -1202,15 +1204,14 @@ const app = createApp({
                         if (resCandle && resCandle.ok) {
                             const candleData = await resCandle.json();
                             
-                            // Check if Twelve Data response
                             if (candleData.values && Array.isArray(candleData.values)) {
                                 const prices = candleData.values.map(d => parseFloat(d.close)).slice(0, 30).reverse();
                                 if (prices.length > 0) {
                                     const min = Math.min(...prices);
                                     const max = Math.max(...prices);
                                     const range = max - min || 1;
-                                    const points = prices.map((p, i) => {
-                                        const x = (i / (prices.length - 1)) * 100;
+                                    const points = prices.map((p, idx) => {
+                                        const x = (idx / (prices.length - 1)) * 100;
                                         const y = 30 - ((p - min) / range) * 30;
                                         return `${x.toFixed(1)},${y.toFixed(1)}`;
                                     });
@@ -1221,14 +1222,13 @@ const app = createApp({
                                 console.warn('Twelve Data rate limit reached:', candleData.message);
                                 stocksError.value = "Twelve Data rate limit reached. Please wait a moment and refresh.";
                             }
-                            // Check if Finnhub response
                             else if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
                                 const prices = candleData.c;
                                 const min = Math.min(...prices);
                                 const max = Math.max(...prices);
                                 const range = max - min || 1;
-                                const points = prices.map((p, i) => {
-                                    const x = (i / (prices.length - 1)) * 100;
+                                const points = prices.map((p, idx) => {
+                                    const x = (idx / (prices.length - 1)) * 100;
                                     const y = 30 - ((p - min) / range) * 30;
                                     return `${x.toFixed(1)},${y.toFixed(1)}`;
                                 });
@@ -1239,25 +1239,21 @@ const app = createApp({
                         }
 
                         if (data && data.c !== undefined && data.c !== 0) {
-                            results.push({
+                            // Update reactive array incrementally
+                            stockItems.value = [...stockItems.value, {
                                 symbol,
                                 currentPrice: data.c,
                                 change: data.d,
                                 percentChange: data.dp,
                                 sparkline
-                            });
+                            }].sort((a, b) => a.symbol.localeCompare(b.symbol));
                         }
                     } catch (err) {
                         console.error(`Error fetching stock ${symbol}`, err);
                     }
-                    
-                    // Respect Twelve Data rate limit (8 req/min => let's add a small delay anyway to be safe, e.g. 500ms)
-                    if (twelveKey && i < symbols.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
+                });
                 
-                stockItems.value = results.sort((a, b) => a.symbol.localeCompare(b.symbol));
+                await Promise.all(fetchPromises);
             } catch (err) {
                 console.error("Failed to fetch stocks", err);
                 stocksError.value = "Unable to load stock data.";
