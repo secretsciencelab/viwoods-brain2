@@ -83,7 +83,7 @@ gcloud beta run services logs tail secondbrain-gdrive --region us-central1 --pro
 
 ## 🌐 Web Application
 
-This repository includes a front-end **Web Application** (`/webapp`) hosted on GitHub Pages that provides a beautiful, native-like interface to view and read your processed Markdown files directly from your browser.
+This repository includes a front-end **Web Application** (`/webapp`) that can be easily hosted on GitHub Pages. It provides a beautiful, native-like interface to view and read your processed Markdown files directly from your browser.
 
 ### Features
 - **Interactive Dashboard:** Start your day with a customizable widget dashboard.
@@ -93,12 +93,11 @@ This repository includes a front-end **Web Application** (`/webapp`) hosted on G
 - **Persistent Sessions:** Your Google Drive token is securely cached in your browser's local storage so you don't have to log in on every page refresh.
 - **Image Support:** Seamlessly loads embedded drawings and blank pages exported by the sync script, fully supporting dark/light mode via transparency rendering.
 - **Tree Navigation:** Explore your Viwoods folder hierarchy easily via a collapsible file tree.
-- **GitHub Pages Deployment:** Automatically deployed and hosted via the included `.github/workflows/webapp.yaml` configuration.
 
-To use the web app, simply visit the hosted version here:
-**👉 [https://secretsciencelab.github.io/viwoods-brain2/](https://secretsciencelab.github.io/viwoods-brain2/)**
+### Hosting on GitHub Pages
+To use the web app, simply fork this repository to your own GitHub account. Once forked, the included `.github/workflows/webapp.yaml` configuration will automatically deploy and host your very own copy of the web app via GitHub Pages! 
 
-Because the app is fully client-side and only connects directly to Google Drive via your browser, anyone can safely use this hosted URL by just plugging in their own Google Drive Client ID! You do not need to host your own copy.
+You can then visit your newly hosted dashboard URL (e.g., `https://<your-username>.github.io/<your-repo-name>/`) and plug in your Google Drive Client ID to safely connect it to your Google account.
 
 ### ⚠️ Handling the "Google hasn't verified this app" Warning
 When setting up your OAuth Consent Screen, you must add the `https://www.googleapis.com/auth/tasks.readonly` scope (along with `drive.readonly`). Because these are classified as "Restricted" or "Sensitive" scopes, you will encounter a scary **"Google hasn't verified this app"** screen when logging in.
