@@ -209,8 +209,9 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
             page_id = p['id']
             page_hash_content = b""
             for hf in p['hash_files']:
-                if hf in z.namelist():
-                    with z.open(hf) as f:
+                match = next((f for f in z.namelist() if f.endswith(hf)), None)
+                if match:
+                    with z.open(match) as f:
                         page_hash_content += f.read()
                         
             page_hash = hashlib.md5(page_hash_content).hexdigest()
