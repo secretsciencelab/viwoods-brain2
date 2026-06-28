@@ -1068,7 +1068,11 @@ const app = createApp({
                 
                 // Fetch each RSS feed via rss2json
                 const promises = rssUrls.map(feedObj => {
-                    const encodedUrl = encodeURIComponent(feedObj.url);
+                    const cacheBuster = `cb=${Date.now()}`;
+                    const feedUrlWithCb = feedObj.url.includes('?') 
+                        ? `${feedObj.url}&${cacheBuster}` 
+                        : `${feedObj.url}?${cacheBuster}`;
+                    const encodedUrl = encodeURIComponent(feedUrlWithCb);
                     let url = `https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`;
                     const apiKey = widgetSettings.value.rss2jsonApiKey?.trim();
                     if (apiKey) {
