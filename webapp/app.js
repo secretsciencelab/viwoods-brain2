@@ -116,10 +116,18 @@ const app = createApp({
 
         const dailyActivity = computed(() => {
             const counts = {};
-            notes.value.forEach(note => {
-                if (note.modifiedTime) {
-                    const dateStr = getLocalDateStr(note.modifiedTime);
-                    counts[dateStr] = (counts[dateStr] || 0) + 1;
+            // Track updates for individual pages inside notebooks
+            Object.values(noteContents.value).forEach(text => {
+                if (!text) return;
+                const regex = /> \*Last updated: (.*?)\*/g;
+                let m;
+                while ((m = regex.exec(text)) !== null) {
+                    const dateStr = m[1].replace(' at ', ' ');
+                    const d = new Date(dateStr);
+                    if (!isNaN(d)) {
+                        const localStr = getLocalDateStr(d);
+                        counts[localStr] = (counts[localStr] || 0) + 1;
+                    }
                 }
             });
             return counts;
