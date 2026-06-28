@@ -1030,10 +1030,10 @@ main {
     text-align: right;
 }
 .stock-change.positive {
-    color: #10b981;
+    color: #4caf50;
 }
 .stock-change.negative {
-    color: var(--delete-color);
+    color: #f44336;
 }
 
 /* Animations */
