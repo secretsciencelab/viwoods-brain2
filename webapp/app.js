@@ -1266,6 +1266,9 @@ const app = createApp({
             }
         };
 
+        let newsInterval = null;
+        let stocksInterval = null;
+
         onMounted(() => {
             if (widgetSettings.value.showNews) {
                 fetchNews();
@@ -1273,6 +1276,20 @@ const app = createApp({
             if (widgetSettings.value.showStocks) {
                 fetchStocks();
             }
+            
+            // Auto-refresh every 15 minutes
+            newsInterval = setInterval(() => {
+                if (widgetSettings.value.showNews) fetchNews();
+            }, 15 * 60 * 1000);
+            
+            stocksInterval = setInterval(() => {
+                if (widgetSettings.value.showStocks) fetchStocks();
+            }, 15 * 60 * 1000);
+        });
+
+        onUnmounted(() => {
+            if (newsInterval) clearInterval(newsInterval);
+            if (stocksInterval) clearInterval(stocksInterval);
         });
 
         watch(noteContents, () => {
