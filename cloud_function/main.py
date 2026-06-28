@@ -156,7 +156,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                     'id': page_id,
                     'lastModifiedTime': page.get('lastModifiedTime'),
                     'image_names': image_names,
-                    'hash_files': [f"PATH_{page_id}.json", f"{page_id}_LayoutText.json", layout_img_file]
+                    'hash_files': image_names
                 })
         elif page_list_file:
             with z.open(page_list_file) as f:
@@ -190,7 +190,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 best_image = screenshot_bmp if screenshot_bmp else main_bmp
                 
                 image_names = [best_image] if best_image else [f"screenshotBmp_{page_id}.png", f"mainBmp_{page_id}.png"]
-                hash_files = paths if paths else [f"path_{page_id}.json", f"screenshotBmp_{page_id}.png"]
+                hash_files = image_names
                 
                 pages.append({
                     'id': page_id,
