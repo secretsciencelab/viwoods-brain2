@@ -325,8 +325,8 @@
                 <div class="settings-section" style="margin-top: 24px;">
                     <h3>Widgets</h3>
                     <p class="settings-desc">Customize which widgets appear on your dashboard.</p>
-                    
-                    <div class="toggle-group">
+                    <div style="display: flex; flex-direction: column;">
+                        <div class="toggle-group" :style="{ order: getWidgetIndex('weather') }">
                         <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
                             <label class="toggle-switch">
                                 <input type="checkbox" v-model="widgetSettings.showWeather">
@@ -342,8 +342,7 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="toggle-group" style="flex-wrap: wrap;">
+                        <div class="toggle-group" style="flex-wrap: wrap;" :style="{ order: getWidgetIndex('tasks') }">
                         <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
                             <label class="toggle-switch">
                                 <input type="checkbox" v-model="widgetSettings.showTasks">
@@ -363,8 +362,7 @@
                             <input type="text" v-model="widgetSettings.excludedLists" placeholder="e.g. Groceries, Random Ideas">
                         </div>
                     </div>
-                    
-                    <div class="toggle-group" style="flex-wrap: wrap;">
+                        <div class="toggle-group" style="flex-wrap: wrap;" :style="{ order: getWidgetIndex('news') }">
                         <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
                             <label class="toggle-switch">
                                 <input type="checkbox" v-model="widgetSettings.showNews">
@@ -392,8 +390,7 @@
                             <input type="text" v-model="widgetSettings.rss2jsonApiKey" placeholder="Enter API Key">
                         </div>
                     </div>
-
-                    <div class="toggle-group" style="flex-wrap: wrap;">
+                        <div class="toggle-group" style="flex-wrap: wrap;" :style="{ order: getWidgetIndex('stocks') }">
                         <div style="display: flex; align-items: center; gap: 16px; width: 100%;">
                             <label class="toggle-switch">
                                 <input type="checkbox" v-model="widgetSettings.showStocks">
@@ -421,6 +418,7 @@
                             <input type="text" v-model="widgetSettings.twelveDataApiKey" placeholder="Enter free Twelve Data API Key">
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="modal-actions" style="margin-top: 32px;">
@@ -438,6 +436,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=80"></script>
+    <script src="app.js?v=81"></script>
 </body>
 </html>
