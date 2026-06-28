@@ -337,8 +337,8 @@
                                 <span>Shows daily forecast and chance of rain</span>
                             </div>
                             <div style="display: flex; gap: 4px;">
-                                <button class="icon-btn" @click="moveWidget('weather', -1)" :disabled="getWidgetIndex('weather') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
-                                <button class="icon-btn" @click="moveWidget('weather', 1)" :disabled="getWidgetIndex('weather') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('weather', -1)" :disabled="getWidgetIndex('weather') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('weather', 1)" :disabled="getWidgetIndex('weather') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                     </div>
@@ -354,8 +354,8 @@
                                 <span>Shows open items from Google Tasks and your Notebooks</span>
                             </div>
                             <div style="display: flex; gap: 4px;">
-                                <button class="icon-btn" @click="moveWidget('tasks', -1)" :disabled="getWidgetIndex('tasks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
-                                <button class="icon-btn" @click="moveWidget('tasks', 1)" :disabled="getWidgetIndex('tasks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('tasks', -1)" :disabled="getWidgetIndex('tasks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('tasks', 1)" :disabled="getWidgetIndex('tasks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showTasks">
@@ -375,8 +375,8 @@
                                 <span>Fetches news from your favorite topics and custom RSS feeds</span>
                             </div>
                             <div style="display: flex; gap: 4px;">
-                                <button class="icon-btn" @click="moveWidget('news', -1)" :disabled="getWidgetIndex('news') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
-                                <button class="icon-btn" @click="moveWidget('news', 1)" :disabled="getWidgetIndex('news') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('news', -1)" :disabled="getWidgetIndex('news') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('news', 1)" :disabled="getWidgetIndex('news') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showNews">
@@ -404,8 +404,8 @@
                                 <span>Real-time stock market quotes</span>
                             </div>
                             <div style="display: flex; gap: 4px;">
-                                <button class="icon-btn" @click="moveWidget('stocks', -1)" :disabled="getWidgetIndex('stocks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
-                                <button class="icon-btn" @click="moveWidget('stocks', 1)" :disabled="getWidgetIndex('stocks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('stocks', -1)" :disabled="getWidgetIndex('stocks') <= 0"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_upward</span></button>
+                                <button type="button" class="icon-btn" @click.prevent="moveWidget('stocks', 1)" :disabled="getWidgetIndex('stocks') >= 3"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_downward</span></button>
                             </div>
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 12px; margin-left: 60px;" v-if="widgetSettings.showStocks">
@@ -438,6 +438,6 @@
     </div>
 
     <!-- Application Logic -->
-    <script src="app.js?v=79"></script>
+    <script src="app.js?v=80"></script>
 </body>
 </html>

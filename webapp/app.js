@@ -28,7 +28,7 @@ const app = createApp({
         };
 
         const moveWidget = (id, direction) => {
-            const arr = widgetSettings.value.widgetOrder;
+            const arr = [...widgetSettings.value.widgetOrder];
             const index = arr.indexOf(id);
             if (index < 0) return;
             const newIndex = index + direction;
@@ -36,6 +36,7 @@ const app = createApp({
                 const temp = arr[index];
                 arr[index] = arr[newIndex];
                 arr[newIndex] = temp;
+                widgetSettings.value.widgetOrder = arr;
             }
         };
 
