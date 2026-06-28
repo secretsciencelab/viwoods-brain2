@@ -1544,9 +1544,24 @@ app.component('tree-node', {
     `,
     props: ['node', 'selectedNote'],
     methods: {
+        autoExpandIfNoFiles(node) {
+            if (!node.children || node.children.length === 0) return;
+            const hasFiles = node.children.some(c => !c.isFolder);
+            if (!hasFiles) {
+                node.children.forEach(c => {
+                    if (c.isFolder) {
+                        c.expanded = true;
+                        this.autoExpandIfNoFiles(c);
+                    }
+                });
+            }
+        },
         toggleOrSelect(child) {
             if (child.isFolder) {
                 child.expanded = !child.expanded;
+                if (child.expanded) {
+                    this.autoExpandIfNoFiles(child);
+                }
             } else {
                 this.$emit('select', child);
             }
