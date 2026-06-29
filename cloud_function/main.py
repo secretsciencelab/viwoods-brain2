@@ -10,6 +10,32 @@ from master_compiler import compile_master_files
 @functions_framework.http
 def sync_drive_notes(request):
     """HTTP Cloud Function entry point."""
+    
+    # Handle CORS Preflight for the new proxy endpoint
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '3600'
+        }
+        return ('', 204, headers)
+
+    # Simple built-in CORS proxy for RSS feeds
+    if request.args.get('proxy_url'):
+        target_url = request.args.get('proxy_url')
+        try:
+            import urllib.request
+            req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                content = response.read()
+                return (content, 200, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': response.headers.get('Content-Type', 'application/xml')
+                })
+        except Exception as e:
+            return (f"Proxy error: {str(e)}", 500, {'Access-Control-Allow-Origin': '*'})
+
     if not os.environ.get("GEMINI_API_KEY"):
         return "Please set the GEMINI_API_KEY environment variable in Cloud Functions.", 500
 

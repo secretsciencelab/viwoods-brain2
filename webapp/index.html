@@ -386,8 +386,17 @@
                             <input type="text" v-model="widgetSettings.customRss" placeholder="https://news.ycombinator.com/rss">
                         </div>
                         <div class="input-group" style="width: 100%; margin-top: 6px; margin-left: 60px;" v-if="widgetSettings.showNews">
-                            <label style="font-size: 0.8rem; color: var(--text-secondary);">rss2json.com API Key (Optional, for >10 items)</label>
-                            <input type="text" v-model="widgetSettings.rss2jsonApiKey" placeholder="Enter API Key">
+                            <div class="setting-item">
+                                <label for="rss2jsonApiKey">rss2json.com API Key <span class="optional">(Optional - Fallback)</span></label>
+                                <input type="text" id="rss2jsonApiKey" v-model="widgetSettings.rss2jsonApiKey" placeholder="Enter API key" />
+                                <small>Used as a final fallback if the primary proxy fails.</small>
+                            </div>
+                            
+                            <div class="setting-item" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                                <label for="customProxyUrl" style="color: #4caf50;">Custom Cloud Proxy URL <span class="optional">(Recommended)</span></label>
+                                <input type="text" id="customProxyUrl" v-model="widgetSettings.customProxyUrl" placeholder="https://us-central1-YOUR-PROJECT.cloudfunctions.net/sync_drive_notes" />
+                                <small>Since public proxies block production domains, you must deploy your Cloud Function and paste its URL here to reliably load Google News.</small>
+                            </div>
                         </div>
                     </div>
                         <div class="toggle-group" style="flex-wrap: wrap;" :style="{ order: getWidgetIndex('stocks') }">
