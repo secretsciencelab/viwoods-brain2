@@ -32,56 +32,80 @@ export async function fetchNews(widgetSettings) {
 
     const allItems = [];
     
-    // Fetch each RSS feed via rss2json
-    const promises = rssUrls.map(feedObj => {
-        const cacheBuster = `cb=${Date.now()}`;
-        const feedUrlWithCb = feedObj.url.includes('?') 
-            ? `${feedObj.url}&${cacheBuster}` 
-            : `${feedObj.url}?${cacheBuster}`;
-        const encodedUrl = encodeURIComponent(feedUrlWithCb);
-        let url = `https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`;
-        const apiKey = widgetSettings.rss2jsonApiKey?.trim();
-        if (apiKey) {
-            url += `&api_key=${apiKey}`;
-            // Increase count to 15 for custom feeds if we have an API key
-            if (feedObj.isCustom) {
-                url += `&count=15`;
-            }
-        }
-        
-        return fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'ok' && data.items) {
-                    // Inject source title and decode html entities
-                    const decodeHtml = (html) => {
-                        const txt = document.createElement("textarea");
-                        txt.innerHTML = html;
-                        return txt.value;
-                    };
-                    
-                    let redditSub = "";
-                    if (feedObj.url.includes("reddit.com/r/")) {
-                        const match = feedObj.url.match(/reddit\.com\/r\/([^\/\.\?]+)/);
-                        if (match) redditSub = ` [r/${match[1]}]`;
-                    }
+    // Fetch each RSS feed via a CORS proxy and parse XML locally
+    const promises = rssUrls.map(async feedObj => {
+        try {
+            // Use corsproxy.io to bypass browser CORS blocks
+            const targetUrl = encodeURIComponent(feedObj.url);
+            const proxyUrl = `https://corsproxy.io/?url=${targetUrl}`;
+            
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error(`Proxy returned status ${res.status}`);
+            const text = await res.text();
+            
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
+            
+            // Check for parse errors
+            const errorNode = xmlDoc.querySelector("parsererror");
+            if (errorNode) throw new Error("XML Parsing Error");
+            
+            // Get Feed Title
+            let feedTitle = "News";
+            const channelTitleNode = xmlDoc.querySelector("channel > title") || xmlDoc.querySelector("feed > title");
+            if (channelTitleNode) feedTitle = channelTitleNode.textContent;
+            
+            // Get Items (RSS <item> or Atom <entry>)
+            const itemNodes = Array.from(xmlDoc.querySelectorAll("item, entry"));
+            
+            // Limit custom feeds
+            const maxItems = feedObj.isCustom ? 15 : 10;
+            const itemsToProcess = itemNodes.slice(0, maxItems);
+            
+            const decodeHtml = (html) => {
+                const txt = document.createElement("textarea");
+                txt.innerHTML = html;
+                return txt.value;
+            };
 
-                    data.items.forEach(item => {
-                        item.source = (data.feed.title || 'News');
-                        let itemRedditSub = "";
-                        if (item.link && item.link.includes("reddit.com/r/")) {
-                            const match = item.link.match(/reddit\.com\/r\/([^\/\.\?]+)/);
-                            if (match) itemRedditSub = ` [r/${match[1]}]`;
-                        } else {
-                            itemRedditSub = redditSub;
-                        }
-                        item.title = decodeHtml(item.title || '') + itemRedditSub;
-                        item.isCustom = feedObj.isCustom;
-                        allItems.push(item);
-                    });
+            let redditSub = "";
+            if (feedObj.url.includes("reddit.com/r/")) {
+                const match = feedObj.url.match(/reddit\.com\/r\/([^\/\.\?]+)/);
+                if (match) redditSub = ` [r/${match[1]}]`;
+            }
+            
+            itemsToProcess.forEach(item => {
+                const title = item.querySelector("title")?.textContent || "";
+                let link = "";
+                const linkNode = item.querySelector("link");
+                if (linkNode) {
+                    if (linkNode.textContent) link = linkNode.textContent;
+                    else if (linkNode.getAttribute("href")) link = linkNode.getAttribute("href");
                 }
-            })
-            .catch(err => console.error("Error fetching RSS", feedObj.url, err));
+                
+                const pubDate = item.querySelector("pubDate, published, updated")?.textContent || "";
+                
+                let cleanTitle = decodeHtml(title);
+                
+                let itemRedditSub = "";
+                if (link && link.includes("reddit.com/r/")) {
+                    const match = link.match(/reddit\.com\/r\/([^\/\.\?]+)/);
+                    if (match) itemRedditSub = ` [r/${match[1]}]`;
+                } else {
+                    itemRedditSub = redditSub;
+                }
+                
+                allItems.push({
+                    title: cleanTitle + itemRedditSub,
+                    link: link,
+                    pubDate: pubDate,
+                    source: feedTitle,
+                    isCustom: feedObj.isCustom
+                });
+            });
+        } catch (err) {
+            console.error("Error fetching RSS natively", feedObj.url, err);
+        }
     });
     
     await Promise.all(promises);
