@@ -150,9 +150,9 @@ export async function fetchStocks(widgetSettings) {
                 const changeP = (change / prevClose) * 100;
                 stockData.push({
                     symbol: data.symbol,
-                    c: close,
-                    d: change,
-                    dp: changeP
+                    currentPrice: close,
+                    change: change,
+                    percentChange: changeP
                 });
             }
         } else {
@@ -164,9 +164,9 @@ export async function fetchStocks(widgetSettings) {
                     const changeP = (change / prevClose) * 100;
                     stockData.push({
                         symbol: data[sym].symbol,
-                        c: close,
-                        d: change,
-                        dp: changeP
+                        currentPrice: close,
+                        change: change,
+                        percentChange: changeP
                     });
                 }
             }
@@ -180,9 +180,9 @@ export async function fetchStocks(widgetSettings) {
                     if (data && data.c !== undefined && data.c !== null && data.c !== 0) {
                         return {
                             symbol: sym,
-                            c: data.c,
-                            d: data.d,
-                            dp: data.dp
+                            currentPrice: data.c,
+                            change: data.d,
+                            percentChange: data.dp
                         };
                     }
                     return null;
