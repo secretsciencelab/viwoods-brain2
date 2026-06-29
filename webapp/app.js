@@ -672,7 +672,7 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            return parseMarkdown(noteContents.value, reversePageOrder.value, imageBlobUrls.value);
+            return parseMarkdown(rawMd, reversePageOrder.value, imageBlobUrls.value);
         });
 
         // Lightbox Logic

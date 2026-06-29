@@ -172,7 +172,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
     // Post-process HTML to convert timestamp blockquotes into beautiful badges
     html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, (match, ts) => {
         let localStr = ts;
-        const d = new Date(ts.replace(' at ', ' ') + ' UTC');
+        const d = new Date(ts.replace(' at ', 'T') + 'Z');
         if (!isNaN(d.getTime())) {
             localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
         }
