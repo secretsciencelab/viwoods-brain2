@@ -702,7 +702,10 @@ const app = createApp({
         const reversePageOrder = computed({
             get: () => {
                 if (!selectedNote.value) return false;
-                return notebookOrders.value[selectedNote.value.id] || false;
+                if (notebookOrders.value[selectedNote.value.id] !== undefined) {
+                    return notebookOrders.value[selectedNote.value.id];
+                }
+                return true; // Default to newest first
             },
             set: (val) => {
                 if (selectedNote.value) {
