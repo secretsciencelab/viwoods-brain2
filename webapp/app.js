@@ -169,7 +169,8 @@ const app = createApp({
                     currentWeek = [];
                 }
             });
-            return weeks;
+            // Reverse so that the newest weeks are displayed at the top
+            return weeks.reverse();
         });
 
         const isNewMonth = (week, index, weeks) => {
@@ -996,10 +997,19 @@ const app = createApp({
             isStocksLoading.value = true;
             stocksError.value = '';
             try {
-                stockItems.value = await apiFetchStocks(widgetSettings.value);
+                const newStocks = await apiFetchStocks(widgetSettings.value);
+                if (newStocks && newStocks.length > 0) {
+                    stockItems.value = newStocks;
+                }
             } catch (err) {
                 console.error("Failed to fetch stocks", err);
-                stocksError.value = err.message || 'Could not load stock data.';
+                
+                // If we ran out of credits but already have data loaded, just keep showing the old data
+                if (err.message && err.message.toLowerCase().includes('credits') && stockItems.value.length > 0) {
+                    stocksError.value = '';
+                } else {
+                    stocksError.value = err.message || 'Could not load stock data.';
+                }
             }
             isStocksLoading.value = false;
         };
