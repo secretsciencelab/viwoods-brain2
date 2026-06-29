@@ -36,8 +36,15 @@ def sync_drive_notes(request):
         except Exception as e:
             return (f"Proxy error: {str(e)}", 500, {'Access-Control-Allow-Origin': '*'})
 
-    if not os.environ.get("GEMINI_API_KEY"):
-        return "Please set the GEMINI_API_KEY environment variable in Cloud Functions.", 500
+    if not request.args.get('proxy_url'):
+        # For the actual sync job, we require a secret key to prevent unauthorized invocations
+        # once the Cloud Run service is made public for the CORS proxy.
+        cron_secret = os.environ.get("CRON_SECRET")
+        if cron_secret and request.args.get("cron_secret") != cron_secret:
+            return "Unauthorized", 401
+            
+        if not os.environ.get("GEMINI_API_KEY"):
+            return "Please set the GEMINI_API_KEY environment variable in Cloud Functions.", 500
 
     try:
         service = get_drive_service()
