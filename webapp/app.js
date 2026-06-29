@@ -642,14 +642,9 @@ const app = createApp({
                 let res3 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q3}&fields=files(id,name,thumbnailLink)`, { headers: { Authorization: `Bearer ${accessToken}` } });
                 let data3 = await res3.json();
                 
-                // 4. Use Google Drive's fast thumbnail links instead of downloading massive blobs
+                // 4. Use Google Drive's fast thumbnail links securely
                 for (let file of data3.files) {
-                    if (file.thumbnailLink) {
-                        // Upgrade the default s220 thumbnail to s800 for crisp but lightweight viewing
-                        let fastImageUrl = file.thumbnailLink.replace(/=s\d+$/, '=s800');
-                        imageBlobUrls.value[file.name] = fastImageUrl;
-                    } else {
-                        // Fallback to media blob if thumbnail is unavailable
+                    const fetchMediaBlob = () => {
                         fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
                             headers: { Authorization: `Bearer ${accessToken}` }
                         })
@@ -657,6 +652,26 @@ const app = createApp({
                         .then(blob => {
                             imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
                         });
+                    };
+
+                    if (file.thumbnailLink) {
+                        let fastImageUrl = file.thumbnailLink.replace(/=s\d+$/, '=s800');
+                        fetch(fastImageUrl, {
+                            headers: { Authorization: `Bearer ${accessToken}` }
+                        })
+                        .then(r => {
+                            if (!r.ok) throw new Error(`Thumbnail fetch failed with status ${r.status}`);
+                            return r.blob();
+                        })
+                        .then(blob => {
+                            imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
+                        })
+                        .catch(err => {
+                            console.warn("Failed to fetch thumbnail securely, falling back to full media blob", err);
+                            fetchMediaBlob();
+                        });
+                    } else {
+                        fetchMediaBlob();
                     }
                 }
             } catch (err) {
