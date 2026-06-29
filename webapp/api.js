@@ -77,6 +77,20 @@ export async function fetchNews(widgetSettings) {
         return { feedTitle, items: data.items || [], format: 'json' };
     };
 
+    const fetchViaChainedProxy = async (targetUrl) => {
+        // Since feed2json.org doesn't send CORS headers, we wrap it in corsproxy.io
+        // This chained approach (corsproxy -> feed2json -> google news) bypasses the direct IP block on corsproxy!
+        const feed2JsonUrl = `https://feed2json.org/convert?url=${encodeURIComponent(targetUrl)}`;
+        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(feed2JsonUrl)}`;
+        
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`Chained proxy returned ${res.status}`);
+        const data = await res.json();
+        
+        let feedTitle = data.title || "News";
+        return { feedTitle, items: data.items || [], format: 'json' };
+    };
+
     // Fetch each RSS feed with multi-proxy fallback architecture
     const promises = rssUrls.map(async feedObj => {
         try {
@@ -85,9 +99,16 @@ export async function fetchNews(widgetSettings) {
                 // Primary: corsproxy.io (Native XML parsing)
                 result = await fetchViaCorsProxy(feedObj.url);
             } catch (err1) {
-                console.warn(`Primary proxy failed for ${feedObj.url}, trying fallback:`, err1);
-                // Fallback: feed2json.org (JSON feed parsing)
-                result = await fetchViaFeed2Json(feedObj.url);
+                console.warn(`Primary proxy failed for ${feedObj.url}, trying secondary:`, err1);
+                try {
+                    // Secondary: feed2json.org (JSON feed parsing)
+                    // This will likely fail due to lack of CORS headers, but some browsers/extensions might allow it
+                    result = await fetchViaFeed2Json(feedObj.url);
+                } catch (err2) {
+                    console.warn(`Secondary proxy failed for ${feedObj.url}, trying tertiary chained proxy:`, err2);
+                    // Tertiary: corsproxy -> feed2json (Chained)
+                    result = await fetchViaChainedProxy(feedObj.url);
+                }
             }
             
             const maxItems = feedObj.isCustom ? 15 : 10;
