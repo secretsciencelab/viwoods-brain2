@@ -278,30 +278,7 @@ const app = createApp({
             tokenClient.requestAccessToken({prompt: ''});
         };
 
-        let isRefreshing = false;
-        
-        // Auto-refresh token by piggybacking on user interactions to bypass popup blockers
-        const autoRefreshToken = () => {
-            if (!isAuthenticated.value || !accessToken || isRefreshing || !clientId.value) return;
-            
-            const expiresAt = parseInt(localStorage.getItem('brain2_token_expires') || '0');
-            const timeRemaining = expiresAt - Date.now();
-            
-            // If token is expiring in less than 10 minutes, silently refresh it
-            if (timeRemaining > 0 && timeRemaining < 600000) {
-                isRefreshing = true;
-                if (!tokenClient) {
-                    initGoogleAuth(); // Will set tokenClient and call requestAccessToken
-                } else {
-                    tokenClient.requestAccessToken({prompt: ''});
-                }
-            }
-        };
 
-        onMounted(() => {
-            window.addEventListener('click', autoRefreshToken, { capture: true });
-            window.addEventListener('keydown', autoRefreshToken, { capture: true });
-        });
 
         const extractTags = (content) => {
             if (!content) return { all: [] };
