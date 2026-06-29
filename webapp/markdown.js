@@ -26,7 +26,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
         
         // Skip inversion logic if it's a completely external image
         if (finalSrc === src && src.startsWith('http') && !src.includes('googleapis.com') && !src.includes('googleusercontent.com')) {
-            return `\n<img src="${finalSrc}" alt="${altText}" />`;
+            return `\n<img src="${finalSrc}" data-filename="${filename}" alt="${altText}" />`;
         }
 
         // Inline script injected to flip the image colors back if the stroke color matches the background
@@ -74,7 +74,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
             }
         "`;
         
-        return `\n<img src="${finalSrc}" alt="${altText}" crossorigin="anonymous" ${invertLogic} />`;
+        return `\n<img src="${finalSrc}" data-filename="${filename}" alt="${altText}" crossorigin="anonymous" ${invertLogic} />`;
     });
 
     // We convert these into internal links and reduce their size

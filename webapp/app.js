@@ -668,8 +668,27 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            return parseMarkdown(rawMd, reversePageOrder.value, imageBlobUrls.value);
+            // We NO LONGER pass imageBlobUrls.value here to prevent full DOM re-renders every time an image loads!
+            // Images will initially render with placeholders and be surgically updated via the watcher below.
+            return parseMarkdown(rawMd, reversePageOrder.value, {});
         });
+
+        // Surgically patch image src attributes directly in the DOM as they finish downloading
+        // This completely eliminates the severe "flashing" caused by destroying the DOM repeatedly.
+        watch(imageBlobUrls, (newUrls) => {
+            Vue.nextTick(() => {
+                const imgs = document.querySelectorAll('.markdown-body img[data-filename]');
+                imgs.forEach(img => {
+                    const filename = img.getAttribute('data-filename');
+                    if (filename && newUrls[filename] && img.src !== newUrls[filename]) {
+                        // Reset inversion processing flag so dark mode logic runs again on the new image
+                        img.removeAttribute('data-processed');
+                        img.style.filter = '';
+                        img.src = newUrls[filename];
+                    }
+                });
+            });
+        }, { deep: true });
 
         // Lightbox Logic
         const lightboxImage = ref(null);
