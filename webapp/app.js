@@ -1,3 +1,6 @@
+import { parseMarkdown } from './markdown.js';
+import { fetchWeather as apiFetchWeather, fetchNews as apiFetchNews, fetchStocks as apiFetchStocks } from './api.js';
+
 const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
 
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/tasks.readonly";
@@ -669,124 +672,7 @@ const app = createApp({
             // Fix Gemini wrapping the entire OCR response in ```markdown ... ``` blocks
             rawMd = rawMd.replace(/```(?:markdown|md)\n([\s\S]*?)\n```/gi, '$1');
             
-            // Completely hide legacy SVG code blocks
-            rawMd = rawMd.replace(/```(?:xml|svg|html)\n?[\s\S]*?<svg[\s\S]*?<\/svg>[\s\S]*?\n?```/gi, '');
-
-            if (selectedNote.value && selectedNote.value.name.endsWith('Master.md')) {
-                // The backend outputs `## Folder/Path/Note.md` (TODO) or `## Source: Folder/Path/Note.md`
-                // We convert these into internal links and reduce their size
-                rawMd = rawMd.replace(/^##\s+Source:\s*\/?(.*?\.md)\s*$/gm, (match, path) => {
-                    return `#### Source: [[${path}]]`;
-                });
-                rawMd = rawMd.replace(/^##\s+\/?(.*?\.md)\s*$/gm, (match, path) => {
-                    return `#### [[${path}]]`;
-                });
-            }
-
-            // Bulletproof regex: matches ANY image link containing _attachments or Attachments anywhere in the path
-            rawMd = rawMd.replace(/!\[(.*?)\]\(\s*.*?(?:_attachments|Attachments)\/.*?([^\/]+\.(?:png|jpg|jpeg|gif|bmp|webp))\s*\)/gi, (match, altText, filename) => {
-                let src = imageBlobUrls.value[filename] || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                return `\n<img src="${src}" alt="${altText}" />`;
-            });
-            
-            // Replace [[Note Name]] with clickable internal links
-            rawMd = rawMd.replace(/\[\[(.*?)\]\]/g, (match, noteName) => {
-                return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
-            });
-            
-            // Extract tags and move them to the bottom of their respective page block, and enforce H1 rule
-            rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
-                let tags = [];
-                // Extract lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
-                content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
-                    tags.push(tagLine.trim());
-                    return ''; 
-                });
-                // Enforce strict H1 rule: Only allowed if it's the very first line of the actual note content.
-                let lines = content.split(/\r?\n/);
-                let ocrStarted = false;
-                
-                for (let i = 0; i < lines.length; i++) {
-                    let line = lines[i];
-                    if (!ocrStarted) {
-                        // Skip empty lines, images, and the auto-generated timestamp blockquote
-                        if (line.trim() === '' || line.startsWith('![') || line.startsWith('>')) {
-                            continue;
-                        }
-                        ocrStarted = true;
-                        // If the very first line of text is an H1, allow it
-                        if (line.startsWith('# ')) {
-                            continue; 
-                        }
-                    }
-                    
-                    // Once OCR has started, any H1 encountered must be demoted to H2
-                    if (ocrStarted && line.startsWith('# ')) {
-                        lines[i] = '## ' + line.substring(2);
-                    }
-                }
-                content = lines.join('\n');
-                
-                if (tags.length > 0) {
-                    content += `\n\n<div class="tags-container">\n\n${tags.join(' ')}\n\n</div>\n`;
-                }
-                
-                return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
-            });
-            
-            // Subtly style inline #tags
-            rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_\-\/]+)/g, (match, space, tag) => {
-                // Ensure it's not a markdown heading by checking if there's a space after the #
-                return `${space}<span class="inline-tag">${tag}</span>`;
-            });
-            
-            // Prevent Setext heading confusion by ensuring a blank line before horizontal rules
-            rawMd = rawMd.replace(/([^\s])\s*\n---(?:\s*\n|$)/g, '$1\n\n---\n');
-            
-            let html = marked.parse(rawMd);
-            
-            // Post-process HTML to wrap pages and inject page numbers
-            let pageCounter = 1;
-            let pages = [];
-            html = html.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
-                let wrapped = `
-                    <div class="page-block" data-page-id="${pageId}">
-                        <div class="page-number-indicator">Page ${pageCounter}</div>
-                        ${content}
-                    </div>
-                `;
-                pages.push(wrapped);
-                pageCounter++;
-                return `<!-- PAGE_PLACEHOLDER -->`;
-            });
-            
-            if (reversePageOrder.value) {
-                pages.reverse();
-            }
-            
-            let pageIndex = 0;
-            html = html.replace(/<!-- PAGE_PLACEHOLDER -->/g, () => {
-                return pages[pageIndex++];
-            });
-            
-            // Post-process HTML to convert timestamp blockquotes into beautiful badges
-            html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, (match, ts) => {
-                let localStr = ts;
-                const d = new Date(ts.replace(' at ', ' ') + ' UTC');
-                if (!isNaN(d.getTime())) {
-                    localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-                }
-                return '<div class="page-timestamp"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ' + localStr + '</div>';
-            });
-            
-            // Post-process HTML to inject id attributes into headings for the Document Outline
-            html = html.replace(/<h([1-6])>(.*?)<\/h\1>/g, (match, level, text) => {
-                const cleanText = text.replace(/<[^>]*>?/gm, ''); // strip inline HTML
-                const id = cleanText.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                return `<h${level} id="${id}">${text}</h${level}>`;
-            });
-            
-            return html;
+            return parseMarkdown(noteContents.value, reversePageOrder.value, imageBlobUrls.value);
         });
 
         // Lightbox Logic
@@ -830,9 +716,7 @@ const app = createApp({
         const fetchWeather = async (lat = 37.7749, lon = -122.4194) => {
             try {
                 weatherError.value = null;
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=2`);
-                const data = await res.json();
-                if (data.error) throw new Error(data.reason);
+                const data = await apiFetchWeather(lat, lon);
                 weatherData.value = data;
                 
                 // Parse hourly forecast (next 24 hours starting from current hour)
@@ -1076,120 +960,13 @@ const app = createApp({
             if (!widgetSettings.value.showNews) return;
             isNewsLoading.value = true;
             newsError.value = '';
-            
-            const topics = (widgetSettings.value.newsTopics || "").split(',').map(s => s.trim()).filter(s => s);
-            const customRss = (widgetSettings.value.customRss || "").split(',').map(s => s.trim()).filter(s => s);
-            
-            const rssUrls = [];
-            
-            // Map topics to Google News RSS
-            topics.forEach(topic => {
-                const encodedTopic = encodeURIComponent(topic);
-                rssUrls.push({ url: `https://news.google.com/rss/search?q=${encodedTopic}&hl=en-US&gl=US&ceid=US:en`, isCustom: false });
-            });
-            
-            // Add custom RSS
-            customRss.forEach(url => {
-                if (url.startsWith('http')) rssUrls.push({ url, isCustom: true });
-            });
-            
-            if (rssUrls.length === 0) {
-                isNewsLoading.value = false;
-                newsItems.value = [];
-                return;
-            }
-
             try {
-                const allItems = [];
-                
-                // Fetch each RSS feed via rss2json
-                const promises = rssUrls.map(feedObj => {
-                    const cacheBuster = `cb=${Date.now()}`;
-                    const feedUrlWithCb = feedObj.url.includes('?') 
-                        ? `${feedObj.url}&${cacheBuster}` 
-                        : `${feedObj.url}?${cacheBuster}`;
-                    const encodedUrl = encodeURIComponent(feedUrlWithCb);
-                    let url = `https://api.rss2json.com/v1/api.json?rss_url=${encodedUrl}`;
-                    const apiKey = widgetSettings.value.rss2jsonApiKey?.trim();
-                    if (apiKey) {
-                        url += `&api_key=${apiKey}`;
-                        // Increase count to 15 for custom feeds if we have an API key
-                        if (feedObj.isCustom) {
-                            url += `&count=15`;
-                        }
-                    }
-                    
-                    return fetch(url)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.status === 'ok' && data.items) {
-                                // Inject source title and decode html entities
-                                const decodeHtml = (html) => {
-                                    const txt = document.createElement("textarea");
-                                    txt.innerHTML = html;
-                                    return txt.value;
-                                };
-                                
-                                let redditSub = "";
-                                if (feedObj.url.includes("reddit.com/r/")) {
-                                    const match = feedObj.url.match(/reddit\.com\/r\/([^\/\.\?]+)/);
-                                    if (match) redditSub = ` [r/${match[1]}]`;
-                                }
-
-                                data.items.forEach(item => {
-                                    item.source = (data.feed.title || 'News');
-                                    let itemRedditSub = "";
-                                    if (item.link && item.link.includes("reddit.com/r/")) {
-                                        const match = item.link.match(/reddit\.com\/r\/([^\/\.\?]+)/);
-                                        if (match) itemRedditSub = ` [r/${match[1]}]`;
-                                    } else {
-                                        itemRedditSub = redditSub;
-                                    }
-                                    item.title = decodeHtml(item.title || '') + itemRedditSub;
-                                    item.isCustom = feedObj.isCustom;
-                                    allItems.push(item);
-                                });
-                            }
-                        })
-                        .catch(err => console.error("Error fetching RSS", feedObj.url, err));
-                });
-                
-                await Promise.all(promises);
-                
-                // Sort combined items by date descending
-                allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-                
-                // Group by source
-                const grouped = {};
-                allItems.forEach(item => {
-                    const sourceName = item.source.replace(/["']/g, '').replace(/\s*-\s*Google News/ig, '').trim();
-                    if (!grouped[sourceName]) {
-                        grouped[sourceName] = { source: sourceName, articles: [], isCustom: item.isCustom };
-                    }
-                    grouped[sourceName].articles.push(item);
-                });
-                
-                // Convert to array and sort custom feeds first
-                const groupsArr = Object.values(grouped);
-                groupsArr.sort((a, b) => {
-                    if (a.isCustom && !b.isCustom) return -1;
-                    if (!a.isCustom && b.isCustom) return 1;
-                    return 0;
-                });
-                
-                // Slice items per group based on feed type
-                groupsArr.forEach(group => {
-                    const maxItems = group.isCustom ? 15 : 5;
-                    group.articles = group.articles.slice(0, maxItems);
-                });
-                
-                newsItems.value = groupsArr;
+                newsItems.value = await apiFetchNews(widgetSettings.value);
             } catch (err) {
                 console.error("Failed to fetch news", err);
-                newsError.value = "Unable to load news feeds.";
-            } finally {
-                isNewsLoading.value = false;
+                newsError.value = 'Could not load news feed.';
             }
+            isNewsLoading.value = false;
         };
 
         const stockItems = ref([]);
@@ -1198,108 +975,15 @@ const app = createApp({
 
         const fetchStocks = async () => {
             if (!widgetSettings.value.showStocks) return;
-            const apiKey = widgetSettings.value.finnhubApiKey?.trim();
-            if (!apiKey) {
-                stocksError.value = "Please enter your free Finnhub API Key in Settings.";
-                return;
-            }
-
             isStocksLoading.value = true;
             stocksError.value = '';
-            
-            const symbols = (widgetSettings.value.stockSymbols || "").split(',').map(s => s.trim().toUpperCase()).filter(s => s);
-            
-            if (symbols.length === 0) {
-                isStocksLoading.value = false;
-                stockItems.value = [];
-                return;
-            }
-
             try {
-                const twelveKey = widgetSettings.value.twelveDataApiKey?.trim();
-                stockItems.value = []; // Clear current items for fresh incremental load
-                
-                const fetchPromises = symbols.map(async (symbol, i) => {
-                    // Stagger start times to respect API burst limits
-                    if (i > 0) {
-                        await new Promise(resolve => setTimeout(resolve, i * 500));
-                    }
-                    try {
-                        const quoteRes = fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`);
-                        let sparklinePromise = Promise.resolve(null);
-                        
-                        if (twelveKey) {
-                            sparklinePromise = fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=30&apikey=${encodeURIComponent(twelveKey)}`);
-                        } else {
-                            const toDate = Math.floor(Date.now() / 1000);
-                            const fromDate = toDate - (30 * 24 * 60 * 60);
-                            sparklinePromise = fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${fromDate}&to=${toDate}&token=${encodeURIComponent(apiKey)}`);
-                        }
-                        
-                        const [resQuote, resCandle] = await Promise.all([quoteRes, sparklinePromise]);
-                        if (!resQuote.ok) throw new Error(`Status ${resQuote.status}`);
-                        const data = await resQuote.json();
-                        
-                        let sparkline = '';
-                        if (resCandle && resCandle.ok) {
-                            const candleData = await resCandle.json();
-                            
-                            if (candleData.values && Array.isArray(candleData.values)) {
-                                const prices = candleData.values.map(d => parseFloat(d.close)).slice(0, 30).reverse();
-                                if (prices.length > 0) {
-                                    const min = Math.min(...prices);
-                                    const max = Math.max(...prices);
-                                    const range = max - min || 1;
-                                    const points = prices.map((p, idx) => {
-                                        const x = (idx / (prices.length - 1)) * 100;
-                                        const y = 30 - ((p - min) / range) * 30;
-                                        return `${x.toFixed(1)},${y.toFixed(1)}`;
-                                    });
-                                    sparkline = points.join(' ');
-                                }
-                            }
-                            else if (candleData.status === 'error' && candleData.code === 429) {
-                                console.warn('Twelve Data rate limit reached:', candleData.message);
-                                stocksError.value = "Twelve Data rate limit reached. Please wait a moment and refresh.";
-                            }
-                            else if (candleData.s === 'ok' && candleData.c && candleData.c.length > 0) {
-                                const prices = candleData.c;
-                                const min = Math.min(...prices);
-                                const max = Math.max(...prices);
-                                const range = max - min || 1;
-                                const points = prices.map((p, idx) => {
-                                    const x = (idx / (prices.length - 1)) * 100;
-                                    const y = 30 - ((p - min) / range) * 30;
-                                    return `${x.toFixed(1)},${y.toFixed(1)}`;
-                                });
-                                sparkline = points.join(' ');
-                            } else {
-                                console.warn('Sparkline data issue:', symbol, candleData);
-                            }
-                        }
-
-                        if (data && data.c !== undefined && data.c !== 0) {
-                            // Update reactive array incrementally
-                            stockItems.value = [...stockItems.value, {
-                                symbol,
-                                currentPrice: data.c,
-                                change: data.d,
-                                percentChange: data.dp,
-                                sparkline
-                            }].sort((a, b) => a.symbol.localeCompare(b.symbol));
-                        }
-                    } catch (err) {
-                        console.error(`Error fetching stock ${symbol}`, err);
-                    }
-                });
-                
-                await Promise.all(fetchPromises);
+                stockItems.value = await apiFetchStocks(widgetSettings.value);
             } catch (err) {
                 console.error("Failed to fetch stocks", err);
-                stocksError.value = "Unable to load stock data.";
-            } finally {
-                isStocksLoading.value = false;
+                stocksError.value = err.message || 'Could not load stock data.';
             }
+            isStocksLoading.value = false;
         };
 
         let newsInterval = null;
