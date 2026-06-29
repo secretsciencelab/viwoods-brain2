@@ -656,20 +656,9 @@ const app = createApp({
 
                     if (file.thumbnailLink) {
                         let fastImageUrl = file.thumbnailLink.replace(/=s\d+$/, '=s800');
-                        fetch(fastImageUrl, {
-                            headers: { Authorization: `Bearer ${accessToken}` }
-                        })
-                        .then(r => {
-                            if (!r.ok) throw new Error(`Thumbnail fetch failed with status ${r.status}`);
-                            return r.blob();
-                        })
-                        .then(blob => {
-                            imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
-                        })
-                        .catch(err => {
-                            console.warn("Failed to fetch thumbnail securely, falling back to full media blob", err);
-                            fetchMediaBlob();
-                        });
+                        // Thumbnail links have embedded tokens and don't need Authorization headers
+                        // We can just use the URL directly, skipping the blob download entirely!
+                        imageBlobUrls.value[file.name] = fastImageUrl;
                     } else {
                         fetchMediaBlob();
                     }
