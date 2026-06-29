@@ -642,26 +642,18 @@ const app = createApp({
                 let res3 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q3}&fields=files(id,name,thumbnailLink)`, { headers: { Authorization: `Bearer ${accessToken}` } });
                 let data3 = await res3.json();
                 
-                // 4. Use Google Drive's fast thumbnail links securely
+                // 4. Download images securely as Blobs via the Drive API
                 for (let file of data3.files) {
-                    const fetchMediaBlob = () => {
-                        fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
-                            headers: { Authorization: `Bearer ${accessToken}` }
-                        })
-                        .then(r => r.blob())
-                        .then(blob => {
-                            imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
-                        });
-                    };
-
-                    if (file.thumbnailLink) {
-                        let fastImageUrl = file.thumbnailLink.replace(/=s\d+$/, '=s800');
-                        // Thumbnail links have embedded tokens and don't need Authorization headers
-                        // We can just use the URL directly, skipping the blob download entirely!
-                        imageBlobUrls.value[file.name] = fastImageUrl;
-                    } else {
-                        fetchMediaBlob();
-                    }
+                    fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+                        headers: { Authorization: `Bearer ${accessToken}` }
+                    })
+                    .then(r => r.blob())
+                    .then(blob => {
+                        imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
+                    })
+                    .catch(err => {
+                        console.error("Error fetching media blob for", file.name, err);
+                    });
                 }
             } catch (err) {
                 console.error("Error loading images:", err);
