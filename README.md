@@ -60,13 +60,16 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
 3. Point it to your forked repository and set:
    - **Build type:** Buildpacks
    - **Context directory:** `/cloud_function`
+   - **Authentication:** Select **"Allow unauthenticated invocations"** (Required for the web app's RSS Proxy feature).
 4. Under **Variables & Secrets**, add the following Environment Variables:
    - `GEMINI_API_KEY`: Your key from Step 2.
    - `DRIVE_TOKEN_JSON`: Paste the entire contents of your generated `token.json` file.
+   - `CRON_SECRET`: Create a random password (e.g. `coffee-mug-42`). This secures your handwriting sync job from unauthorized triggers now that the endpoint is public.
    - `DRIVE_FOLDERS` (Optional): E.g., `Viwoods-Note`.
 
 ### Step 4: Cloud Scheduler
 1. Go to **Cloud Scheduler** in Google Cloud and create a new HTTP job targeting your Cloud Run URL.
+   - **CRITICAL:** You MUST append `?cron_secret=YOUR_SECRET` (matching the password you created above) to the end of your URL, otherwise the job will fail!
 2. **CRITICAL:** Under Retry config, set the **Attempt deadline** to `30m` (30 minutes) to prevent timeouts when processing many files.
 3. Set your cron schedule (e.g., `0 2 * * *` for nightly).
 
@@ -87,6 +90,7 @@ This repository includes a front-end **Web Application** (`/webapp`) that can be
 - **Direct Google Drive Integration:** Connects securely to your Google Drive to load the transcribed `.md` files dynamically.
 - **Auto-Sync:** Silently polls Google Drive every 60 seconds in the background to hot-swap content without disrupting your reading or closing expanded folders.
 - **Persistent Sessions:** Your Google Drive token is securely cached in your browser's local storage so you don't have to log in on every page refresh.
+- **Unblockable RSS Feeds:** Seamlessly routes Google News and other strict RSS feeds (like Reddit) through your own custom Google Cloud proxy endpoint to permanently bypass restrictive 403 and public CORS blocks.
 - **Image Support:** Seamlessly loads embedded drawings and blank pages exported by the sync script, fully supporting dark/light mode via transparency rendering.
 - **Tree Navigation:** Explore your Viwoods folder hierarchy easily via a collapsible file tree.
 
