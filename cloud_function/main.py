@@ -26,13 +26,22 @@ def sync_drive_notes(request):
         target_url = request.args.get('proxy_url')
         try:
             import urllib.request
-            req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
+            import urllib.error
+            # Use a descriptive user-agent so strict sites (like Reddit) don't block us with a 403 Forbidden
+            req = urllib.request.Request(target_url, headers={'User-Agent': 'viwoods-brain2-rss-proxy/1.0'})
             with urllib.request.urlopen(req) as response:
                 content = response.read()
                 return (content, 200, {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': response.headers.get('Content-Type', 'application/xml')
                 })
+        except urllib.error.HTTPError as e:
+            # If the target server returns a 4xx or 5xx, pass it through gracefully instead of crashing the proxy
+            error_content = e.read()
+            return (error_content, e.code, {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': e.headers.get('Content-Type', 'text/plain')
+            })
         except Exception as e:
             return (f"Proxy error: {str(e)}", 500, {'Access-Control-Allow-Origin': '*'})
 
