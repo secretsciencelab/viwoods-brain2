@@ -166,14 +166,14 @@
                                     No pending tasks found.
                                 </div>
                                 <div v-else class="tasks-groups">
-                                    <!-- Google Tasks -->
-                                    <div v-if="googleTasks.length > 0" class="task-group">
+                                    <!-- Handwritten Tasks -->
+                                    <div v-if="handwrittenTasks.length > 0" class="task-group">
                                         <div class="task-group-header">
-                                            <span class="material-symbols-outlined">check_circle</span>
-                                            <h4>Google Tasks</h4>
+                                            <span class="material-symbols-outlined">draw</span>
+                                            <h4>Notebook Tasks</h4>
                                         </div>
-                                        <div v-for="group in googleTasks" :key="group.name" class="task-subgroup">
-                                            <div class="task-subgroup-title">{{ group.name }}</div>
+                                        <div v-for="group in handwrittenTasks" :key="group.name" class="task-subgroup">
+                                            <div class="task-subgroup-title">{{ group.name.replace('.md', '') }}</div>
                                             <ul class="tasks-list">
                                                 <li v-for="task in group.tasks" :key="task.id" class="task-item">
                                                     <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
@@ -185,14 +185,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Handwritten Tasks -->
-                                    <div v-if="handwrittenTasks.length > 0" class="task-group">
+                                    <!-- Google Tasks -->
+                                    <div v-if="googleTasks.length > 0" class="task-group">
                                         <div class="task-group-header">
-                                            <span class="material-symbols-outlined">draw</span>
-                                            <h4>Notebook Tasks</h4>
+                                            <span class="material-symbols-outlined">check_circle</span>
+                                            <h4>Google Tasks</h4>
                                         </div>
-                                        <div v-for="group in handwrittenTasks" :key="group.name" class="task-subgroup">
-                                            <div class="task-subgroup-title">{{ group.name.replace('.md', '') }}</div>
+                                        <div v-for="group in googleTasks" :key="group.name" class="task-subgroup">
+                                            <div class="task-subgroup-title">{{ group.name }}</div>
                                             <ul class="tasks-list">
                                                 <li v-for="task in group.tasks" :key="task.id" class="task-item">
                                                     <span class="material-symbols-outlined task-icon">{{ task.icon }}</span>
