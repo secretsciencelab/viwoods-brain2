@@ -5,26 +5,28 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
     
     // Auto-detect dark mode and invert images dynamically
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Process all image links
     rawMd = rawMd.replace(/!\[([^\]]*)\]\((.*?)\)/g, (match, altText, src) => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const folderId = urlParams.get('folderId');
+        const filename = src.split('/').pop();
+        let finalSrc = src;
         
-        let fileId = src;
-        if (src.startsWith('_attachments/')) {
-            const filename = src.split('/').pop();
+        if (imageBlobUrls && imageBlobUrls[filename]) {
+            finalSrc = imageBlobUrls[filename];
+        } else if (src.startsWith('_attachments/') || src.startsWith('Attachments/')) {
+            // Legacy Obsidian file ID extraction (Only for valid 25+ char IDs, preventing "screenshotBmp" bugs)
             const idMatch = filename.match(/^([^_]+)_/);
-            if (idMatch) {
-                fileId = idMatch[1];
+            if (idMatch && idMatch[1].length >= 25) {
+                finalSrc = `https://www.googleapis.com/drive/v3/files/${idMatch[1]}?alt=media`;
+            } else {
+                // Empty transparent placeholder if not found
+                finalSrc = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             }
         }
         
-        if (fileId && fileId.length > 10 && !src.startsWith('http')) {
-            src = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-        }
-        
-        // Skip inversion logic if it's already an external HTTP link or not an attachment
-        if (!src.startsWith('http')) {
-            return match;
+        // Skip inversion logic if it's a completely external image
+        if (finalSrc === src && src.startsWith('http') && !src.includes('googleapis.com') && !src.includes('googleusercontent.com')) {
+            return `\n<img src="${finalSrc}" alt="${altText}" />`;
         }
 
         // Inline script injected to flip the image colors back if the stroke color matches the background
@@ -72,7 +74,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
             }
         "`;
         
-        return `\n<img src="${src}" alt="${altText}" crossorigin="anonymous" ${invertLogic} />`;
+        return `\n<img src="${finalSrc}" alt="${altText}" crossorigin="anonymous" ${invertLogic} />`;
     });
 
     // We convert these into internal links and reduce their size
@@ -81,12 +83,6 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
     });
     rawMd = rawMd.replace(/^##\s+\/?(.*?\.md)\s*$/gm, (match, path) => {
         return `#### [[${path}]]`;
-    });
-    
-    // Bulletproof regex: matches ANY image link containing _attachments or Attachments anywhere in the path
-    rawMd = rawMd.replace(/!\[(.*?)\]\(\s*.*?(?:_attachments|Attachments)\/.*?([^\/]+\.(?:png|jpg|jpeg|gif|bmp|webp))\s*\)/gi, (match, altText, filename) => {
-        let src = imageBlobUrls[filename] || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        return `\n<img src="${src}" alt="${altText}" />`;
     });
     
     // Replace [[Note Name]] with clickable internal links
