@@ -168,7 +168,9 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
     // Post-process HTML to convert timestamp blockquotes into beautiful badges
     html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, (match, ts) => {
         let localStr = ts;
-        const d = new Date(ts.replace(' at ', 'T') + 'Z');
+        // The timestamp from the cloud function is in UTC but formatted without a timezone (e.g. "June 29, 2026 at 11:32 AM")
+        // We replace ' at ' with a space and append ' UTC' so the browser correctly interprets it and converts to local time
+        const d = new Date(ts.replace(' at ', ' ') + ' UTC');
         if (!isNaN(d.getTime())) {
             localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
         }
