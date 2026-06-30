@@ -50,16 +50,16 @@ export async function fetchNews(widgetSettings) {
         return sub;
     };
 
-    const fetchViaCorsProxy = async (targetUrl, widgetSettings = {}) => {
-        let proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+    const fetchViaCloudProxy = async (targetUrl, widgetSettings = {}) => {
+        let proxyUrl = targetUrl;
         
-        // Use sovereign cloud function proxy if available to bypass all public proxy blocks
+        // Use sovereign cloud function proxy if available to bypass CORS blocks
         if (widgetSettings.customProxyUrl) {
             proxyUrl = `${widgetSettings.customProxyUrl}?proxy_url=${encodeURIComponent(targetUrl)}`;
         }
         
         const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`corsproxy.io returned status ${res.status}`);
+        if (!res.ok) throw new Error(`Proxy returned status ${res.status}`);
         const text = await res.text();
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(text, "text/xml");
@@ -80,8 +80,8 @@ export async function fetchNews(widgetSettings) {
         try {
             let result;
             try {
-                // Primary: corsproxy.io or Custom Sovereign Cloud Proxy
-                result = await fetchViaCorsProxy(feedObj.url, widgetSettings);
+                // Primary: Custom Sovereign Cloud Proxy or Direct
+                result = await fetchViaCloudProxy(feedObj.url, widgetSettings);
             } catch (err1) {
                 console.warn(`Proxy failed for ${feedObj.url}:`, err1);
                 throw err1; // Throw to be caught by the outer block
