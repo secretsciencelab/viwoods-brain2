@@ -1,6 +1,6 @@
 // markdown.js - Pure function for parsing markdown with our custom rules
 
-export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
+export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuery = '', selectedTag = '') {
     if (!rawMd) return '';
     
     // Auto-detect dark mode and invert images dynamically
@@ -145,8 +145,18 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls) {
     let pageCounter = 1;
     let pages = [];
     html = html.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
+        let isMatch = true;
+        if (searchQuery || selectedTag) {
+            let cleanText = content.replace(/<[^>]*>?/gm, '').toLowerCase();
+            let queryMatch = searchQuery ? cleanText.includes(searchQuery.toLowerCase()) : true;
+            let tagMatch = selectedTag ? cleanText.includes(selectedTag.toLowerCase()) : true;
+            isMatch = queryMatch && tagMatch;
+        }
+        
+        let displayStyle = isMatch ? '' : 'style="display: none;"';
+        
         let wrapped = `
-            <div class="page-block" data-page-id="${pageId}">
+            <div class="page-block" data-page-id="${pageId}" ${displayStyle}>
                 <div class="page-number-indicator">Page ${pageCounter}</div>
                 ${content}
             </div>

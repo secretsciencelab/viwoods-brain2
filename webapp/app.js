@@ -1,4 +1,4 @@
-import { parseMarkdown } from './markdown.js';
+import { parseMarkdown } from './markdown.js?v=89';
 import { fetchWeather as apiFetchWeather, fetchNews as apiFetchNews, fetchStocks as apiFetchStocks } from './api.js';
 
 const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
@@ -648,7 +648,7 @@ const app = createApp({
             
             // We NO LONGER pass imageBlobUrls.value here to prevent full DOM re-renders every time an image loads!
             // Images will initially render with placeholders and be surgically updated via the watcher below.
-            return parseMarkdown(rawMd, reversePageOrder.value, {});
+            return parseMarkdown(rawMd, reversePageOrder.value, {}, searchQuery.value, selectedTag.value);
         });
 
         // Surgically patch image src attributes directly in the DOM as they finish downloading
