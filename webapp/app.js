@@ -668,6 +668,22 @@ const app = createApp({
             });
         }, { deep: true });
 
+        // When parsedMarkdown re-evaluates (e.g., during a search), the DOM is replaced and images revert to placeholders.
+        // We need to re-apply the already downloaded image URLs.
+        watch(parsedMarkdown, () => {
+            Vue.nextTick(() => {
+                const imgs = document.querySelectorAll('.markdown-body img[data-filename]');
+                imgs.forEach(img => {
+                    const filename = img.getAttribute('data-filename');
+                    if (filename && imageBlobUrls.value[filename] && !img.src.includes('blob:')) {
+                        img.removeAttribute('data-processed');
+                        img.style.filter = '';
+                        img.src = imageBlobUrls.value[filename];
+                    }
+                });
+            });
+        });
+
         // Lightbox Logic
         const lightboxImage = ref(null);
         
