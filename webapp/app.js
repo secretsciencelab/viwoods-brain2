@@ -672,7 +672,11 @@ const app = createApp({
         // We need to re-apply the already downloaded image URLs.
         watch(parsedMarkdown, () => {
             Vue.nextTick(() => {
-                const imgs = document.querySelectorAll('.markdown-body img[data-filename]');
+                const markdownBody = document.querySelector('.markdown-body');
+                if (!markdownBody) return;
+
+                // Restore images
+                const imgs = markdownBody.querySelectorAll('img[data-filename]');
                 imgs.forEach(img => {
                     const filename = img.getAttribute('data-filename');
                     if (filename && imageBlobUrls.value[filename] && !img.src.includes('blob:')) {
@@ -681,6 +685,41 @@ const app = createApp({
                         img.src = imageBlobUrls.value[filename];
                     }
                 });
+
+                // Highlight text
+                const termToHighlight = searchQuery.value || selectedTag.value;
+                if (termToHighlight) {
+                    const escapeHtml = (unsafe) => {
+                        return unsafe
+                             .replace(/&/g, "&amp;")
+                             .replace(/</g, "&lt;")
+                             .replace(/>/g, "&gt;")
+                             .replace(/"/g, "&quot;")
+                             .replace(/'/g, "&#039;");
+                    };
+                    
+                    const regex = new RegExp(`(${termToHighlight.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'gi');
+                    const walk = document.createTreeWalker(markdownBody, NodeFilter.SHOW_TEXT, null, false);
+                    let node;
+                    const nodesToReplace = [];
+                    while (node = walk.nextNode()) {
+                        if (node.parentNode.nodeName !== 'SCRIPT' && node.parentNode.nodeName !== 'STYLE' && !node.parentNode.classList.contains('search-highlight')) {
+                            const pageBlock = node.parentNode.closest('.page-block');
+                            if (pageBlock && pageBlock.style.display === 'none') continue;
+                            
+                            if (regex.test(node.nodeValue)) {
+                                nodesToReplace.push(node);
+                            }
+                        }
+                    }
+                    
+                    nodesToReplace.forEach(node => {
+                        const span = document.createElement('span');
+                        const escapedText = escapeHtml(node.nodeValue);
+                        span.innerHTML = escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+                        node.parentNode.replaceChild(span, node);
+                    });
+                }
             });
         });
 
