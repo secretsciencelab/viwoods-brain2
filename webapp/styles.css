@@ -1352,6 +1352,15 @@ input:checked + .slider:before {
     gap: 8px;
 }
 
+.section-tags {
+    float: right;
+    margin: 4px 0 8px 16px;
+    max-width: 50%;
+    text-align: right;
+    /* Clear any float issues with adjacent tags */
+    clear: right;
+}
+
 /* Tree View Styles */
 .tree-root {
     overflow-y: auto;

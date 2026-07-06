@@ -90,14 +90,13 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
         return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
     });
     
-    // Extract tags and move them to the bottom of their respective page block, and enforce H1 rule
+    // Extract tags and format them as floating section tags, and enforce H1 rule
     rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
-        let tags = [];
-        // Extract lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
+        // Format lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
         content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
-            tags.push(tagLine.trim());
-            return ''; 
+            return `\n<div class="section-tags">${tagLine.trim()}</div>\n`; 
         });
+        
         // Enforce strict H1 rule: Only allowed if it's the very first line of the actual note content.
         let lines = content.split(/\r?\n/);
         let ocrStarted = false;
@@ -122,10 +121,6 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
             }
         }
         content = lines.join('\n');
-        
-        if (tags.length > 0) {
-            content += `\n\n<div class="tags-container">\n\n${tags.join(' ')}\n\n</div>\n`;
-        }
         
         return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
     });
