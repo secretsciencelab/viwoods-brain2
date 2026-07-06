@@ -92,14 +92,9 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     
     // Extract tags and format them as floating section tags, and enforce H1 rule
     rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
-        // Format lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
-        content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
-            return `\n<div class="section-tags">${tagLine.trim()}</div>\n\n`; 
-        });
-        
-        // Enforce strict H1 rule: Only allowed if it's the very first line of the actual note content.
         let lines = content.split(/\r?\n/);
         let ocrStarted = false;
+        let topTags = null;
         
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
@@ -109,8 +104,27 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
                     continue;
                 }
                 ocrStarted = true;
+                
+                // Check if this line is a top-level tag line
+                let tagMatch = line.match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
+                if (tagMatch) {
+                    topTags = tagMatch[1].trim();
+                    lines[i] = ''; // Remove from top
+                    continue;
+                }
+                
                 // If the very first line of text is an H1, allow it
                 if (line.startsWith('# ')) {
+                    // Check if the next line has top-level tags
+                    for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                        if (lines[j].trim() === '') continue;
+                        let nextTagMatch = lines[j].match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
+                        if (nextTagMatch) {
+                            topTags = nextTagMatch[1].trim();
+                            lines[j] = ''; // Remove from top
+                        }
+                        break;
+                    }
                     continue; 
                 }
             }
@@ -121,6 +135,15 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
             }
         }
         content = lines.join('\n');
+        
+        // Format REMAINING standalone tag lines as floating section tags
+        content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
+            return `\n<div class="section-tags">${tagLine.trim()}</div>\n\n`; 
+        });
+        
+        if (topTags) {
+            content += `\n\n<div class="tags-container">\n\n${topTags}\n\n</div>\n`;
+        }
         
         return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
     });
