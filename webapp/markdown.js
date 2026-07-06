@@ -6,6 +6,64 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     // Auto-detect dark mode and invert images dynamically
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     
+    // Extract tags and format them as floating section tags, and enforce H1 rule
+    rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
+        let lines = content.split(/\r?\n/);
+        let ocrStarted = false;
+        let topTags = null;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            if (!ocrStarted) {
+                // Skip empty lines, images, and the auto-generated timestamp blockquote
+                if (line.trim() === '' || line.startsWith('![') || line.startsWith('>')) {
+                    continue;
+                }
+                ocrStarted = true;
+                
+                // Check if this line is a top-level tag line
+                let tagMatch = line.match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
+                if (tagMatch) {
+                    topTags = tagMatch[1].trim();
+                    lines[i] = ''; // Remove from top
+                    continue;
+                }
+                
+                // If the very first line of text is an H1, allow it
+                if (line.startsWith('# ')) {
+                    // Check if the next line has top-level tags
+                    for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                        if (lines[j].trim() === '') continue;
+                        let nextTagMatch = lines[j].match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
+                        if (nextTagMatch) {
+                            topTags = nextTagMatch[1].trim();
+                            lines[j] = ''; // Remove from top
+                        }
+                        break;
+                    }
+                    continue; 
+                }
+            }
+            
+            // Once OCR has started, any H1 encountered must be demoted to H2
+            if (ocrStarted && line.startsWith('# ')) {
+                lines[i] = '## ' + line.substring(2);
+            }
+        }
+        content = lines.join('\n');
+        
+        // Format REMAINING standalone tag lines as floating section tags
+        content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
+            return `\n<div class="section-tags">${tagLine.trim()}</div>\n\n`; 
+        });
+        
+        if (topTags) {
+            content += `\n\n<div class="tags-container">\n\n${topTags}\n\n</div>\n`;
+        }
+        
+        return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
+    });
+
     // Process all image links
     rawMd = rawMd.replace(/!\[([^\]]*)\]\((.*?)\)/g, (match, altText, src) => {
         const filename = src.split('/').pop();
@@ -90,63 +148,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
         return `<a href="#" class="internal-link" data-note="${noteName}">${noteName}</a>`;
     });
     
-    // Extract tags and format them as floating section tags, and enforce H1 rule
-    rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
-        let lines = content.split(/\r?\n/);
-        let ocrStarted = false;
-        let topTags = null;
-        
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i];
-            if (!ocrStarted) {
-                // Skip empty lines, images, and the auto-generated timestamp blockquote
-                if (line.trim() === '' || line.startsWith('![') || line.startsWith('>')) {
-                    continue;
-                }
-                ocrStarted = true;
-                
-                // Check if this line is a top-level tag line
-                let tagMatch = line.match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
-                if (tagMatch) {
-                    topTags = tagMatch[1].trim();
-                    lines[i] = ''; // Remove from top
-                    continue;
-                }
-                
-                // If the very first line of text is an H1, allow it
-                if (line.startsWith('# ')) {
-                    // Check if the next line has top-level tags
-                    for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-                        if (lines[j].trim() === '') continue;
-                        let nextTagMatch = lines[j].match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
-                        if (nextTagMatch) {
-                            topTags = nextTagMatch[1].trim();
-                            lines[j] = ''; // Remove from top
-                        }
-                        break;
-                    }
-                    continue; 
-                }
-            }
-            
-            // Once OCR has started, any H1 encountered must be demoted to H2
-            if (ocrStarted && line.startsWith('# ')) {
-                lines[i] = '## ' + line.substring(2);
-            }
-        }
-        content = lines.join('\n');
-        
-        // Format REMAINING standalone tag lines as floating section tags
-        content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
-            return `\n<div class="section-tags">${tagLine.trim()}</div>\n\n`; 
-        });
-        
-        if (topTags) {
-            content += `\n\n<div class="tags-container">\n\n${topTags}\n\n</div>\n`;
-        }
-        
-        return `<!-- PAGE_${pageId}_START -->\n${content}\n<!-- PAGE_${pageId}_END -->`;
-    });
+
     
     // Subtly style inline #tags
     rawMd = rawMd.replace(/(^|[\s>])(#[a-zA-Z0-9_\-\/]+)/g, (match, prefix, tag) => {
