@@ -23,7 +23,10 @@ def run_gemini_ocr(valid_image_bytes, page_id, last_modified_time=None, is_daily
         
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=contents
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction="You are a strict markdown transcriber. CRITICAL RULE: When transcribing or inferring hashtags, you MUST exclusively use XML formatting like <tag>word</tag>. NEVER use the '#' symbol for tags. The '#' symbol is strictly reserved for Markdown headings only."
+            )
         )
         if response.text:
             if last_modified_time:
