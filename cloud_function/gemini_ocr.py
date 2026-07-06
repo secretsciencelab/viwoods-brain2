@@ -22,8 +22,9 @@ def fix_hallucinated_tags(text):
                 if not re.match(r'^[a-zA-Z0-9_/-]+$', w):
                     is_tag_line = False
                     break
-                # If a word is CamelCase or all lowercase, it's a tag signature (unlike ALL CAPS titles)
-                if w != w.upper() and w != w.lower():
+                # If a word is CamelCase (contains an uppercase letter after the first character) or all lowercase, it's a tag signature.
+                # Normal titles are usually ALL CAPS or Title Case (e.g. "Sketches") which won't trigger this.
+                if re.search(r'[a-z]', w) and re.search(r'[A-Z]', w[1:]):
                     has_tag_case = True
                 if w == w.lower() and re.search(r'[a-z]', w):
                     has_tag_case = True
