@@ -3,33 +3,6 @@
 export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuery = '', selectedTag = '') {
     if (!rawMd) return '';
     
-    // Helper to detect if a line like "# AnimalSketch" or "# design layout" is actually a malformed tag line
-    function isMalformedTagLine(line) {
-        if (!line.startsWith('# ')) return false;
-        let text = line.substring(2).trim();
-        if (text.length === 0) return false;
-        
-        let words = text.split(/[\s,]+/);
-        let allValid = true;
-        let hasCamelCase = false;
-        let allLowerCase = true;
-        
-        for (let w of words) {
-            if (!/^[a-zA-Z0-9_\-\/]+$/.test(w)) {
-                allValid = false;
-                break;
-            }
-            let isCamel = /[a-z]/.test(w) && /[A-Z]/.test(w.substring(1));
-            if (isCamel) hasCamelCase = true;
-            if (w !== w.toLowerCase()) allLowerCase = false;
-        }
-        
-        if (!allValid) return false;
-        if (hasCamelCase) return true;
-        if (allLowerCase) return true;
-        return false;
-    }
-
     // Auto-detect dark mode and invert images dynamically
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     
@@ -42,11 +15,11 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             
-            // Auto-correct lines that Gemini mistook for headings but are actually just lowercase or camelCase tags (e.g. "# AnimalSketch")
-            if (isMalformedTagLine(line)) {
+            // Auto-correct lines that Gemini mistook for headings but are actually just lowercase tags (e.g. "# maxims reflect")
+            if (line.startsWith('# ') && line === line.toLowerCase()) {
                 let words = line.substring(2).split(/[\s,]+/);
-                let validWords = words.filter(w => w.trim().length > 0);
-                if (validWords.length > 0) {
+                let validWords = words.filter(w => w.trim().length > 0 && /^[a-z0-9_\-\/]+$/.test(w));
+                if (validWords.length > 0 && validWords.length === words.filter(w => w.trim().length > 0).length) {
                     line = validWords.map(w => '#' + w).join(' ');
                     lines[i] = line;
                 }
@@ -75,10 +48,10 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
                         if (nextLine.trim() === '') continue;
                         
                         // Auto-correct next line if malformed
-                        if (isMalformedTagLine(nextLine)) {
+                        if (nextLine.startsWith('# ') && nextLine === nextLine.toLowerCase()) {
                             let words = nextLine.substring(2).split(/[\s,]+/);
-                            let validWords = words.filter(w => w.trim().length > 0);
-                            if (validWords.length > 0) {
+                            let validWords = words.filter(w => w.trim().length > 0 && /^[a-z0-9_\-\/]+$/.test(w));
+                            if (validWords.length > 0 && validWords.length === words.filter(w => w.trim().length > 0).length) {
                                 nextLine = validWords.map(w => '#' + w).join(' ');
                                 lines[j] = nextLine;
                             }
