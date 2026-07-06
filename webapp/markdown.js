@@ -14,6 +14,17 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
         
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
+            
+            // Auto-correct lines that Gemini mistook for headings but are actually just lowercase tags (e.g. "# maxims reflect")
+            if (line.startsWith('# ') && line === line.toLowerCase()) {
+                let words = line.substring(2).split(/[\s,]+/);
+                let validWords = words.filter(w => w.trim().length > 0 && /^[a-z0-9_\-\/]+$/.test(w));
+                if (validWords.length > 0 && validWords.length === words.filter(w => w.trim().length > 0).length) {
+                    line = validWords.map(w => '#' + w).join(' ');
+                    lines[i] = line;
+                }
+            }
+
             if (!ocrStarted) {
                 // Skip empty lines, images, and the auto-generated timestamp blockquote
                 if (line.trim() === '' || line.startsWith('![') || line.startsWith('>')) {
@@ -33,8 +44,20 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
                 if (line.startsWith('# ')) {
                     // Check if the next line has top-level tags
                     for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-                        if (lines[j].trim() === '') continue;
-                        let nextTagMatch = lines[j].match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
+                        let nextLine = lines[j];
+                        if (nextLine.trim() === '') continue;
+                        
+                        // Auto-correct next line if malformed
+                        if (nextLine.startsWith('# ') && nextLine === nextLine.toLowerCase()) {
+                            let words = nextLine.substring(2).split(/[\s,]+/);
+                            let validWords = words.filter(w => w.trim().length > 0 && /^[a-z0-9_\-\/]+$/.test(w));
+                            if (validWords.length > 0 && validWords.length === words.filter(w => w.trim().length > 0).length) {
+                                nextLine = validWords.map(w => '#' + w).join(' ');
+                                lines[j] = nextLine;
+                            }
+                        }
+
+                        let nextTagMatch = nextLine.match(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)$/);
                         if (nextTagMatch) {
                             topTags = nextTagMatch[1].trim();
                             lines[j] = ''; // Remove from top
