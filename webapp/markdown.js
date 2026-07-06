@@ -94,7 +94,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     rawMd = rawMd.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
         // Format lines that consist purely of tags (accounting for accidental '# ' prefixes from Gemini)
         content = content.replace(/^(?:#\s+)?((?:#[a-zA-Z0-9_\-\/]+[ \t]*)+)(?:\r?\n|$)/gm, (m, tagLine) => {
-            return `\n<div class="section-tags">${tagLine.trim()}</div>\n`; 
+            return `\n<div class="section-tags">${tagLine.trim()}</div>\n\n`; 
         });
         
         // Enforce strict H1 rule: Only allowed if it's the very first line of the actual note content.
@@ -126,9 +126,9 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     });
     
     // Subtly style inline #tags
-    rawMd = rawMd.replace(/(^|\s)(#[a-zA-Z0-9_\-\/]+)/g, (match, space, tag) => {
+    rawMd = rawMd.replace(/(^|[\s>])(#[a-zA-Z0-9_\-\/]+)/g, (match, prefix, tag) => {
         // Ensure it's not a markdown heading by checking if there's a space after the #
-        return `${space}<span class="inline-tag">${tag}</span>`;
+        return `${prefix}<span class="inline-tag">${tag}</span>`;
     });
     
     // Prevent Setext heading confusion by ensuring a blank line before horizontal rules
