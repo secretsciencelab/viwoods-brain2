@@ -1179,6 +1179,7 @@ const app = createApp({
 
             // Create vis.js edges
             tagEdgesMap.forEach((weight, edgeKey) => {
+                if (weight < 2) return; // Only show edges for tags that co-occur in multiple notes
                 const [t1, t2] = edgeKey.split('|');
                 edges.push({
                     from: t1,
