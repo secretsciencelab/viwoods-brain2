@@ -42,7 +42,7 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
 2. **Google Cloud Scheduler:** Wakes up the Cloud Run Function on a daily or hourly schedule.
 3. **Cloud Run Function:** Scans the Drive folder and downloads new/modified Viwoods .note files.
 4. **Gemini API:** Reads the Viwoods .note files and converts the handwriting to structured Markdown (`.md`).
-5. **Google Drive & GitHub:** The Cloud Function uploads the individual `.md` files back to their original subfolders in Drive, and additionally commits and pushes them to your specified GitHub repository for revision control. It also updates the combined Master files in both locations.
+5. **Google Drive & GitHub:** The Cloud Function uploads the individual `.md` files back to their original subfolders in Drive, and additionally commits and pushes them (along with all extracted image attachments) to your specified GitHub repository for revision control. It also updates the combined Master files in both locations.
 6. **NotebookLM / Obsidian:** Connects directly to the Master Markdown files for your final Knowledge Graph and AI search.
 
 ## 🚀 Setup Guide
@@ -90,9 +90,10 @@ This repository includes a front-end **Web Application** (`/webapp`) that can be
 ### Features
 - **Interactive Dashboard:** Start your day with a customizable widget dashboard.
 - **Weather Commute Widget:** A live weather widget using Chart.js to visualize temperature and rain probability for the next 24 hours, leveraging Open-Meteo's free geocoding and forecasting API (supports zip codes or browser geolocation).
-- **Direct Google Drive Integration:** Connects securely to your Google Drive to load the transcribed `.md` files dynamically.
-- **Auto-Sync:** Silently polls Google Drive every 60 seconds in the background to hot-swap content without disrupting your reading or closing expanded folders.
-- **Persistent Sessions:** Your Google Drive token is securely cached in your browser's local storage so you don't have to log in on every page refresh.
+- **Direct GitHub Integration:** Connects securely to your private GitHub repository to load the transcribed `.md` files and image attachments dynamically using a Personal Access Token (PAT).
+- **Google Tasks:** Isolated Google OAuth support specifically to securely retrieve and display your personal Google Tasks widget on the dashboard.
+- **Auto-Sync:** Silently polls the GitHub API every 60 seconds in the background to hot-swap content without disrupting your reading or closing expanded folders.
+- **Persistent Sessions:** Your Google Drive token and GitHub PAT are securely cached in your browser's local storage so you don't have to log in on every page refresh.
 - **Unblockable RSS Feeds:** Seamlessly routes Google News and other strict RSS feeds (like Reddit) through your own custom Google Cloud proxy endpoint to permanently bypass restrictive 403 and public CORS blocks.
 - **Image Support:** Seamlessly loads embedded drawings and blank pages exported by the sync script, fully supporting dark/light mode via transparency rendering.
 - **Tree Navigation:** Explore your Viwoods folder hierarchy easily via a collapsible file tree.
