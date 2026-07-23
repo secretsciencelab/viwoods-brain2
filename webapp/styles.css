@@ -168,9 +168,7 @@ header h1::before {
     gap: 8px;
 }
 
-.mobile-actions .icon-btn,
-.mobile-actions .connect-btn,
-.mobile-actions .status-badge {
+.mobile-actions .icon-btn {
     width: 100%;
     justify-content: center;
     display: flex;
@@ -1074,38 +1072,8 @@ mark.search-highlight {
     background: #3f3f46;
 }
 
-/* Append to styles.css */
-.connect-btn {
-    background: var(--text-primary);
-    color: var(--bg-base);
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-}
 
-.connect-btn:hover {
-    background: #d4d4d8;
-    transform: translateY(-1px);
-}
 
-.status-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    background: var(--bg-surface);
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border-color);
-}
 
 .indicator {
     width: 8px;

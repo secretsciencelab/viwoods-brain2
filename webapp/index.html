@@ -37,11 +37,11 @@
                     <span class="material-symbols-outlined">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
                 </button>
                 <button @click="openSettings" class="icon-btn" title="Settings"><span class="material-symbols-outlined">settings</span></button>
-                <button v-if="!isAuthenticated" @click="initGoogleAuth" class="connect-btn">
-                    <span class="icon material-symbols-outlined" style="font-size: 1.1rem; top: 1px; position: relative;">link</span> Connect Google Drive
+                <button v-if="!isAuthenticated" @click="initGoogleAuth" class="icon-btn" title="Connect Google Tasks">
+                    <span class="material-symbols-outlined">add_to_drive</span>
                 </button>
-                <div v-else class="status-badge">
-                    <span class="indicator"></span> Connected
+                <div v-else class="icon-btn" title="Google Tasks Connected" style="cursor: default; opacity: 0.8;">
+                    <span class="indicator" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
                 </div>
             </div>
             
@@ -64,11 +64,11 @@
                 <button @click="openSettings(); showMobileMenu = false;" class="icon-btn">
                     <span class="material-symbols-outlined">settings</span> Settings
                 </button>
-                <button v-if="!isAuthenticated" @click="initGoogleAuth(); showMobileMenu = false;" class="connect-btn">
-                    <span class="icon material-symbols-outlined" style="font-size: 1.1rem; top: 1px; position: relative;">link</span> Connect
+                <button v-if="!isAuthenticated" @click="initGoogleAuth(); showMobileMenu = false;" class="icon-btn" style="width: 100%; justify-content: flex-start; border-radius: 8px;">
+                    <span class="material-symbols-outlined">add_to_drive</span> Connect Tasks
                 </button>
-                <div v-else class="status-badge">
-                    <span class="indicator"></span> Connected
+                <div v-else class="icon-btn" style="width: 100%; justify-content: flex-start; border-radius: 8px; cursor: default; opacity: 0.8;">
+                    <span class="indicator" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; margin-left: 8px; margin-right: 8px;"></span> Connected
                 </div>
             </div>
         </div>
