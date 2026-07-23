@@ -347,6 +347,17 @@ const app = createApp({
             };
             sortTree(tree);
 
+            const autoExpand = (node) => {
+                if (node.isFolder && node.children) {
+                    const hasFiles = node.children.some(c => !c.isFolder);
+                    if (!hasFiles && node.name !== "root") {
+                        node.expanded = true;
+                    }
+                    node.children.forEach(autoExpand);
+                }
+            };
+            autoExpand(tree);
+
             return tree;
         };
 
