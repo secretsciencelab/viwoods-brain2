@@ -349,11 +349,11 @@ const app = createApp({
 
             const autoExpand = (node) => {
                 if (node.isFolder && node.children) {
+                    node.expanded = true;
                     const hasFiles = node.children.some(c => !c.isFolder);
-                    if (!hasFiles && node.name !== "root") {
-                        node.expanded = true;
+                    if (!hasFiles || node.name === "root") {
+                        node.children.forEach(autoExpand);
                     }
-                    node.children.forEach(autoExpand);
                 }
             };
             autoExpand(tree);
