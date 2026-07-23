@@ -129,7 +129,7 @@ def sync_drive_notes(request):
                     clean_note_name = doc["name"].replace(".note", "")
                     is_daily = "Daily" in doc.get("folder_path", "") or clean_note_name.startswith("day_")
                     
-                    success, internal_dt = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily)
+                    success, internal_dt = process_note_to_markdown(local_doc_path, local_md_path, existing_md_path, service, parent_id, clean_note_name, is_daily, github_folder_path=doc.get("folder_path", ""))
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                         print("Hit Google AI API rate limit! Stopping processing for today, but will compile Master file.")

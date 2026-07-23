@@ -27,7 +27,7 @@ def get_page_text_from_md(md_content, page_id):
         return match.group(1).strip()
     return ""
 
-def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None, note_name=None, is_daily=False):
+def process_note_to_markdown(note_path, output_path, existing_md_path=None, service=None, parent_folder_id=None, note_name=None, is_daily=False, github_folder_path=None):
     print(f"Extracting and analyzing {note_path}...")
     
     attachments_folder_id = None
@@ -186,12 +186,20 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                                 
                 page_markdown = run_gemini_ocr(valid_image_bytes, page_id, p.get('lastModifiedTime'), is_daily)
                 
-                if service and attachments_folder_id and img_path:
-                    with _google_api_lock:
-                        upload_image_to_drive(service, img_path, attachments_folder_id)
-                    page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(img_path)})\n\n" + page_markdown
-                    
                 if img_path and os.path.exists(img_path):
+                    if service and attachments_folder_id:
+                        with _google_api_lock:
+                            upload_image_to_drive(service, img_path, attachments_folder_id)
+                    
+                    if github_folder_path is not None:
+                        from github_client import push_to_github
+                        gh_img_path = f"{github_folder_path}/_attachments/{note_name}/{os.path.basename(img_path)}"
+                        try:
+                            push_to_github(gh_img_path, img_path, commit_message=f"Sync image: {os.path.basename(img_path)}")
+                        except Exception as e:
+                            print(f"Failed to push image to GitHub: {e}")
+
+                    page_markdown = f"![Page {page_id}](_attachments/{note_name}/{os.path.basename(img_path)})\n\n" + page_markdown
                     os.remove(img_path)
             
             return page_id, page_hash, page_markdown

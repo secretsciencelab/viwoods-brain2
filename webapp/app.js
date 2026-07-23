@@ -10,8 +10,12 @@ marked.use({ breaks: true, gfm: true });
 const app = createApp({
     setup() {
         const clientId = ref(localStorage.getItem('brain2_client_id') || '');
+        const githubPat = ref(localStorage.getItem('brain2_github_pat') || '');
+        const githubRepo = ref(localStorage.getItem('brain2_github_repo') || '');
         const showSettings = ref(false);
         const clientIdInput = ref('');
+        const githubPatInput = ref('');
+        const githubRepoInput = ref('');
         const widgetSettings = ref(JSON.parse(localStorage.getItem('brain2_widget_settings') || '{"showWeather": true, "showTasks": true, "excludedLists": "", "showNews": true, "newsTopics": "Technology, Artificial Intelligence", "customRss": "", "showStocks": true, "stockSymbols": "AAPL, GOOGL, MSFT", "finnhubApiKey": "", "widgetOrder": ["weather", "tasks", "news", "stocks"]}'));
         if (widgetSettings.value.excludedLists === undefined) widgetSettings.value.excludedLists = "";
         if (widgetSettings.value.showNews === undefined) widgetSettings.value.showNews = true;
@@ -200,16 +204,19 @@ const app = createApp({
             if (savedToken && expiresAt && Date.now() < parseInt(expiresAt)) {
                 accessToken = savedToken;
                 isAuthenticated.value = true;
-                loadNotebooks();
             } else {
                 if (savedToken) {
                     // Clear expired token
                     localStorage.removeItem('brain2_access_token');
                     localStorage.removeItem('brain2_token_expires');
                 }
-                if (!clientId.value) {
+                if (!clientId.value && (!githubPat.value || !githubRepo.value)) {
                     openSettings();
                 }
+            }
+
+            if (githubPat.value && githubRepo.value) {
+                loadNotebooks();
             }
         };
 
@@ -219,6 +226,8 @@ const app = createApp({
 
         const openSettings = () => {
             clientIdInput.value = clientId.value;
+            githubPatInput.value = githubPat.value;
+            githubRepoInput.value = githubRepo.value;
             showSettings.value = true;
         };
 
@@ -226,6 +235,14 @@ const app = createApp({
             if (clientIdInput.value) {
                 clientId.value = clientIdInput.value.trim();
                 localStorage.setItem('brain2_client_id', clientId.value);
+            }
+            if (githubPatInput.value !== undefined) {
+                githubPat.value = githubPatInput.value.trim();
+                localStorage.setItem('brain2_github_pat', githubPat.value);
+            }
+            if (githubRepoInput.value !== undefined) {
+                githubRepo.value = githubRepoInput.value.trim();
+                localStorage.setItem('brain2_github_repo', githubRepo.value);
             }
             localStorage.setItem('brain2_widget_settings', JSON.stringify(widgetSettings.value));
             showSettings.value = false;
@@ -235,6 +252,10 @@ const app = createApp({
                 extractHandwrittenTasks();
             } else {
                 initGoogleAuth();
+            }
+            
+            if (githubPat.value && githubRepo.value) {
+                loadNotebooks();
             }
             if (widgetSettings.value.showNews) {
                 fetchNews();
@@ -265,7 +286,6 @@ const app = createApp({
                             localStorage.setItem('brain2_access_token', accessToken);
                             localStorage.setItem('brain2_token_expires', expiresAt.toString());
                             
-                            await loadNotebooks();
                             isRefreshing = false;
                         }
                     },
@@ -331,21 +351,30 @@ const app = createApp({
         };
 
         const loadNotebooks = async (isSilent = false) => {
+            if (!githubPat.value || !githubRepo.value) return;
             if (!isSilent) isLoading.value = true;
             try {
-                let query = encodeURIComponent("name='Viwoods-Note' and mimeType='application/vnd.google-apps.folder' and trashed=false");
-                let res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
+                const treeUrl = `https://api.github.com/repos/${githubRepo.value}/git/trees/main?recursive=1`;
+                const headers = { Authorization: `Bearer ${githubPat.value}` };
+                let res = await fetch(treeUrl, { headers });
+                if (!res.ok) throw new Error("Failed to fetch repository tree");
                 let data = await res.json();
                 
-                if (!data.files || data.files.length === 0) {
-                    if (!isSilent) alert("Could not find 'Viwoods-Note' folder in your Google Drive.");
-                    return;
-                }
-                const rootFolderId = data.files[0].id;
+                const allNotesList = [];
+                const treeFiles = data.tree || [];
                 
-                // Preserve tree expansion state before fetching
+                for (let file of treeFiles) {
+                    if (file.type === 'blob' && file.path.endsWith('.md') && (!file.path.toLowerCase().endsWith('master.md') || file.path.endsWith('TODO_Master.md')) && !file.path.includes('_attachments/')) {
+                        const parts = file.path.split('/');
+                        allNotesList.push({
+                            id: file.sha,
+                            name: parts[parts.length - 1],
+                            displayName: file.path,
+                            path: file.path
+                        });
+                    }
+                }
+
                 const oldExpandedState = {};
                 const storeExpandedState = (node, path) => {
                     if (node.isFolder) {
@@ -364,52 +393,6 @@ const app = createApp({
                     }
                 };
 
-                const allNotesList = [];
-                
-                const fetchAllMarkdown = async (parentId, path = "") => {
-                    let q = encodeURIComponent(`'${parentId}' in parents and (name contains '.md' or mimeType='application/vnd.google-apps.folder') and name != '_attachments' and trashed=false`);
-                    let response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,parents,modifiedTime)&orderBy=name`, {
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    });
-                    
-                    if (response.status === 401) {
-                        isAuthenticated.value = false;
-                        accessToken = null;
-                        localStorage.removeItem('brain2_access_token');
-                        localStorage.removeItem('brain2_token_expires');
-                        throw new Error("Authentication expired");
-                    }
-                    
-                    let result = await response.json();
-                    
-                    if (!result.files) return;
-
-                    let folderPromises = [];
-
-                    for (let file of result.files) {
-                        if (file.mimeType === 'application/vnd.google-apps.folder') {
-                            const subFolderPath = path ? `${path}/${file.name}` : file.name;
-                            folderPromises.push(fetchAllMarkdown(file.id, subFolderPath));
-                        } else if (file.name.endsWith('.md') && (!file.name.toLowerCase().endsWith('master.md') || file.name === 'TODO_Master.md')) {
-                            file.displayName = path ? `${path}/${file.name}` : file.name;
-                            allNotesList.push(file);
-                        }
-                    }
-                    
-                    // Progressively update the UI as soon as files from this directory are found
-                    if (allNotesList.length > 0) {
-                        const updatedTree = buildTree(allNotesList);
-                        restoreExpandedState(updatedTree, 'root');
-                        fileTree.value = updatedTree;
-                        notes.value = [...allNotesList];
-                    }
-
-                    await Promise.all(folderPromises);
-                };
-
-                await fetchAllMarkdown(rootFolderId);
-                const allNotes = allNotesList;
-                
                 const fetchAllNoteContents = async (files) => {
                     const contents = {};
                     const tagSet = new Set();
@@ -418,8 +401,11 @@ const app = createApp({
                         const batch = files.slice(i, i + batchSize);
                         await Promise.all(batch.map(async (note) => {
                             try {
-                                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${note.id}?alt=media`, {
-                                    headers: { Authorization: `Bearer ${accessToken}` }
+                                const res = await fetch(`https://api.github.com/repos/${githubRepo.value}/contents/${note.path}`, {
+                                    headers: { 
+                                        Authorization: `Bearer ${githubPat.value}`,
+                                        Accept: 'application/vnd.github.v3.raw'
+                                    }
                                 });
                                 const text = await res.text();
                                 contents[note.id] = text;
@@ -430,7 +416,7 @@ const app = createApp({
                                 }
                                 
                                 const extracted = extractTags(text);
-                                extracted.explicit.forEach(t => tagSet.add(t));
+                                extracted.all.forEach(t => tagSet.add(t));
                             } catch (e) {
                                 // ignore
                             }
@@ -439,23 +425,23 @@ const app = createApp({
                     noteContents.value = contents;
                     allTags.value = Array.from(tagSet).sort();
                 };
-                // Background fetch for contents
-                fetchAllNoteContents(allNotes);
 
-                notes.value = allNotes;
-                fileTree.value = buildTree(allNotes);
+                window._githubTreeCache = treeFiles;
+                fetchAllNoteContents(allNotesList);
+
+                notes.value = allNotesList;
+                fileTree.value = buildTree(allNotesList);
                 restoreExpandedState(fileTree.value, 'root');
 
-                // Check if currently selected note got updated
                 if (isSilent && selectedNote.value) {
-                    const updatedNote = allNotes.find(n => n.id === selectedNote.value.id);
-                    if (updatedNote && updatedNote.modifiedTime !== selectedNote.value.modifiedTime) {
-                        selectNote(updatedNote, true); // true for isSilent mode
+                    const updatedNote = allNotesList.find(n => n.path === selectedNote.value.path);
+                    if (updatedNote && updatedNote.id !== selectedNote.value.id) {
+                        selectNote(updatedNote, true);
                     }
                 }
             } catch (err) {
                 console.error(err);
-                if (!isSilent && err.message !== "Authentication expired") {
+                if (!isSilent) {
                     alert("Failed to load notebooks. Check console.");
                 }
             } finally {
@@ -465,7 +451,7 @@ const app = createApp({
 
         // Periodic background refresh every 60 seconds
         setInterval(() => {
-            if (isAuthenticated.value) {
+            if (githubPat.value && githubRepo.value) {
                 loadNotebooks(true);
             }
         }, 60000);
@@ -554,8 +540,11 @@ const app = createApp({
             }
             
             try {
-                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${note.id}?alt=media`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
+                const res = await fetch(`https://api.github.com/repos/${githubRepo.value}/contents/${note.path}`, {
+                    headers: { 
+                        Authorization: `Bearer ${githubPat.value}`,
+                        Accept: 'application/vnd.github.v3.raw'
+                    }
                 });
                 const text = await res.text();
                 markdownContent.value = text;
@@ -597,40 +586,25 @@ const app = createApp({
 
         const loadImagesForNote = async (note) => {
             try {
-                if (!note.parents || note.parents.length === 0) return;
-                const parentId = note.parents[0];
                 const noteBaseName = note.name.replace('.md', '');
-                
-                // 1. Find _attachments or Attachments in the same folder
-                let q1 = encodeURIComponent(`'${parentId}' in parents and (name='_attachments' or name='Attachments') and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-                let res1 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q1}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-                let data1 = await res1.json();
-                if (!data1.files || data1.files.length === 0) return;
-                let attFolderId = data1.files[0].id;
-                
-                // 2. Find noteBaseName folder inside _attachments
-                let q2 = encodeURIComponent(`'${attFolderId}' in parents and name='${noteBaseName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-                let res2 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q2}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-                let data2 = await res2.json();
-                if (!data2.files || data2.files.length === 0) return;
-                let specificAttFolderId = data2.files[0].id;
-                
-                // 3. Get all images in that folder
-                let q3 = encodeURIComponent(`'${specificAttFolderId}' in parents and trashed=false`);
-                let res3 = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q3}&fields=files(id,name,thumbnailLink)`, { headers: { Authorization: `Bearer ${accessToken}` } });
-                let data3 = await res3.json();
-                
-                // 4. Download images securely as Blobs via the Drive API
-                for (let file of data3.files) {
-                    fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
-                        headers: { Authorization: `Bearer ${accessToken}` }
+                const treeFiles = window._githubTreeCache || [];
+                const imageFiles = treeFiles.filter(f => f.type === 'blob' && f.path.includes(`_attachments/${noteBaseName}/`));
+
+                for (let file of imageFiles) {
+                    fetch(`https://api.github.com/repos/${githubRepo.value}/contents/${file.path}`, {
+                        headers: { 
+                            Authorization: `Bearer ${githubPat.value}`,
+                            Accept: 'application/vnd.github.v3.raw'
+                        }
                     })
                     .then(r => r.blob())
                     .then(blob => {
-                        imageBlobUrls.value[file.name] = URL.createObjectURL(blob);
+                        const parts = file.path.split('/');
+                        const filename = parts[parts.length - 1];
+                        imageBlobUrls.value[filename] = URL.createObjectURL(blob);
                     })
                     .catch(err => {
-                        console.error("Error fetching media blob for", file.name, err);
+                        console.error("Error fetching media blob for", file.path, err);
                     });
                 }
             } catch (err) {

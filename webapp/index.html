@@ -315,10 +315,18 @@
                 
                 <div class="settings-section">
                     <h3>Authentication</h3>
-                    <p class="settings-desc">Enter your Google OAuth Web Client ID below. It will be saved securely in your browser's local storage.</p>
+                    <p class="settings-desc">Enter your Google OAuth Web Client ID (for Tasks) and GitHub PAT (for Notes).</p>
                     <div class="input-group">
                         <label>Google Client ID</label>
                         <input type="text" v-model="clientIdInput" placeholder="123456789-abc...apps.googleusercontent.com">
+                    </div>
+                    <div class="input-group" style="margin-top: 12px;">
+                        <label>GitHub Personal Access Token (PAT)</label>
+                        <input type="password" v-model="githubPatInput" placeholder="ghp_xxxxxxxxxxxx">
+                    </div>
+                    <div class="input-group" style="margin-top: 12px;">
+                        <label>GitHub Repository</label>
+                        <input type="text" v-model="githubRepoInput" placeholder="username/repository-name">
                     </div>
                 </div>
 

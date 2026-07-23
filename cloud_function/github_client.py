@@ -14,8 +14,15 @@ def push_to_github(file_path, local_file_path, commit_message="Auto-commit from 
         g = Github(token)
         repo = g.get_repo(repo_name)
         
-        with open(local_file_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        with open(local_file_path, "rb") as f:
+            raw_content = f.read()
+            
+        is_binary = local_file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
+        if is_binary:
+            content = raw_content
+            # To compare binary files, contents.content is base64 encoded by Github API
+        else:
+            content = raw_content.decode("utf-8")
             
         # Clean up leading slash if any
         if file_path.startswith("/"):
@@ -23,7 +30,19 @@ def push_to_github(file_path, local_file_path, commit_message="Auto-commit from 
             
         try:
             contents = repo.get_contents(file_path)
-            if contents.decoded_content.decode("utf-8") == content:
+            
+            # Compare contents
+            is_same = False
+            if is_binary:
+                import base64
+                if contents.content:
+                    github_bytes = base64.b64decode(contents.content)
+                    is_same = github_bytes == raw_content
+            else:
+                if contents.decoded_content:
+                    is_same = contents.decoded_content.decode("utf-8") == content
+            
+            if is_same:
                 print(f"No changes for {file_path} in GitHub.")
             else:
                 repo.update_file(contents.path, commit_message, content, contents.sha)
