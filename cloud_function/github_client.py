@@ -23,8 +23,11 @@ def push_to_github(file_path, local_file_path, commit_message="Auto-commit from 
             
         try:
             contents = repo.get_contents(file_path)
-            repo.update_file(contents.path, commit_message, content, contents.sha)
-            print(f"Updated {file_path} in GitHub.")
+            if contents.decoded_content.decode("utf-8") == content:
+                print(f"No changes for {file_path} in GitHub.")
+            else:
+                repo.update_file(contents.path, commit_message, content, contents.sha)
+                print(f"Updated {file_path} in GitHub.")
         except UnknownObjectException:
             # File doesn't exist, create it
             repo.create_file(file_path, commit_message, content)

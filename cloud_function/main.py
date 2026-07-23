@@ -100,14 +100,18 @@ def sync_drive_notes(request):
                     md_app_props = md_file.get("appProperties", {})
                     
                     if doc_md5 and md_app_props and doc_md5 == md_app_props.get("source_md5"):
-                        print(f"Skipping {doc['name']} (MD5 checksum matches).")
+                        print(f"Skipping {doc['name']} (MD5 checksum matches). Pushing to GitHub anyway.")
+                        existing_md_path = download_file(service, md_file['id'], expected_md_name, dest_folder="/tmp/cache")
+                        push_to_github(expected_md_path, existing_md_path, commit_message=f"Auto-sync from OCR: {expected_md_name}")
                         continue
                         
                     doc_time = datetime.datetime.fromisoformat(doc["modifiedTime"].replace("Z", "+00:00"))
                     md_time = datetime.datetime.fromisoformat(md_file["modifiedTime"].replace("Z", "+00:00"))
                     
                     if doc_time <= md_time:
-                        print(f"Skipping {doc['name']} (Markdown is up to date based on timestamp).")
+                        print(f"Skipping {doc['name']} (Markdown is up to date based on timestamp). Pushing to GitHub anyway.")
+                        existing_md_path = download_file(service, md_file['id'], expected_md_name, dest_folder="/tmp/cache")
+                        push_to_github(expected_md_path, existing_md_path, commit_message=f"Auto-sync from OCR: {expected_md_name}")
                         continue
                     
                     existing_md_id = md_file["id"]
