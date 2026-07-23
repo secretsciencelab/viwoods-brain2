@@ -22,6 +22,7 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
   - **Blockquotes:** Draw a vertical line `|` or bracket `[` in the left margin next to a paragraph to create a Markdown Blockquote (`>`).
   - **Dividers:** Draw a horizontal line completely across the page to create a section break (`---`).
 - **Folder Aware & Master Compiling:** Automatically categorizes your notes into `All_Notes_Master.md` and `Work_Master.md` based on their subdirectories, allowing you to easily separate contexts in NotebookLM.
+- **GitHub Sync (Revision Control):** Automatically commits and pushes your processed Markdown files and Master compiled files directly to a GitHub repository, giving you full revision control and backup history.
 - **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
 
@@ -41,7 +42,7 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
 2. **Google Cloud Scheduler:** Wakes up the Cloud Run Function on a daily or hourly schedule.
 3. **Cloud Run Function:** Scans the Drive folder and downloads new/modified Viwoods .note files.
 4. **Gemini API:** Reads the Viwoods .note files and converts the handwriting to structured Markdown (`.md`).
-5. **Google Drive:** The Cloud Function uploads the individual `.md` files back to their original subfolders and updates the combined Master files in the root folder.
+5. **Google Drive & GitHub:** The Cloud Function uploads the individual `.md` files back to their original subfolders in Drive, and additionally commits and pushes them to your specified GitHub repository for revision control. It also updates the combined Master files in both locations.
 6. **NotebookLM / Obsidian:** Connects directly to the Master Markdown files for your final Knowledge Graph and AI search.
 
 ## 🚀 Setup Guide
@@ -66,6 +67,8 @@ Using a combination of AI (Gemini OCR), cloud processing, and the powerful web a
    - `DRIVE_TOKEN_JSON`: Paste the entire contents of your generated `token.json` file.
    - `CRON_SECRET`: Create a random password (e.g. `coffee-mug-42`). This secures your handwriting sync job from unauthorized triggers now that the endpoint is public.
    - `DRIVE_FOLDERS` (Optional): E.g., `Viwoods-Note`.
+   - `GITHUB_TOKEN` (Optional): A GitHub Personal Access Token (PAT) with `repo` permissions to automatically backup your markdown files to Git.
+   - `GITHUB_REPO` (Optional): The target repository for your backups (e.g., `username/repository-name`).
 
 ### Step 4: Cloud Scheduler
 1. Go to **Cloud Scheduler** in Google Cloud and create a new HTTP job targeting your Cloud Run URL.

@@ -1,6 +1,7 @@
 import re
 import concurrent.futures
 from drive_client import get_drive_service, download_file, upload_to_drive, get_files_in_folder
+from github_client import push_to_github
 
 def process_master_file(md):
     try:
@@ -93,6 +94,7 @@ def compile_master_files(service, folder_id, target_folder_name):
         master_search = [f for f in final_files if f["name"] == cat_data["filename"]]
         master_id = master_search[0]["id"] if master_search else None
         upload_to_drive(service, master_path, folder_id, existing_file_id=master_id)
+        push_to_github(cat_data["filename"], master_path, commit_message=f"Auto-sync master file: {cat_data['filename']}")
         
     if todo_content != "# Master To-Do List\n\n":
         todo_path = "/tmp/TODO_Master.md"
@@ -102,3 +104,4 @@ def compile_master_files(service, folder_id, target_folder_name):
         todo_search = [f for f in final_files if f["name"] == "TODO_Master.md"]
         todo_id = todo_search[0]["id"] if todo_search else None
         upload_to_drive(service, todo_path, folder_id, existing_file_id=todo_id)
+        push_to_github("TODO_Master.md", todo_path, commit_message="Auto-sync master file: TODO_Master.md")

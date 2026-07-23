@@ -6,6 +6,7 @@ from googleapiclient.errors import HttpError
 from drive_client import get_drive_service, get_files_in_folder, download_file, upload_to_drive
 from viwoods_parser import process_note_to_markdown
 from master_compiler import compile_master_files
+from github_client import push_to_github
 
 @functions_framework.http
 def sync_drive_notes(request):
@@ -137,6 +138,7 @@ def sync_drive_notes(request):
                     original_modified_time = internal_dt or doc.get('modifiedTime')
                     source_md5 = doc.get("md5Checksum")
                     upload_to_drive(service, local_md_path, parent_id, existing_file_id=existing_md_id, modified_time=original_modified_time, source_md5=source_md5)
+                    push_to_github(expected_md_path, local_md_path, commit_message=f"Auto-sync from OCR: {expected_md_name}")
                     processed_count += 1
                     total_processed_count += 1
                     

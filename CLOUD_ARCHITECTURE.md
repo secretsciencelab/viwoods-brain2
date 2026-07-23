@@ -6,6 +6,7 @@ This repository uses a Google Cloud Run service (`secondbrain-gdrive`) to automa
 ## Cloud Infrastructure Details
 - **Google Cloud Run:** The transcription logic (`cloud_function/main.py`) runs as a serverless Cloud Run instance.
 - **Continuous Deployment (Cloud Build):** A Google Cloud Build trigger is hooked directly to this GitHub repository (`viwoods-brain2`). Every push to the `main` branch automatically builds a new container image and deploys it to the `secondbrain-gdrive` Cloud Run service in the `us-central1` region under the `aaron-secondbrain` GCP project.
+- **GitHub Sync (Revision Control):** After converting the `.note` files, the service pushes the generated `.md` files to a specified GitHub repository via the GitHub API (`PyGithub`).
 - **Authentication:** 
   - **In the Cloud:** The script uses Google's Application Default Credentials (`google.auth.default()`). 
   - **Locally:** If executed locally (e.g. via `utils/run_main.py`), it falls back to parsing a local `token.json` file.
