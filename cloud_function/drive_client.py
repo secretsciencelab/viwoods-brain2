@@ -6,26 +6,36 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 import google.auth
 from google.oauth2.credentials import Credentials
 
-SCOPES = ["https://www.googleapis.com/auth/drive"]
+SCOPES = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/tasks"
+]
 
-def get_drive_service():
+def _get_credentials():
     token_json_str = os.environ.get("DRIVE_TOKEN_JSON")
     if token_json_str:
-        print("Using user's DRIVE_TOKEN_JSON for Drive API authentication...")
+        print("Using user's DRIVE_TOKEN_JSON for API authentication...")
         token_info = json.loads(token_json_str)
-        credentials = Credentials.from_authorized_user_info(token_info, SCOPES)
+        return Credentials.from_authorized_user_info(token_info, SCOPES)
     else:
         try:
             credentials, project = google.auth.default(scopes=SCOPES)
+            return credentials
         except google.auth.exceptions.DefaultCredentialsError:
-            print("Falling back to token.json for Drive API authentication...")
+            print("Falling back to token.json for API authentication...")
             token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'token.json')
             if os.path.exists(token_path):
-                credentials = Credentials.from_authorized_user_file(token_path, SCOPES)
+                return Credentials.from_authorized_user_file(token_path, SCOPES)
             else:
                 raise
-        
+
+def get_drive_service():
+    credentials = _get_credentials()
     return build("drive", "v3", credentials=credentials)
+
+def get_tasks_service():
+    credentials = _get_credentials()
+    return build("tasks", "v1", credentials=credentials)
 
 def download_file(service, file_id, file_name, dest_folder="/tmp"):
     if not os.path.exists(dest_folder):

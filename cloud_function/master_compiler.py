@@ -2,6 +2,7 @@ import re
 import concurrent.futures
 from drive_client import get_drive_service, download_file, upload_to_drive, get_files_in_folder
 from github_client import push_to_github
+from tasks_client import sync_todos_to_tasks
 
 def process_master_file(md):
     try:
@@ -109,3 +110,9 @@ def compile_master_files(service, folder_id, target_folder_name):
         
         github_todo_path = f"{target_folder_name}/TODO_Master.md"
         push_to_github(github_todo_path, todo_path, commit_message="Auto-sync master file: TODO_Master.md")
+        
+        try:
+            print("Syncing master to-do list to Google Tasks...")
+            sync_todos_to_tasks(todo_path)
+        except Exception as e:
+            print(f"Failed to sync to Google Tasks: {e}")
