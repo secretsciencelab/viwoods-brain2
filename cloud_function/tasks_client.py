@@ -42,6 +42,9 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
     current_parent_title = None
     current_parent_id = None
     
+    seen_parent_ids = set()
+    seen_subtask_keys = set()
+    
     for line in lines:
         header_match = re.match(r'^##\s+(.*)', line)
         if header_match:
@@ -56,6 +59,8 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                 existing_parents[current_parent_title] = created_task
                 current_parent_id = created_task['id']
                 
+            seen_parent_ids.add(current_parent_id)
+                
         elif current_parent_id:
             # Check for to-do items
             match = re.match(r'^\s*-\s+\[( |x)\]\s+(.*)', line)
@@ -64,6 +69,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                 task_title = match.group(2).strip()
                 
                 key = (current_parent_id, task_title)
+                seen_subtask_keys.add(key)
                 
                 if key in existing_subtasks:
                     # Update status if it changed
@@ -87,3 +93,16 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                         task['status'] = 'completed'
                     created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                     existing_subtasks[key] = created_task
+
+    # 5. Mark missing subtasks as completed
+    for key, task in existing_subtasks.items():
+        if key not in seen_subtask_keys:
+            if task.get('status') != 'completed':
+                try:
+                    task['status'] = 'completed'
+                    service.tasks().update(tasklist=tasklist_id, task=task['id'], body=task).execute()
+                except Exception as e:
+                    print(f"Error marking subtask as completed: {e}")
+
+    # 6. (Optional) We leave parent tasks alone so their completed children remain visible
+
