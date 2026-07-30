@@ -50,6 +50,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
     
     seen_parent_ids = set()
     seen_subtask_keys = set()
+    seen_subtask_ids = set()
     
     for line in lines:
         header_match = re.match(r'^##\s+(.*)', line)
@@ -81,6 +82,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                 if key in existing_subtasks:
                     # Update status if it changed
                     existing_task = existing_subtasks[key]
+                    seen_subtask_ids.add(existing_task['id'])
                     needs_update = False
                     
                     if is_completed and existing_task['status'] != 'completed':
@@ -102,6 +104,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                                     fallback_task['status'] = 'completed'
                                 created_task = service.tasks().insert(tasklist=tasklist_id, body=fallback_task, parent=current_parent_id).execute()
                                 existing_subtasks[key] = created_task
+                                seen_subtask_ids.add(created_task['id'])
                             else:
                                 print(f"Error updating task: {e}")
                 else:
@@ -112,6 +115,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                     try:
                         created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                         existing_subtasks[key] = created_task
+                        seen_subtask_ids.add(created_task['id'])
                     except Exception as e:
                         if '404' in str(e):
                             # Parent deleted, recreate it
@@ -125,22 +129,27 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                             seen_subtask_keys.add(key)
                             created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                             existing_subtasks[key] = created_task
+                            seen_subtask_ids.add(created_task['id'])
                         else:
                             print(f"Error creating task: {e}")
 
-    # 5. Delete missing subtasks
-    for key, task in existing_subtasks.items():
-        if key not in seen_subtask_keys:
-            try:
-                service.tasks().delete(tasklist=tasklist_id, task=task['id']).execute()
-            except Exception as e:
-                print(f"Error deleting subtask: {e}")
-
-    # 6. Delete missing parent tasks
-    for title, task in existing_parents.items():
-        if task['id'] not in seen_parent_ids:
-            try:
-                service.tasks().delete(tasklist=tasklist_id, task=task['id']).execute()
-            except Exception as e:
-                print(f"Error deleting parent task: {e}")
+    # 5. Delete missing or duplicate tasks
+    for t in existing_tasks:
+        if t.get('deleted'):
+            continue
+            
+        if 'parent' in t:
+            # Subtask
+            if t['id'] not in seen_subtask_ids:
+                try:
+                    service.tasks().delete(tasklist=tasklist_id, task=t['id']).execute()
+                except Exception as e:
+                    print(f"Error deleting subtask: {e}")
+        else:
+            # Parent task
+            if t['id'] not in seen_parent_ids:
+                try:
+                    service.tasks().delete(tasklist=tasklist_id, task=t['id']).execute()
+                except Exception as e:
+                    print(f"Error deleting parent task: {e}")
 
