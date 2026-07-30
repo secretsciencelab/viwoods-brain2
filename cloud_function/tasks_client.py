@@ -35,11 +35,11 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
             break
     
     # Build quick lookup dictionaries
-    existing_parents = {t['title']: t for t in existing_tasks if 'parent' not in t}
+    existing_parents = {t['title']: t for t in existing_tasks if 'parent' not in t and not t.get('deleted')}
     
     existing_subtasks = {}
     for t in existing_tasks:
-        if 'parent' in t:
+        if 'parent' in t and not t.get('deleted'):
             key = (t['parent'], t['title'])
             existing_subtasks[key] = t
             
