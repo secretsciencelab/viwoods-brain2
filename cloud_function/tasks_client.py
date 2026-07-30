@@ -25,8 +25,14 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
         content = f.read()
         
     # 3. Get all tasks currently in the list
-    existing_tasks_resp = service.tasks().list(tasklist=tasklist_id, showHidden=True, maxResults=100).execute()
-    existing_tasks = existing_tasks_resp.get('items', [])
+    existing_tasks = []
+    page_token = None
+    while True:
+        resp = service.tasks().list(tasklist=tasklist_id, showHidden=True, maxResults=100, pageToken=page_token).execute()
+        existing_tasks.extend(resp.get('items', []))
+        page_token = resp.get('nextPageToken')
+        if not page_token:
+            break
     
     # Build quick lookup dictionaries
     existing_parents = {t['title']: t for t in existing_tasks if 'parent' not in t}
@@ -81,7 +87,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                         needs_update = True
                     elif not is_completed and existing_task['status'] == 'completed':
                         existing_task['status'] = 'needsAction'
-                        existing_task['completed'] = None
+                        existing_task.pop('completed', None)
                         needs_update = True
                         
                     if needs_update:
@@ -94,15 +100,19 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                     created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                     existing_subtasks[key] = created_task
 
-    # 5. Mark missing subtasks as completed
+    # 5. Delete missing subtasks
     for key, task in existing_subtasks.items():
         if key not in seen_subtask_keys:
-            if task.get('status') != 'completed':
-                try:
-                    task['status'] = 'completed'
-                    service.tasks().update(tasklist=tasklist_id, task=task['id'], body=task).execute()
-                except Exception as e:
-                    print(f"Error marking subtask as completed: {e}")
+            try:
+                service.tasks().delete(tasklist=tasklist_id, task=task['id']).execute()
+            except Exception as e:
+                print(f"Error deleting subtask: {e}")
 
-    # 6. (Optional) We leave parent tasks alone so their completed children remain visible
+    # 6. Delete missing parent tasks
+    for title, task in existing_parents.items():
+        if task['id'] not in seen_parent_ids:
+            try:
+                service.tasks().delete(tasklist=tasklist_id, task=task['id']).execute()
+            except Exception as e:
+                print(f"Error deleting parent task: {e}")
 
