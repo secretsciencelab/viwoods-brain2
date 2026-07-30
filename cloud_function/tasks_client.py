@@ -55,22 +55,23 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
         header_match = re.match(r'^##\s+(.*)', line)
         if header_match:
             current_parent_title = header_match.group(1).strip()
-            
-            # Find or create parent task for the notebook
-            if current_parent_title in existing_parents:
-                current_parent_id = existing_parents[current_parent_title]['id']
-            else:
-                task = {'title': current_parent_title}
-                created_task = service.tasks().insert(tasklist=tasklist_id, body=task).execute()
-                existing_parents[current_parent_title] = created_task
-                current_parent_id = created_task['id']
+            current_parent_id = None
                 
-            seen_parent_ids.add(current_parent_id)
-                
-        elif current_parent_id:
+        elif current_parent_title:
             # Check for to-do items
             match = re.match(r'^\s*-\s+\[( |x)\]\s+(.*)', line)
             if match:
+                if not current_parent_id:
+                    # Find or create parent task for the notebook only when a subtask exists
+                    if current_parent_title in existing_parents:
+                        current_parent_id = existing_parents[current_parent_title]['id']
+                    else:
+                        task = {'title': current_parent_title}
+                        created_task = service.tasks().insert(tasklist=tasklist_id, body=task).execute()
+                        existing_parents[current_parent_title] = created_task
+                        current_parent_id = created_task['id']
+                    seen_parent_ids.add(current_parent_id)
+                
                 is_completed = match.group(1).lower() == 'x'
                 task_title = match.group(2).strip()
                 
