@@ -6,14 +6,8 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
     service = get_tasks_service()
     
     # 1. Get or create the main Task List
-    tasklists = []
-    page_token = None
-    while True:
-        resp = service.tasklists().list(maxResults=100, pageToken=page_token).execute()
-        tasklists.extend(resp.get('items', []))
-        page_token = resp.get('nextPageToken')
-        if not page_token:
-            break
+    tasklists_resp = service.tasklists().list().execute()
+    tasklists = tasklists_resp.get('items', [])
             
     tasklist_id = None
     for lst in tasklists:
