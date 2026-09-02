@@ -16,11 +16,13 @@ def process_master_file(md):
         todos = []
         in_todo = False
         current_todo = []
+        page_counter = 0
         current_page = None
         for line in clean_content.split("\n"):
             page_match = re.search(r'<!-- PAGE_(.*?)_START -->', line)
             if page_match:
-                current_page = page_match.group(1)
+                page_counter += 1
+                current_page = page_counter
                 
             if re.match(r'^\s*<!-- PAGE_.*_(START|END) -->\s*$', line):
                 continue
