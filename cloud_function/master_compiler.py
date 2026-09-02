@@ -36,7 +36,7 @@ def process_master_file(md):
                     clean_line = "- " + clean_line
                 clean_line = re.sub(r'☐|\(\s*\)', '[ ]', clean_line, count=1)
                 if current_page:
-                    clean_line = clean_line.replace("- [ ] ", f"- [ ] (Page {current_page}) ", 1)
+                    clean_line = clean_line + f" (p.{current_page})"
                 current_todo = [clean_line]
             elif in_todo:
                 if not line.strip() or re.search(r'^\s*(?:[-*+]|\d+\.)\s+', line):
