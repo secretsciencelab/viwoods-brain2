@@ -43,10 +43,16 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
             key = (t['parent'], t['title'])
             existing_subtasks[key] = t
             
+    current_order = {}
+    for t in existing_tasks:
+        if 'parent' in t and not t.get('deleted'):
+            current_order.setdefault(t['parent'], []).append(t['id'])
+            
     # 4. Parse markdown and sync
     lines = content.split('\n')
     current_parent_title = None
     current_parent_id = None
+    previous_task_id = None
     
     seen_parent_ids = set()
     seen_subtask_keys = set()
@@ -57,6 +63,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
         if header_match:
             current_parent_title = header_match.group(1).strip()
             current_parent_id = None
+            previous_task_id = None
                 
         elif current_parent_title:
             # Check for to-do items
@@ -79,10 +86,13 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                 key = (current_parent_id, task_title)
                 seen_subtask_keys.add(key)
                 
+                task_id = None
+                
                 if key in existing_subtasks:
                     # Update status if it changed
                     existing_task = existing_subtasks[key]
-                    seen_subtask_ids.add(existing_task['id'])
+                    task_id = existing_task['id']
+                    seen_subtask_ids.add(task_id)
                     needs_update = False
                     
                     if is_completed and existing_task['status'] != 'completed':
@@ -95,7 +105,7 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                         
                     if needs_update:
                         try:
-                            service.tasks().update(tasklist=tasklist_id, task=existing_task['id'], body=existing_task).execute()
+                            service.tasks().update(tasklist=tasklist_id, task=task_id, body=existing_task).execute()
                         except Exception as e:
                             if '404' in str(e):
                                 # Recreate missing subtask
@@ -104,7 +114,16 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                                     fallback_task['status'] = 'completed'
                                 created_task = service.tasks().insert(tasklist=tasklist_id, body=fallback_task, parent=current_parent_id).execute()
                                 existing_subtasks[key] = created_task
-                                seen_subtask_ids.add(created_task['id'])
+                                
+                                old_id = task_id
+                                task_id = created_task['id']
+                                seen_subtask_ids.add(task_id)
+                                
+                                curr_list = current_order.setdefault(current_parent_id, [])
+                                if old_id in curr_list:
+                                    curr_list[curr_list.index(old_id)] = task_id
+                                else:
+                                    curr_list.append(task_id)
                             else:
                                 print(f"Error updating task: {e}")
                 else:
@@ -115,7 +134,9 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                     try:
                         created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                         existing_subtasks[key] = created_task
-                        seen_subtask_ids.add(created_task['id'])
+                        task_id = created_task['id']
+                        seen_subtask_ids.add(task_id)
+                        current_order.setdefault(current_parent_id, []).append(task_id)
                     except Exception as e:
                         if '404' in str(e):
                             # Parent deleted, recreate it
@@ -129,9 +150,27 @@ def sync_todos_to_tasks(todo_path, task_list_name="ViWoods Notebooks"):
                             seen_subtask_keys.add(key)
                             created_task = service.tasks().insert(tasklist=tasklist_id, body=task, parent=current_parent_id).execute()
                             existing_subtasks[key] = created_task
-                            seen_subtask_ids.add(created_task['id'])
+                            task_id = created_task['id']
+                            seen_subtask_ids.add(task_id)
+                            current_order.setdefault(current_parent_id, []).append(task_id)
                         else:
                             print(f"Error creating task: {e}")
+                            
+                if task_id:
+                    curr_list = current_order.setdefault(current_parent_id, [])
+                    curr_idx = curr_list.index(task_id)
+                    expected_prev_idx = -1 if previous_task_id is None else curr_list.index(previous_task_id)
+                    
+                    if curr_idx != expected_prev_idx + 1:
+                        try:
+                            service.tasks().move(tasklist=tasklist_id, task=task_id, parent=current_parent_id, previous=previous_task_id).execute()
+                            curr_list.remove(task_id)
+                            new_prev_idx = -1 if previous_task_id is None else curr_list.index(previous_task_id)
+                            curr_list.insert(new_prev_idx + 1, task_id)
+                        except Exception as e:
+                            print(f"Error moving task: {e}")
+                    
+                    previous_task_id = task_id
 
     # 5. Delete missing or duplicate tasks
     for t in existing_tasks:
