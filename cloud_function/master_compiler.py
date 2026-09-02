@@ -12,17 +12,21 @@ def process_master_file(md):
             content = f.read()
         
         clean_content = re.sub(r'<!-- HASHES:\s*.*?\s*-->', '', content, flags=re.DOTALL)
-        clean_content = re.sub(r'<!-- PAGE_.*_START -->', '', clean_content)
-        clean_content = re.sub(r'<!-- PAGE_.*_END -->', '', clean_content)
-        
-        folder_path = md.get('folder_path', '')
-        name = md['name']
-        chunk = f"\n\n## Source: {folder_path}/{name}\n\n{clean_content.strip()}\n"
         
         todos = []
         in_todo = False
         current_todo = []
+        current_page = None
         for line in clean_content.split("\n"):
+            page_match = re.search(r'<!-- PAGE_(.*?)_START -->', line)
+            if page_match:
+                current_page = page_match.group(1)
+                
+            if re.match(r'^\s*<!-- PAGE_.*_(START|END) -->\s*$', line):
+                continue
+                
+            line = re.sub(r'<!-- PAGE_.*_(START|END) -->', '', line)
+            
             if re.search(r'\[\s*\]|☐|\(\s*\)', line):
                 if in_todo:
                     todos.append(" ".join(current_todo))
@@ -31,6 +35,8 @@ def process_master_file(md):
                 if re.match(r'^[☐\[\(]', clean_line):
                     clean_line = "- " + clean_line
                 clean_line = re.sub(r'☐|\(\s*\)', '[ ]', clean_line, count=1)
+                if current_page:
+                    clean_line = clean_line.replace("- [ ] ", f"- [ ] (Page {current_page}) ", 1)
                 current_todo = [clean_line]
             elif in_todo:
                 if not line.strip() or re.search(r'^\s*(?:[-*+]|\d+\.)\s+', line):
@@ -40,6 +46,14 @@ def process_master_file(md):
                     current_todo.append(line.strip())
         if in_todo:
             todos.append(" ".join(current_todo))
+
+        clean_content = re.sub(r'<!-- PAGE_.*_START -->', '', clean_content)
+        clean_content = re.sub(r'<!-- PAGE_.*_END -->', '', clean_content)
+        
+        folder_path = md.get('folder_path', '')
+        name = md['name']
+        chunk = f"\n\n## Source: {folder_path}/{name}\n\n{clean_content.strip()}\n"
+        
         todo_chunk = ""
         if todos:
             todo_chunk = f"## {folder_path}/{name}\n" + "\n".join(todos) + "\n\n"
