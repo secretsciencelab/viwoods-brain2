@@ -333,11 +333,14 @@ const app = createApp({
                 current.children.push({ ...f, name: parts[parts.length - 1], isFolder: false });
             });
 
-            // Recursively sort: folders first, then alphabetically
+            // Recursively sort: folders first, then alphabetically (or reverse for ai_feedback)
             const sortTree = (node) => {
                 if (node.isFolder && node.children) {
                     node.children.sort((a, b) => {
                         if (a.isFolder === b.isFolder) {
+                            if (node.name === 'ai_feedback') {
+                                return b.name.localeCompare(a.name);
+                            }
                             return a.name.localeCompare(b.name);
                         }
                         return a.isFolder ? -1 : 1;
