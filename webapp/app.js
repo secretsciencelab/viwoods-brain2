@@ -334,18 +334,19 @@ const app = createApp({
             });
 
             // Recursively sort: folders first, then alphabetically (or reverse for ai_feedback)
-            const sortTree = (node) => {
+            const sortTree = (node, reverseFolder = false) => {
                 if (node.isFolder && node.children) {
+                    const shouldReverse = reverseFolder || node.name === 'ai_feedback';
                     node.children.sort((a, b) => {
                         if (a.isFolder === b.isFolder) {
-                            if (node.name === 'ai_feedback') {
+                            if (shouldReverse) {
                                 return b.name.localeCompare(a.name);
                             }
                             return a.name.localeCompare(b.name);
                         }
                         return a.isFolder ? -1 : 1;
                     });
-                    node.children.forEach(sortTree);
+                    node.children.forEach(child => sortTree(child, shouldReverse));
                 }
             };
             sortTree(tree);
