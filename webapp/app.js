@@ -337,6 +337,7 @@ const app = createApp({
             const sortTree = (node, reverseFolder = false) => {
                 if (node.isFolder && node.children) {
                     const shouldReverse = reverseFolder || node.name === 'ai_feedback';
+                    node.isAiFeedback = shouldReverse;
                     node.children.sort((a, b) => {
                         if (a.isFolder === b.isFolder) {
                             if (shouldReverse) {
@@ -1295,6 +1296,7 @@ app.component('tree-node', {
     props: ['node', 'selectedNote'],
     methods: {
         autoExpandIfNoFiles(node) {
+            if (node.isAiFeedback || node.name === 'ai_feedback') return;
             if (!node.children || node.children.length === 0) return;
             const hasFiles = node.children.some(c => !c.isFolder);
             if (!hasFiles) {
