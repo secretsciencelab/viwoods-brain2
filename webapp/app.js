@@ -351,12 +351,19 @@ const app = createApp({
             };
             sortTree(tree);
 
-            const autoExpand = (node) => {
+            const autoExpand = (node, insideAiFeedback = false) => {
                 if (node.isFolder && node.children) {
-                    node.expanded = true;
+                    const isAiFeedback = insideAiFeedback || node.name === 'ai_feedback';
+                    
+                    if (isAiFeedback && node.name !== 'root') {
+                        node.expanded = false;
+                    } else {
+                        node.expanded = true;
+                    }
+                    
                     const hasFiles = node.children.some(c => !c.isFolder);
                     if (!hasFiles || node.name === "root") {
-                        node.children.forEach(autoExpand);
+                        node.children.forEach(child => autoExpand(child, isAiFeedback));
                     }
                 }
             };
