@@ -184,8 +184,7 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     
     let html = window.marked.parse(rawMd);
     
-    // Post-process HTML to wrap pages and inject page numbers
-    let pageCounter = 1;
+    // Post-process HTML to extract pages, sort them by created time, and inject page numbers
     let pages = [];
     html = html.replace(/<!-- PAGE_(.*?)_START -->([\s\S]*?)<!-- PAGE_\1_END -->/g, (match, pageId, content) => {
         let isMatch = true;
@@ -198,16 +197,23 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
         
         let displayStyle = isMatch ? '' : 'style="display: none;"';
         
-        let wrapped = `
-            <div class="page-block" data-page-id="${pageId}" ${displayStyle}>
-                <div class="page-number-indicator">Page ${pageCounter}</div>
-                ${content}
-            </div>
-        `;
-        pages.push(wrapped);
-        pageCounter++;
+        let timestamp = 0;
+        const createdMatch = content.match(/<em>Created:\s*(.*?)<\/em>/);
+        if (createdMatch) {
+            timestamp = new Date(createdMatch[1].replace(' at ', ' ') + ' UTC').getTime() || 0;
+        } else {
+            const updatedMatch = content.match(/<em>Last updated:\s*(.*?)<\/em>/);
+            if (updatedMatch) {
+                timestamp = new Date(updatedMatch[1].replace(' at ', ' ') + ' UTC').getTime() || 0;
+            }
+        }
+        
+        pages.push({ pageId, content, displayStyle, timestamp });
         return `<!-- PAGE_PLACEHOLDER -->`;
     });
+    
+    // Sort pages by timestamp (ascending)
+    pages.sort((a, b) => a.timestamp - b.timestamp);
     
     if (reversePageOrder) {
         pages.reverse();
@@ -215,19 +221,27 @@ export function parseMarkdown(rawMd, reversePageOrder, imageBlobUrls, searchQuer
     
     let pageIndex = 0;
     html = html.replace(/<!-- PAGE_PLACEHOLDER -->/g, () => {
-        return pages[pageIndex++];
+        const p = pages[pageIndex++];
+        return `
+            <div class="page-block" data-page-id="${p.pageId}" ${p.displayStyle}>
+                <div class="page-number-indicator">Page ${pageIndex}</div>
+                ${p.content}
+            </div>
+        `;
     });
     
     // Post-process HTML to convert timestamp blockquotes into beautiful badges
-    html = html.replace(/<blockquote>\s*<p><em>Last updated: (.*?)<\/em><\/p>\s*<\/blockquote>/g, (match, ts) => {
-        let localStr = ts;
-        // The timestamp from the cloud function is in UTC but formatted without a timezone (e.g. "June 29, 2026 at 11:32 AM")
-        // We replace ' at ' with a space and append ' UTC' so the browser correctly interprets it and converts to local time
-        const d = new Date(ts.replace(' at ', ' ') + ' UTC');
-        if (!isNaN(d.getTime())) {
-            localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-        }
-        return '<div class="page-timestamp"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ' + localStr + '</div>';
+    html = html.replace(/<blockquote>\s*<p>\s*(?:<em>(Created|Last updated):\s*.*?<\/em>(?:<br>\s*|\n\s*)*)+<\/p>\s*<\/blockquote>/g, (match) => {
+        let badges = '';
+        match.replace(/<em>(Created|Last updated):\s*(.*?)<\/em>/g, (m, type, ts) => {
+            let localStr = ts;
+            const d = new Date(ts.replace(' at ', ' ') + ' UTC');
+            if (!isNaN(d.getTime())) {
+                localStr = d.toLocaleString(undefined, { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+            }
+            badges += '<div class="page-timestamp" style="margin-bottom: 4px; display: inline-flex; margin-right: 12px; align-items: center;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <span style="font-weight: 500; margin-right: 4px;">' + type + ':</span> ' + localStr + '</div>';
+        });
+        return '<div class="timestamp-container" style="margin-bottom: 1em;">' + badges + '</div>';
     });
     
     // Post-process HTML to inject id attributes into headings for the Document Outline
