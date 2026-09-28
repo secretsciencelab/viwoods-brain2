@@ -77,6 +77,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 
                 pages.append({
                     'id': page_id,
+                    'createdTime': page.get('createTime') or page.get('createdTime'),
                     'lastModifiedTime': page.get('lastModifiedTime'),
                     'image_names': image_names,
                     'hash_files': image_names
@@ -113,6 +114,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 
                 pages.append({
                     'id': page_id,
+                    'createdTime': page.get('createTime') or page.get('createdTime'),
                     'lastModifiedTime': page.get('lastModifiedTime'),
                     'image_names': image_names,
                     'hash_files': hash_files
@@ -184,7 +186,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                             with open(img_path, "rb") as img_file:
                                 valid_image_bytes.append(img_file.read())
                                 
-                page_markdown = run_gemini_ocr(valid_image_bytes, page_id, p.get('lastModifiedTime'), is_daily)
+                page_markdown = run_gemini_ocr(valid_image_bytes, page_id, p.get('lastModifiedTime'), p.get('createdTime'), is_daily)
                 
                 if img_path and os.path.exists(img_path):
                     if service and attachments_folder_id:
