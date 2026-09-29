@@ -46,6 +46,10 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
     new_hashes = {}
     
     with zipfile.ZipFile(note_path, 'r') as z:
+        if any(f.lower().endswith('.epub') or f.lower().endswith('.pdf') for f in z.namelist()):
+            print(f"Skipping {note_path}: Appears to be an ebook or PDF document, not a handwritten note.")
+            return False, None
+            
         note_list_file = next((f for f in z.namelist() if f.endswith('_NoteList.json')), None)
         page_list_file = next((f for f in z.namelist() if f.endswith('PageListFileInfo.json')), None)
         
