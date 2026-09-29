@@ -129,14 +129,11 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
             
         def process_single_page(p):
             page_id = p['id']
-            page_hash_content = b""
-            for hf in p['hash_files']:
-                match = next((f for f in z.namelist() if f.endswith(hf)), None)
-                if match:
-                    with z.open(match) as f:
-                        page_hash_content += f.read()
-                        
-            page_hash = hashlib.md5(page_hash_content).hexdigest()
+            # CRITICAL FIX: Hash the page's internal lastModifiedTime instead of raw PNG bytes.
+            # ViWoods regenerates PNG metadata on every export, which was breaking the cache
+            # and causing EVERY page to be re-OCRed on EVERY sync, draining the API budget!
+            last_mod = str(p.get('lastModifiedTime', ''))
+            page_hash = hashlib.md5(last_mod.encode('utf-8')).hexdigest()
             
             page_markdown = ""
             if page_id in existing_hashes and existing_hashes[page_id] == page_hash:
