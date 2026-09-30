@@ -22,8 +22,9 @@ This tool automatically detects new handwritten Viwoods .note files in your Goog
   - **Blockquotes:** Draw a vertical line `|` or bracket `[` in the left margin next to a paragraph to create a Markdown Blockquote (`>`).
   - **Dividers:** Draw a horizontal line completely across the page to create a section break (`---`).
 - **Folder Aware & Master Compiling:** Automatically categorizes your notes into `All_Notes_Master.md` and `Work_Master.md` based on their subdirectories, allowing you to easily separate contexts in NotebookLM.
-- **GitHub Sync (Revision Control):** Automatically commits and pushes your processed Markdown files and Master compiled files directly to a GitHub repository, giving you full revision control and backup history.
-- **Smart Syncing:** Compares timestamps. It only processes Viwoods .note files that are new or have been recently modified, aggressively saving API quota.
+- **GitHub Vault Sync:** Automatically commits and pushes your processed Markdown files, extracted images, and Master compiled files directly to a GitHub repository, providing secure revision control, cloud backup, and a platform for further automation.
+- **Vera Analysis Agent:** Includes a highly rigorous, automated AI agent (Vera) that runs daily via GitHub Actions. Vera pulls a 30-day sliding window of your raw notes and acts as a data-driven personal coach—exhaustively tracking fitness metrics, uncovering cognitive patterns, and auditing your open to-dos.
+- **Smart Syncing:** Compares internal metadata to aggressively save API quota, only processing pages that have physically changed.
 - **Serverless:** Runs entirely on Google Cloud Functions for free.
 
 ## 📝 Note-Taking System
