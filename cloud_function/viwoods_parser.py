@@ -207,7 +207,8 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
             
             return page_id, page_hash, page_markdown
             
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # Reduced max_workers to 2 to prevent Cloud Run OOM (512 MiB limit) during heavy Pillow image processing
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             results = list(executor.map(process_single_page, pages))
             
         for page_id, page_hash, page_markdown in results:

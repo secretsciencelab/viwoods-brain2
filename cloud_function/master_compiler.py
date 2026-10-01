@@ -96,7 +96,8 @@ def compile_master_files(service, folder_id, target_folder_name):
         if not cat_data["files"]:
             continue
             
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # Reduced max_workers to 4 to prevent Cloud Run OOM (512 MiB limit) during mass file processing
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             results = list(executor.map(process_master_file, cat_data["files"]))
             
         for chunk, todo_chunk in results:
