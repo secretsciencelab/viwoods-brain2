@@ -141,6 +141,14 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                 page_markdown = get_page_text_from_md(existing_md_content, page_id)
             else:
                 print(f"Page {page_id} changed! OCRing with Gemini...")
+                
+                existing_created_string = None
+                old_page_text = get_page_text_from_md(existing_md_content, page_id)
+                if old_page_text:
+                    created_match = re.search(r'> \*Created: (.*?)\*', old_page_text)
+                    if created_match:
+                        existing_created_string = created_match.group(1)
+                        
                 valid_image_bytes = []
                 img_path = None
                 
@@ -187,7 +195,7 @@ def process_note_to_markdown(note_path, output_path, existing_md_path=None, serv
                             with open(img_path, "rb") as img_file:
                                 valid_image_bytes.append(img_file.read())
                                 
-                page_markdown = run_gemini_ocr(valid_image_bytes, page_id, p.get('lastModifiedTime'), p.get('createdTime'), is_daily)
+                page_markdown = run_gemini_ocr(valid_image_bytes, page_id, p.get('lastModifiedTime'), p.get('createdTime'), is_daily, existing_created_string)
                 
                 if img_path and os.path.exists(img_path):
                     if service and attachments_folder_id:
